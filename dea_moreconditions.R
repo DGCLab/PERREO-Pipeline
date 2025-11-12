@@ -32,8 +32,8 @@ method <- args[[3]]
 CWD <- args[[4]]
 repeatmasker_annotation_gtf <- args[[5]]
 k_num <- args[[6]]
-FDR_thr <- args[[7]]
-log2FC_thr <- args[[8]]
+FDR_thr <- as.numeric(args[[7]])
+log2FC_thr <- as.numeric(args[[8]])
 SAMPLES_DIR <- paste0(CWD,"/SAMPLES/")
 DEA_results_DIR <- paste0(SAMPLES_DIR,"/DEA_results")
 
@@ -651,6 +651,7 @@ pal <- setNames(
 top_up   <- volcano.df |>  filter(DEG.Status == grp_up)    |>  slice_max(negLog10P, n = 10)
 top_down <- volcano.df |> filter(DEG.Status == grp_down)  |>  slice_max(negLog10P, n = 10)
 top_labs <- bind_rows(top_up, top_down)
+write.table(top_labs, "toplabels.txt")
 
 ggplot(volcano.df, aes(x = log2FC, y = negLog10P)) +
   geom_point(aes(color = DEG.Status), alpha = 0.7, size = 1.5) +
@@ -705,11 +706,12 @@ heatmap <- pheatmap(expression_differentials,
                     cluster_cols = FALSE,
                     clustering_method = "complete",
                     scale = "row",
-                    fontsize_row = 8,
-                    fontsize_col = 8,
+                    fontsize_row = if(length(expression_differentials) <= 30){8}else{4},
+                    fontsize_col = if(length(samples) <= 16){8}else{6},
                     main = paste0("DEGs between conditions (", unique(conds)[1], " vs ", unique(conds)[2], ")"),
                     annotation_colors = ann_colors,
-                    color = heat_colors)
+                    color = heat_colors,
+                    annotation_names_col = if(length(samples) <= 30){TRUE}else{FALSE})
 
 png(paste0(DEA_results_DIR,"/heatmap_DEGs_", nm,".png"), width = 2600, height = 2000, res = 300)
 grid.newpage()
@@ -742,7 +744,7 @@ ggplot(df_bar, aes(x = RepeatSequence, y = log2FC, fill = DEG.Status)) +
   theme_minimal(base_size = 12) +
   theme(
     plot.title = element_text(face = "bold", hjust = 0.5),
-    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 8),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = if(length(counts_deg$RepeatSequence) <= 50){8}else{4}),
     legend.position = "top",
     panel.grid.major.x = element_blank()
   ) +
