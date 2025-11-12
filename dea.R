@@ -98,6 +98,14 @@ mat <- counts(dds)
 ## Correct Batch Effect
 if(batch == TRUE){
   
+  ruvg <- TRUE
+  message("Removing Batch Effect...")
+  
+  if ("batch" %in% colnames(sample_list)) {
+    ruvg <- FALSE
+  }
+  
+  if(ruvg == TRUE){
   #Extracting counts data to build the EdgeR object
   library(edgeR)
   message("Removing Batch Effect...")
@@ -171,7 +179,42 @@ if(batch == TRUE){
     
     vsd <- varianceStabilizingTransformation(dds)
   }
-  
+  } else {
+    if (method == "edgeR") {
+      library(edgeR)
+      
+      message("DEA is being performed by edgeR")
+      
+      dge <- DGEList(counts = mat, samples = samples)
+      
+      design <- model.matrix(~ batch + condition, data = sample_list)
+      
+      dge <- calcNormFactors(dge, method="TMM")
+      dge <- estimateDisp(dge, design)
+      fit <- glmQLFit(dge, design)
+      qlf <- glmQLFTest(fit, coef = colnames(design)[3])  
+      
+      results <- topTags(qlf, n = Inf)
+      res_filtered <- results$table[abs(results$table$logFC)> log2FC_thr & results$table$FDR < FDR_thr,]
+      
+    } else if (method == "DESeq2") {
+      library(DESeq2)
+      
+      message("DEA is being performed by DESeq2")
+      
+      dds <- DESeqDataSetFromMatrix(
+        countData = mat,
+        colData = sample_list,
+        design = ~ batch + condition
+      )
+      
+      dds <- DESeq(dds)
+      results <- results(dds, contrast = c("condition", unique(condition)[2], unique(condition)[1]))
+      res_filtered <- subset(results, abs(log2FoldChange) > log2FC_thr & padj < FDR_thr) |> as.data.frame()
+      
+      vsd <- varianceStabilizingTransformation(dds)
+    }
+    
   #Once the batch effect is corrected we use the matrix for visualization
   #PCA
   pca <- prcomp(t(mat.tmm),scale. = T)
