@@ -326,21 +326,42 @@ if(batch == TRUE){
     
   }
 }
+}
 
-
-if (batch == TRUE){
-  mat.tmm.ruv.log <- log2(mat.tmm.ruv)
-  rownames(mat.tmm.ruv.log) <- gsub("#.*$","",rownames(mat.tmm.ruv.log))
-  expression_matrix <- mat.tmm.ruv.log
-} else{
+if (batch == TRUE) {
+  
+  if (ruvg == TRUE) {
+    mat.tmm.ruv.log <- log2(mat.tmm.ruv)
+    rownames(mat.tmm.ruv.log) <- gsub("#.*$","",rownames(mat.tmm.ruv.log))
+    expression_matrix <- mat.tmm.ruv.log
+    
+  } else {
+    if (method == "DESeq2") {
+      vsd <- assay(vsd)
+      rownames(vsd) <- gsub("#.*$", "", rownames(vsd))
+      expression_matrix <- removeBatchEffect(vsd, batch = coldata$Batch)
+      
+    } else {
+      mat.tmm.log <- log2(mat.tmm)
+      rownames(mat.tmm.log) <- gsub("#.*$", "", rownames(mat.tmm.log))
+      expression_matrix <- removeBatchEffect(mat.tmm.log, batch = coldata$Batch)
+    }
+  }
+  
+} else {
+  
   if (method == "DESeq2") {
-  vsd <- assay(vsd)
-  rownames(vsd) <- gsub("#.*$","",rownames(vsd))
-  expression_matrix <- vsd} else {
+    vsd <- assay(vsd)
+    rownames(vsd) <- gsub("#.*$", "", rownames(vsd))
+    expression_matrix <- vsd
+    
+  } else {
     mat.tmm.log <- log2(mat.tmm)
     rownames(mat.tmm.log) <- gsub("#.*$", "", rownames(mat.tmm.log))
-    expression_matrix <- mat.tmm.log}
-} 
+    expression_matrix <- mat.tmm.log
+  }
+}
+ 
 
 write.csv(expression_matrix, paste0(DEA_results_DIR,"/expression_matrix.csv"))
 write.csv(res_filtered, paste0(DEA_results_DIR,"/DEG.csv"))
@@ -674,5 +695,6 @@ p <- ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
 
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), plot = p, width = 8, height = 6, dpi = 300)
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), plot = p, width = 8, height = 6, dpi = 300)
+
 
 
