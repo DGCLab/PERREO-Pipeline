@@ -328,6 +328,8 @@ if(batch == TRUE){
 }
 }
 
+## Generate expression matrix for models
+              
 if (batch == TRUE) {
   
   if (ruvg == TRUE) {
@@ -695,6 +697,7 @@ p <- ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
 
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), plot = p, width = 8, height = 6, dpi = 300)
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), plot = p, width = 8, height = 6, dpi = 300)
+
 
 
 
