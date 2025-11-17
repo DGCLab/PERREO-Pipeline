@@ -716,7 +716,7 @@ ann_colors <- list(
   Condition = setNames(base_colors[seq_along(cond_levels)], cond_levels)
 )
 
-heat_colors <- colorRampPalette(c("#804A45", "white", "#455F80"))(100)
+heat_colors <- colorRampPalette(c("#455F80", "white", "#804A45"))(100)
 
 
 heatmap <- pheatmap(expression_differentials,
