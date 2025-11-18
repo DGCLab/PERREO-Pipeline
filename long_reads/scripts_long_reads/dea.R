@@ -532,39 +532,14 @@ ggsave(paste0(DEA_results_DIR,"/BarPlotUpDown.pdf"),
 ## Read & Preprocess GTF
 message("Loading: ", repeatmasker_annotation_gtf)
 
-gtf <- rtracklayer::readGFF(repeatmasker_annotation_gtf)
-gtf_df_clean <- gtf |> 
-  mutate(repeat_family = stringr::str_extract(transcript_id, "(?<=#)[^/]+(?=/|$)"),
-         gene_id = stringr::str_extract(gene_id, "^[^#]+"), 
-         repeat_family = stringr::str_remove(repeat_family, "_dup.*"))
+### --- 3. Filtrar solo los diferenciales --- ###
+gtf_differentials <- gtf_df %>%
+  filter(gene_id %in% repeat_differentials)
 
-gtf_differentials <- gtf_df_clean[gtf_df_clean$gene_id %in% repeat_differentials,]
-gtf_differentials <- as.data.frame(gtf_differentials)
-
-message("Classificating repeats...")
-
-repeat_class_info <- gtf_differentials |> 
-  dplyr::select(gene_id, repeat_family) |> 
+### --- 4. Obtener tabla gene_id → repeat_family --- ###
+repeat_class_info <- gtf_differentials %>%
+  select(gene_id, repeat_family) %>%
   distinct()
-
-DEGs_type <- volcano.df %>%
-  filter(DEG.Status != "Not significant") |> 
-  dplyr::rename(gene_id = RepeatSequence) |> 
-  mutate(gene_id = gsub("#.*$", "", gene_id)) |>    
-  left_join(repeat_class_info, by = "gene_id")
-
-type_df <- DEGs_type %>%
-  # Filtrar genes que tienen repeat_class asignado
-  filter(!is.na(repeat_family)) %>%
-  # Contar cada tipo
-  dplyr::count(repeat_family) %>%
-  # Calcular porcentajes
-  mutate(
-    percentage = (n / sum(n)) * 100,
-    percentage_label = paste0(round(percentage, 1), "%")
-  ) %>%
-  # Ordenar por frecuencia (descendente)
-  arrange(desc(n))
 
 
 ## Plot DEG
@@ -689,5 +664,6 @@ p <- ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
 
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), plot = p, width = 8, height = 6, dpi = 300)
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), plot = p, width = 8, height = 6, dpi = 300)
+
 
 
