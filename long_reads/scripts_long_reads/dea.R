@@ -539,12 +539,11 @@ extract_attr <- function(x, key){
 }
 
 ### --- 2. Leer GTF y extraer gene_id, repeat_class, repeat_family --- ###
-gtf_df <- rtracklayer::readGFF("repeatmasker_annotation_gtf") %>%
+gtf_df <- rtracklayer::readGFF(repeatmasker_annotation_gtf) %>%
   mutate(
     gene_id       = extract_attr(attributes, "gene_id"),
     transcript_id = extract_attr(attributes, "transcript_id"),
-    repeat_class  = extract_attr(attributes, "repeat_class"),
-    repeat_family = extract_attr(attributes, "repeat_family")
+    repeat_class  = extract_attr(attributes, "repeat_class")
   )
 
 ### --- 3. Filtrar solo los diferenciales --- ###
