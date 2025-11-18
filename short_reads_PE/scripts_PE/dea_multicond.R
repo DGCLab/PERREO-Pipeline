@@ -641,6 +641,15 @@ if (method == "DESeq2"){
                                    "Not significant")))
 } 
 
+## Check if there are DEGs
+all_not_significant <- all(
+  volcano.df$DEG.Status == "Not significant" | is.na(volcano.df$DEG.Status)
+)
+
+if (all_not_significant) {
+  message("No differentially expressed genes were detected. The pipeline will stop here.")
+  quit(save = "no", status = 0)
+}
 
 grp_up   <- paste0("Upregulated in ", unique(conds)[1])
 grp_down <- paste0("Downregulated in ", unique(conds)[1])
@@ -689,9 +698,9 @@ annotation_col <- data.frame(
 )
 rownames(annotation_col) <- colnames(expression_differentials)
 
-ord <- order(annotation_col$Condition)
-expression_differentials <- expression_differentials[, ord]
-annotation_col <- annotation_col[ord, , drop = FALSE]
+# ord <- order(annotation_col$Condition)
+# expression_differentials <- expression_differentials[, ord]
+# annotation_col <- annotation_col[ord, , drop = FALSE]
 
 cond_levels <- levels(annotation_col$Condition)
 base_colors <- c("#804A45", "#BAC6D4","#F5A553", "#2E8B57","#455F80", "#323840", "#FFF1C2")

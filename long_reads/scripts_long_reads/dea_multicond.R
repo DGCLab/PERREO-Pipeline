@@ -657,6 +657,17 @@ if (method == "DESeq2"){
 } 
 
 
+## Check if there are DEGs
+all_not_significant <- all(
+  volcano.df$DEG.Status == "Not significant" | is.na(volcano.df$DEG.Status)
+)
+
+if (all_not_significant) {
+  message("No differentially expressed genes were detected. The pipeline will stop here.")
+  quit(save = "no", status = 0)
+}
+
+
 grp_up   <- paste0("Upregulated in ", unique(conds)[1])
 grp_down <- paste0("Downregulated in ", unique(conds)[1])
 pal <- setNames(
