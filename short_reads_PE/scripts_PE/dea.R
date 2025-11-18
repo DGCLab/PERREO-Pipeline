@@ -484,7 +484,7 @@ dev.off()
 ## ---------------- BARPLOT UP/DOWN ----------------
 
 counts_deg <- volcano.df |> 
-  filter(DEG.Status %in% c(grp_up, grp_down))
+  filter(DEG.Status != "Not significant")
 
 df_bar <- counts_deg %>%
   arrange(desc(log2FC)) %>%
