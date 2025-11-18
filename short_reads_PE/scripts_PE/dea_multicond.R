@@ -779,17 +779,28 @@ ggsave(paste0(DEA_results_DIR,"/BarPlotUpDown_", nm,".pdf"),
 ## Read & Preprocess GTF
 message("Loading: ", repeatmasker_annotation_gtf)
 
-gtf <- rtracklayer::readGFF(repeatmasker_annotation_gtf)
-gtf_df_clean <- gtf |> 
-  mutate(repeat_family = stringr::str_extract(transcript_id, "(?<=#)[^/]+(?=/|$)"),
-         gene_id = stringr::str_extract(gene_id, "^[^#]+"), 
-         repeat_family = stringr::str_remove(repeat_family, "_dup.*"))
+              ### --- 1. Función para extraer atributos del GTF --- ###
+extract_attr <- function(x, key){
+  m <- stringr::str_match(x, paste0(key, ' "([^"]+)"'))
+  return(m[,2])
+}
 
-gtf_differentials <- gtf_df_clean[gtf_df_clean$gene_id %in% repeat_differentials,]
-gtf_differentials <- as.data.frame(gtf_differentials)
+### --- 2. Leer GTF y extraer gene_id, repeat_class, repeat_family --- ###
+gtf_df <- rtracklayer::readGFF("repeatmasker_annotation_gtf") %>%
+  mutate(
+    gene_id       = extract_attr(attributes, "gene_id"),
+    transcript_id = extract_attr(attributes, "transcript_id"),
+    repeat_class  = extract_attr(attributes, "repeat_class"),
+    repeat_family = extract_attr(attributes, "repeat_family")
+  )
 
-repeat_class_info <- gtf_differentials |> 
-  dplyr::select(gene_id, repeat_family) |> 
+### --- 3. Filtrar solo los diferenciales --- ###
+gtf_differentials <- gtf_df %>%
+  filter(gene_id %in% repeat_differentials)
+
+### --- 4. Obtener tabla gene_id → repeat_family --- ###
+repeat_class_info <- gtf_differentials %>%
+  select(gene_id, repeat_family) %>%
   distinct()
 
 message("Classificating repeats...")
@@ -835,19 +846,27 @@ for (nm in res_names) {
   } 
   
   
-DEGs_type <- volcano.df |>
-  filter(DEG.Status != "Not significant") |> 
-  dplyr::rename(gene_id = RepeatSequence) |> 
-  mutate(gene_id = gsub("#.*$", "", gene_id)) |>    
+library(dplyr)
+library(stringr)
+library(rtracklayer)
+
+
+
+### --- 5. Añadir repeat_family a los DEGs y clasificar --- ###
+DEGs_type <- volcano.df %>%
+  filter(DEG.Status != "Not significant") %>%
+  rename(gene_id = RepeatSequence) %>%
+  mutate(gene_id = gsub("#.*$", "", gene_id)) %>%
   left_join(repeat_class_info, by = "gene_id")
 
-type_df <- DEGs_type |>
-  filter(!is.na(repeat_family)) |>
-  dplyr::count(repeat_family) |>
+### --- 6. Tabla final de conteos y porcentajes por familia --- ###
+type_df <- DEGs_type %>%
+  filter(!is.na(repeat_family)) %>%
+  count(repeat_family) %>%
   mutate(
     percentage = (n / sum(n)) * 100,
     percentage_label = paste0(round(percentage, 1), "%")
-  ) |> 
+  ) %>%
   arrange(desc(n))
 
 
@@ -976,3 +995,5 @@ ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
 
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), width = 8, height = 6, dpi = 300)
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), width = 8, height = 6, dpi = 300)
+
+
