@@ -412,6 +412,13 @@ top_up   <- volcano.df |>  filter(DEG.Status == grp_up)    |>  slice_max(negLog1
 top_down <- volcano.df |> filter(DEG.Status == grp_down)  |>  slice_max(negLog10P, n = 10)
 top_labs <- bind_rows(top_up, top_down)
 write.table(top_labs, "toplabels.txt")
+write.table(
+  top_up$RepeatSequence,
+  file = "primersearchtoplabels.txt",
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
 
 ggplot(volcano.df, aes(x = log2FC, y = negLog10P)) +
   geom_point(aes(color = DEG.Status), alpha = 0.7, size = 1.5) +
@@ -448,6 +455,10 @@ annotation_col <- data.frame(
   Condition = factor(condition, levels = c(unique(condition)[2], unique(condition)[1]))
 )
 rownames(annotation_col) <- colnames(expression_differentials)
+
+# ord <- order(annotation_col$Condition)
+# expression_differentials <- expression_differentials[, ord]
+# annotation_col <- annotation_col[ord, , drop = FALSE]
 
 cond_levels <- levels(annotation_col$Condition)
 base_colors <- c("#804A45", "#BAC6D4","#F5A553", "#2E8B57","#455F80", "#323840", "#FFF1C2")
@@ -533,47 +544,6 @@ repeat_class_info <- gtf_differentials |>
   distinct()
 
 message("Classificating repeats...")
-
-for (nm in res_names) {
-
-  
-  results <- get(nm)
-  
-  conds <- strsplit(sub("^results_contrast_", "", nm), "_vs_")[[1]]
-  
-  if (method == "DESeq2"){
-    log2FC <- results$log2FoldChange
-    FDR <- results$padj
-    dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(conds)[1]),
-                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]), 
-                                "Not significant"))
-    
-    volcano.df <- data.frame(
-      RepeatSequence = rownames(results),
-      log2FC = results$log2FoldChange,
-      negLog10P = -log10(results$padj),
-      DEG.Status = factor(dep.labels,
-                          levels = c(paste0("Upregulated in ", unique(conds)[1]), 
-                                     paste0("Downregulated in ", unique(conds)[1]),
-                                     "Not significant")))
-    
-  } else{
-    log2FC <- results$logFC
-    FDR <- results$FDR
-    dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(conds)[1]),
-                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]), 
-                                "Not significant"))
-    
-    volcano.df <- data.frame(
-      RepeatSequence = rownames(results),
-      log2FC = results$logFC,
-      negLog10P = -log10(results$FDR),
-      DEG.Status = factor(dep.labels,
-                          levels = c(paste0("Upregulated in ", unique(conds)[1]), 
-                                     paste0("Downregulated in ", unique(conds)[1]),
-                                     "Not significant")))
-  } 
-  
   
 DEGs_type <- volcano.df |>
   filter(DEG.Status != "Not significant") |> 
@@ -598,8 +568,8 @@ ggplot(type_df, aes(x = reorder(repeat_class, n), y = percentage)) +
             hjust = -0.1, size = 3.5) +
   coord_flip() +
   labs(
-    title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]," - DEGs"),
-    subtitle = paste("Total genes: ", sum(type_df$n)),
+    title = paste0("Repeat class types distribution for ", unique(condition)[1], " vs ", unique(condition)[2]," - DEGs"),
+    subtitle = paste("Total genes: ", sum(type_df$n)-length(which(duplicated(DEGs_type$gene_id)))),
     x = "Repeat class type",
     y = "Percentage (%)",
     caption = "DEA data analysis"
@@ -717,8 +687,5 @@ ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
 
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), width = 8, height = 6, dpi = 300)
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), width = 8, height = 6, dpi = 300)
-
-
-## Save DESeq2/EdgeR 
 
 

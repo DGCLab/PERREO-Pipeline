@@ -661,7 +661,16 @@ pal <- setNames(
 top_up   <- volcano.df |>  filter(DEG.Status == grp_up)    |>  slice_max(negLog10P, n = 10)
 top_down <- volcano.df |> filter(DEG.Status == grp_down)  |>  slice_max(negLog10P, n = 10)
 top_labs <- bind_rows(top_up, top_down)
-write.table(top_labs, "toplabels.txt")
+
+write.table(top_labs, paste0("toplabels_", nm,".txt"))
+write.table(
+  top_up$RepeatSequence,
+  file = paste0("primersearchtoplabels_", nm,".txt"),
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
+
 
 ggplot(volcano.df, aes(x = log2FC, y = negLog10P)) +
   geom_point(aes(color = DEG.Status), alpha = 0.7, size = 1.5) +
@@ -855,7 +864,7 @@ ggplot(type_df, aes(x = reorder(repeat_class, n), y = percentage)) +
   coord_flip() +
   labs(
     title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]," - DEGs"),
-    subtitle = paste("Total genes: ", sum(type_df$n)),
+    subtitle = paste("Total genes: ", sum(type_df$n)-length(which(duplicated(DEGs_type$gene_id)))),
     x = "Repeat class type",
     y = "Percentage (%)",
     caption = "DEA data analysis"
