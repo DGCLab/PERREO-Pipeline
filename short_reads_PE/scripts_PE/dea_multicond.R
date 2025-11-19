@@ -450,7 +450,7 @@ if(batch == TRUE){
       
       assign(paste0("results","_contrast_", cname), res_df)
       
-      pca <- prcomp(t(assay(mat.tmm)),scale. = T)
+      pca <- prcomp(t(mat.tmm),scale. = T)
       pca_df <- as.data.frame(pca$x)
       pca_df$condition <- condition
       
