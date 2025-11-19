@@ -620,8 +620,8 @@ if (method == "DESeq2"){
     log2FC = results$log2FoldChange,
     negLog10P = -log10(results$padj),
     DEG.Status = factor(dep.labels,
-                        levels = c(paste0("Upregulated in ", unique(conds)[2]), 
-                                   paste0("Downregulated in ", unique(conds)[2]),
+                        levels = c(paste0("Upregulated in ", unique(conds)[1]), 
+                                   paste0("Downregulated in ", unique(conds)[1]),
                                    "Not significant")))
   
 } else{
@@ -636,8 +636,8 @@ if (method == "DESeq2"){
     log2FC = results$logFC,
     negLog10P = -log10(results$FDR),
     DEG.Status = factor(dep.labels,
-                        levels = c(paste0("Upregulated in ", unique(conds)[2]), 
-                                   paste0("Downregulated in ", unique(conds)[2]),
+                        levels = c(paste0("Upregulated in ", unique(conds)[1]), 
+                                   paste0("Downregulated in ", unique(conds)[1]),
                                    "Not significant")))
 } 
 
@@ -648,11 +648,11 @@ all_not_significant <- all(
 
 if (all_not_significant) {
   message("No differentially expressed genes were detected. The pipeline will stop here.")
-  quit(save = "no", status = 0)
+  next
 }
 
-grp_up   <- paste0("Upregulated in ", unique(conds)[2])
-grp_down <- paste0("Downregulated in ", unique(conds)[2])
+grp_up   <- paste0("Upregulated in ", unique(conds)[1])
+grp_down <- paste0("Downregulated in ", unique(conds)[1])
 pal <- setNames(
   c("#804A45", "#455F80", "grey70"),          
   c(grp_up, grp_down, "Not significant")      
