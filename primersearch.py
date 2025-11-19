@@ -156,7 +156,7 @@ def download_dfam_by_name(name_list, outdir="."):
 
 
 if __name__ == "__main__":
-    with open("toplabels.txt") as f:
+    with open("primersearchtoplabels.txt") as f:
         names = [line.strip() for line in f if line.strip()]
     download_dfam_by_name(names, outdir="dfam_models")
 
