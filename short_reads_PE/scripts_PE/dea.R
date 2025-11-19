@@ -613,7 +613,7 @@ ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
   coord_flip(clip = "off") +
   scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
   labs(
-    title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]),
+    title = paste0("Repeat class types distribution for ", unique(condition)[1], " vs ", unique(condition)[2]),
     subtitle = paste("Total elements:", sum(rep_type$n)),
     x = "Repeat class type",
     y = "Percentage (%)",
@@ -628,10 +628,10 @@ ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
   ) +
   expand_limits(y = max(rep_type$percentage) * 1.12)  
 
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".png"),
+ggsave(paste0(DEA_results_DIR,"/Classification_All_", ".png"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".pdf"),
+ggsave(paste0(DEA_results_DIR,"/Classification_All_", ".pdf"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
 
