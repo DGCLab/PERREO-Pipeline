@@ -719,6 +719,8 @@ ann_colors <- list(
 
 heat_colors <- colorRampPalette(c("#455F80", "white", "#804A45"))(100)
 
+if (length(repeat_differentials) > 1){
+
 heatmap <- pheatmap(expression_differentials,
                     annotation_col = annotation_col,
                     clustering_distance_rows = "euclidean",
@@ -731,6 +733,7 @@ heatmap <- pheatmap(expression_differentials,
                     annotation_colors = ann_colors,
                     color = heat_colors,
                     annotation_names_col = if(length(samples) <= 30){TRUE}else{FALSE})
+           }
 
 png(paste0(DEA_results_DIR,"/heatmap_DEGs_", nm,".png"), width = 2600, height = 2000, res = 300)
 grid.newpage()
@@ -982,6 +985,7 @@ ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
 
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), width = 8, height = 6, dpi = 300)
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), width = 8, height = 6, dpi = 300)
+
 
 
 
