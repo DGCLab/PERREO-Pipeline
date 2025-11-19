@@ -244,7 +244,7 @@ done
    if [ ! -f "$CWD/SAMPLES/count_data.txt" ]; then
      echo 'count_data.txt must be generated'
 
-     Rscript "$MERGE_QUANT_SCRIPT" "$CWD" "$SAMPLES_DIR" "$REP_GTF_PATH" "$threads" "$DEA_results"
+     Rscript "$MERGE_QUANT_SCRIPT" "$CWD" "$SAMPLES_DIR" "$REP_GTF_PATH" "$threads" "$DEA_results" "$sample_list"
      cd ..
    else
    echo 'count_data.txt already exists'

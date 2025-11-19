@@ -5,7 +5,7 @@ SAMPLES_DIR <- args[[2]]
 REP_GTF_PATH <- args[[3]]
 threads <- as.integer(args[[4]])
 DEA_results <- args[[5]]
-#sample_list <- args[[6]]
+sample_list <- args[[6]]
 
 print(GLOBAL_DIR)
 print(REP_GTF_PATH)
@@ -28,7 +28,7 @@ global_matrix <- matrix()  # 3 filas, 0 columnas
 
 
 #Load the metadata file
-file <- paste0(GLOBAL_DIR, "/samplesheet.txt")
+file <- paste0(GLOBAL_DIR, "/", sample_list)
 print(file)
 #file.exists(file)
 
