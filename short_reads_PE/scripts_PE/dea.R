@@ -581,10 +581,10 @@ ggplot(type_df, aes(x = reorder(repeat_class, n), y = percentage)) +
     axis.text.x = element_text(size = 10)
   )
 
-ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".png"),
+ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", ".png"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
-ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".pdf"),
+ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", ".pdf"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
 ## Plot All
