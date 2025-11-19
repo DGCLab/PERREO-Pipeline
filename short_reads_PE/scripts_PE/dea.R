@@ -634,7 +634,7 @@ ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".png"),
 ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".pdf"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
-}
+
 
 
 

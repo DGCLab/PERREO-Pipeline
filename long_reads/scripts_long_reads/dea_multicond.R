@@ -678,7 +678,14 @@ pal <- setNames(
 top_up   <- volcano.df |>  filter(DEG.Status == grp_up)    |>  slice_max(negLog10P, n = 10)
 top_down <- volcano.df |> filter(DEG.Status == grp_down)  |>  slice_max(negLog10P, n = 10)
 top_labs <- bind_rows(top_up, top_down)
-write.table(top_labs, "toplabels.txt")
+write.table(top_labs, paste0("toplabels_", nm,".txt"))
+write.table(
+  top_up$RepeatSequence,
+  file = paste0("primersearchtoplabels_", nm,".txt"),
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
 
 ggplot(volcano.df, aes(x = log2FC, y = negLog10P)) +
   geom_point(aes(color = DEG.Status), alpha = 0.7, size = 1.5) +
@@ -799,35 +806,19 @@ ggsave(paste0(DEA_results_DIR,"/BarPlotUpDown_", nm,".pdf"),
 ## Read & Preprocess GTF
 message("Loading: ", repeatmasker_annotation_gtf)
 
-### --- 1. Función para extraer atributos del GTF --- ###
-extract_attr <- function(x, key){
-  m <- stringr::str_match(x, paste0(key, ' "([^"]+)"'))
-  return(m[,2])
-}
+gtf <- rtracklayer::readGFF(repeatmasker_annotation_gtf)
 
-### --- 2. Leer GTF y extraer gene_id, repeat_class, repeat_family --- ###
-gtf_df <- rtracklayer::readGFF("repeatmasker_annotation_gtf") %>%
-  mutate(
-    gene_id       = extract_attr(attributes, "gene_id"),
-    transcript_id = extract_attr(attributes, "transcript_id"),
-    repeat_class  = extract_attr(attributes, "repeat_class"),
-    repeat_family = extract_attr(attributes, "repeat_family")
-  )
+gtf_differentials <- gtf[gtf$gene_id %in% repeat_differentials,]
+gtf_differentials <- as.data.frame(gtf_differentials)
 
-### --- 3. Filtrar solo los diferenciales --- ###
-gtf_differentials <- gtf_df %>%
-  filter(gene_id %in% repeat_differentials)
-
-### --- 4. Obtener tabla gene_id → repeat_family --- ###
-repeat_class_info <- gtf_differentials %>%
-  select(gene_id, repeat_family) %>%
+repeat_class_info <- gtf_differentials |> 
+  dplyr::select(gene_id, repeat_class) |> 
   distinct()
-
 
 message("Classificating repeats...")
 
 for (nm in res_names) {
-
+  
   
   results <- get(nm)
   
@@ -867,98 +858,95 @@ for (nm in res_names) {
   } 
   
   
-### --- 5. Añadir repeat_family a los DEGs y clasificar --- ###
-DEGs_type <- volcano.df %>%
-  filter(DEG.Status != "Not significant") %>%
-  rename(gene_id = RepeatSequence) %>%
-  mutate(gene_id = gsub("#.*$", "", gene_id)) %>%
-  left_join(repeat_class_info, by = "gene_id")
-
-### --- 6. Tabla final de conteos y porcentajes por familia --- ###
-type_df <- DEGs_type %>%
-  filter(!is.na(repeat_family)) %>%
-  count(repeat_family) %>%
-  mutate(
-    percentage = (n / sum(n)) * 100,
-    percentage_label = paste0(round(percentage, 1), "%")
-  ) %>%
-  arrange(desc(n))
-
-
-
-## Plot DEG
-ggplot(type_df, aes(x = reorder(repeat_family, n), y = percentage)) +
-  geom_bar(stat = "identity", fill = "#BAC6D4", alpha = 0.7) +
-  geom_text(aes(label = percentage_label), 
-            hjust = -0.1, size = 3.5) +
-  coord_flip() +
-  labs(
-    title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]," - DEGs"),
-    subtitle = paste("Total genes: ", sum(type_df$n)),
-    x = "Repeat class type",
-    y = "Percentage (%)",
-    caption = "DEA data analysis"
-  ) +
-  theme_minimal() +
-  theme(
-    plot.title = element_text(size = 14, face = "bold"),
-    axis.text.y = element_text(size = 10),
-    axis.text.x = element_text(size = 10)
-  )
-
-ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".png"),
-       width = 6000, height = 4500, dpi = 600, units = "px")
-
-ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".pdf"),
-       width = 6000, height = 4500, dpi = 600, units = "px")
-
-## Plot All
-repeat_class_info_all <- gtf_df_clean |> 
-  dplyr::select(gene_id, repeat_family) |> 
-  distinct()
-
-rep_type <- volcano.df |> 
-  dplyr::rename(gene_id = RepeatSequence) |> 
-  mutate(gene_id = gsub("#.*$", "", gene_id)) |>    
-  left_join(repeat_class_info_all, by = "gene_id")
-
-rep_type <- rep_type |>
-  dplyr::mutate(repeat_family = ifelse(is.na(repeat_family), "(Unknown)", repeat_family)) |>
-  dplyr::count(repeat_family, name = "n") |>
-  arrange(n) |>
-  mutate(
-    percentage = 100 * n / sum(n),
-    percentage_label = sprintf("%.1f%%", percentage),
-    repeat_family = factor(repeat_family, levels = repeat_family))
-
-ggplot(rep_type, aes(x = repeat_family, y = percentage)) +
-  geom_col(fill = "#BAC6D4", alpha = 0.8, width = 0.7) +
-  geom_text(aes(label = percentage_label),
-            hjust = -0.1, size = 3.5) +
-  coord_flip(clip = "off") +
-  scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
-  labs(
-    title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]),
-    subtitle = paste("Total elements:", sum(rep_type$n)),
-    x = "Repeat class type",
-    y = "Percentage (%)",
-    caption = "DEA data analysis"
-  ) +
-  theme_minimal(base_size = 12) +
-  theme(
-    plot.title = element_text(size = 14, face = "bold"),
-    axis.text.y = element_text(size = 10),
-    axis.text.x = element_text(size = 10),
-    plot.margin = margin(5.5, 30, 5.5, 5.5) 
-  ) +
-  expand_limits(y = max(rep_type$percentage) * 1.12)  
-
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".png"),
-       width = 6000, height = 4500, dpi = 600, units = "px")
-
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".pdf"),
-       width = 6000, height = 4500, dpi = 600, units = "px")
-
+  DEGs_type <- volcano.df |>
+    filter(DEG.Status != "Not significant") |> 
+    dplyr::rename(gene_id = RepeatSequence) |> 
+    mutate(gene_id = gsub("#.*$", "", gene_id)) |>    
+    left_join(repeat_class_info, by = "gene_id")
+  
+  type_df <- DEGs_type |>
+    filter(!is.na(repeat_class)) |>
+    dplyr::count(repeat_class) |>
+    mutate(
+      percentage = (n / sum(n)) * 100,
+      percentage_label = paste0(round(percentage, 1), "%")
+    ) |> 
+    arrange(desc(n))
+  
+  
+  ## Plot DEG
+  ggplot(type_df, aes(x = reorder(repeat_class, n), y = percentage)) +
+    geom_bar(stat = "identity", fill = "#BAC6D4", alpha = 0.7) +
+    geom_text(aes(label = percentage_label), 
+              hjust = -0.1, size = 3.5) +
+    coord_flip() +
+    labs(
+      title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]," - DEGs"),
+      subtitle = paste("Total genes: ", sum(type_df$n)-length(which(duplicated(DEGs_type$gene_id)))),
+      x = "Repeat class type",
+      y = "Percentage (%)",
+      caption = "DEA data analysis"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(size = 14, face = "bold"),
+      axis.text.y = element_text(size = 10),
+      axis.text.x = element_text(size = 10)
+    )
+  
+  ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".png"),
+         width = 6000, height = 4500, dpi = 600, units = "px")
+  
+  ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".pdf"),
+         width = 6000, height = 4500, dpi = 600, units = "px")
+  
+  ## Plot All
+  repeat_class_info_all <- gtf |> 
+    dplyr::select(gene_id, repeat_class) |> 
+    distinct()
+  
+  rep_type <- volcano.df |> 
+    dplyr::rename(gene_id = RepeatSequence) |> 
+    mutate(gene_id = gsub("#.*$", "", gene_id)) |>    
+    left_join(repeat_class_info_all, by = "gene_id")
+  
+  rep_type <- rep_type |>
+    dplyr::mutate(repeat_class = ifelse(is.na(repeat_class), "(Unknown)", repeat_class)) |>
+    dplyr::count(repeat_class, name = "n") |>
+    arrange(n) |>
+    mutate(
+      percentage = 100 * n / sum(n),
+      percentage_label = sprintf("%.1f%%", percentage),
+      repeat_class = factor(repeat_class, levels = repeat_class))
+  
+  ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
+    geom_col(fill = "#BAC6D4", alpha = 0.8, width = 0.7) +
+    geom_text(aes(label = percentage_label),
+              hjust = -0.1, size = 3.5) +
+    coord_flip(clip = "off") +
+    scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
+    labs(
+      title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]),
+      subtitle = paste("Total elements:", sum(rep_type$n)),
+      x = "Repeat class type",
+      y = "Percentage (%)",
+      caption = "DEA data analysis"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(
+      plot.title = element_text(size = 14, face = "bold"),
+      axis.text.y = element_text(size = 10),
+      axis.text.x = element_text(size = 10),
+      plot.margin = margin(5.5, 30, 5.5, 5.5) 
+    ) +
+    expand_limits(y = max(rep_type$percentage) * 1.12)  
+  
+  ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".png"),
+         width = 6000, height = 4500, dpi = 600, units = "px")
+  
+  ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".pdf"),
+         width = 6000, height = 4500, dpi = 600, units = "px")
+  
 }
 
 
