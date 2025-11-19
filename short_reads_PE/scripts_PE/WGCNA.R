@@ -89,7 +89,7 @@ module_df <- data.frame(
 )
 
 write_delim(module_df,
-            file = "gene_modules.txt",
+            file = paste0(coexpression_dir,"/gene_modules.txt"),
             delim = "\t")
 
 
@@ -190,7 +190,7 @@ textMatrix <- paste0(signif(moduleTraitCor, 2), "\n(",
                      signif(moduleTraitPval, 1), ")")
 
 #Heatmap of correlation between conditions and modules
-pdf(paste0(coexpression_dir,"labeled_heatmap.pdf"), width = 8, height = 8)
+pdf(paste0(coexpression_dir,"/labeled_heatmap.pdf"), width = 8, height = 8)
 
 labeledHeatmap(Matrix = moduleTraitCor,
                xLabels = colnames(datTraits),      
@@ -250,8 +250,8 @@ for (col in topModuleColors) {
   # Exportar a Cytoscape
   exportNetworkToCytoscape(
     modAdj,
-    edgeFile = paste0("CytoscapeInput-edges-", col, ".txt"),
-    nodeFile = paste0("CytoscapeInput-nodes-", col, ".txt"),
+    edgeFile = paste0(coexpression_dir,"/CytoscapeInput-edges-", col, ".txt"),
+    nodeFile = paste0(coexpression_dir,"/CytoscapeInput-nodes-", col, ".txt"),
     weighted = TRUE,
     threshold = thr,
     nodeNames = modGenes,
