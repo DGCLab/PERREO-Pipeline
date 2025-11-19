@@ -103,11 +103,11 @@ To run this pipeline it is necessary to indicate:<br>
 -sample_list
 -reference_genome
 -genome_gtf
--repeat_gtf
+-repeat_gtf: must contain a "repeat_class" column in order to study the type of repetitive elements identified in the analysis.
 -threads #(default: threads=8)
--adapt_r1
--adapt_r2
--trimming_type #trimming_simple/trimming_extra (default: trimming_type=trimming_simple)
+-adapt_r1: If reads are already trimmed, the user can ignore this argument and trimming will be also performed to obtain high quality reads.
+-adapt_r2: If reads are already trimmed, the user can ignore this argument and trimming will be also performed to obtain high quality reads.
+-trimming_type: "trimming_extra" if  "trimming_simple". #trimming_simple/trimming_extra (default: trimming_type=trimming_simple)
 -project_name
 -remove_duplicates #yes/no
 -batch_effect #yes/no
