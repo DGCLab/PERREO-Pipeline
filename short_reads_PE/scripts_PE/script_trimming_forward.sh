@@ -23,10 +23,9 @@ echo $trimming_quality
 echo $min_length
 
 
-#Corro cutadapt
-    # It is necessary to activate the conda environment where cutadapt software is installed
+#Run cutadapt
 if [[ -f "trim/${sample_id}_trimmed_1.fastq.gz" && -f "trim/${sample_id}_trimmed_2.fastq.gz" ]]; then
-    echo "✅ Archivos ya existen en trim/, se omite la creación."
+    echo "✅ Files already exist in trim folder, creation omitted."
 else
   if [[ -z "$adapt_r1" && -z "$adapt_r2" ]]; then
     echo 'Performing trimming without removing adapters(already removed)'
