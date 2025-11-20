@@ -98,7 +98,10 @@ PROJECT_FOLDER/
 
 The folder "scripts" located in this github must be downloaded and included inside the project folder.<br> 
 
-To run this pipeline it is necessary to indicate:<br> 
+To run this pipeline it is necessary to indicate different parameters depending on the selected mode:<br> 
+
+Paired-end short-reads RNA-seq mode<br> 
+
 ```bash
 -sample_list
 -reference_genome
@@ -113,6 +116,16 @@ To run this pipeline it is necessary to indicate:<br>
 -batch_effect #yes/no
 -method #edgeR/DESeq2
 -k_num #(default: k_num=2)
+```
+
+Paired-end short-reads RNA-seq mode<br> 
+```bash
+
+```
+
+Long-reads direct RNA-seq mode<br> 
+```bash
+
 ```
 
 The samplesheet structure should be like this:<br>
