@@ -162,7 +162,7 @@ find . -type f \( -iname "*.fastq" -o -iname "*.fq" -o -iname "*.fastq.gz" -o -i
 
 The flow diagram describes the different steps taken into account in this pipeline.<br>
 
-![Imagen1](https://github.com/user-attachments/assets/21ed3e3b-65aa-40fd-a266-528bb7dd5bfb)
+![FIGURA PAPER 1](https://github.com/user-attachments/assets/eedee39c-b058-4040-b282-a394f08500ec)
 
 
 The following line code is the one the user has to run to perform the whole analysis.
