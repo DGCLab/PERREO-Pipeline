@@ -178,13 +178,6 @@ The flow diagram describes the different steps taken into account in this pipeli
 ![FIGURA PAPER 1](https://github.com/user-attachments/assets/eedee39c-b058-4040-b282-a394f08500ec)
 
 
-The following line code is the one the user has to run to perform the whole analysis.
-
-```bash
-bash repRPI.sh -sample_list sample_sheet.txt  -reference_genome reference_genome.fa  -genome_gtf genome.gtf  -repeat_gtf repeat.gtf \
-   -threads 12  -adapt_r1 "adaptor1"  -adapt_r2 "adaptor2" -project_name "repeat_rna_project"
-```
-
 # Trimming
 In this step there are two main options: simple trimming with cutadapt and a more complex trimming performed firstly with cutadapt and then with trimGC.py script in order to remove additional GC nucleotides added by specific sequencing kits. <br>
 <br>
@@ -195,7 +188,7 @@ Another possibility is that adapters have been removed previously and the trimmi
 STAR aligner parameters are indicated by default allowing the multimapping and removing reads with more than a 10% of mismatches. outFilterMismatchNoverLmax parameter can be changed depending on the user experimental design and conditions.<br>
 
 ```bash
-"$STAR_PATH" --runThreadN $threads \
+STAR --runThreadN $threads \
       --genomeDir "$GENOME_DIR" \
       --readFilesIn "$trimmed1" "$trimmed2" \
       --outFileNamePrefix "$MAP_DIR/${sample_id}_" \
