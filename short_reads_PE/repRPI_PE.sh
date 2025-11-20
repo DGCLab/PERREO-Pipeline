@@ -3,7 +3,6 @@ set -euo pipefail
 
 #Defining current path
 CWD="$(pwd)"
-#GLOBAL_DIR="$CWD"
 
 # Scripts paths that already exist (ajusta nombres/paths)
 TRIM_FW_SCRIPT="$CWD/scripts_PE/script_trimming_forward.sh"   
@@ -18,9 +17,6 @@ DEA_SCRIPT_multicond="$CWD/scripts_PE/dea_multicond.R"
 ASSEMBLY_SCRIPT="$CWD/scripts_PE/stringtie2.sh"   
 WGCNA_SCRIPT="$CWD/scripts_PE/WGCNA.R"         
 PRED_MODEL="$CWD/scripts_PE/prediction_model.R"     
-#STAR_PATH="$CWD/star-2.7.10b-h9ee0642_0/bin/STAR"
-#PICARD_PATH="$CWD/picard.jar"
-
 
   # Parsing arguments
 while [[ $# -gt 0 ]]; do
@@ -46,7 +42,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# --- Asignar valores por defecto ---
+# --- Assigning values by default ---
 threads=${threads:-8}
 k_num=${k_num:-2}
 FDR=${FDR:-0.05}
@@ -89,8 +85,6 @@ GENOME_DIR=$(realpath genome_index)
 cd SAMPLES
 SAMPLES_DIR=$CWD/SAMPLES
 
-
-# Requiere: CWD y sample_list definidos, y TRIM_* scripts disponibles
 set -euo pipefail
 
 awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
@@ -104,20 +98,20 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
 
     echo "Processing $sample_id with strandedness=$STRAND and condition=$CONDITION"
 
-    # Rutas por muestra
+    # Path per sample
     SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
     TRIM_DIR="${SAMPLE_DIR}/trim"
     MAP_DIR="${SAMPLE_DIR}/alignment"
     IN1="${sample_id}_1.fastq"
     IN2="${sample_id}_2.fastq"
 
-    # Asegura estructura básica
+    # Basic structure
     mkdir -p "$SAMPLE_DIR"
 
-    # Entra en la carpeta de la muestra
+    # Enter the sample folder
     cd "$SAMPLE_DIR" || { echo "Error: Unable to enter in $SAMPLE_DIR"; exit 1; }
 
-    # Comprueba inputs crudos
+    # Checking the raw inputs
     if [[ ! -f "$IN1" || ! -f "$IN2" ]]; then
         echo "⚠️  Raw files not found for $sample_id (IN1=$IN1, IN2=$IN2)"
         continue
@@ -126,7 +120,7 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
     echo "IN2: $IN2"
     echo "STRAND: [$STRAND]"
 
-    # Sólo hace trimming si faltan los FASTQ trimmados
+    # Performing trimming only if trimmed fastq files do not exist
     if [[ ! -f "$TRIM_DIR/${sample_id}_trimmed_1.fastq" || ! -f "$TRIM_DIR/${sample_id}_trimmed_2.fastq" ]]; then
         mkdir -p "$TRIM_DIR" "$MAP_DIR"
 
@@ -147,7 +141,6 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
         echo "✓ Trimmed FASTQs already exist for $sample_id — skipping trimming."
     fi
 
-    # ...aquí seguiría tu bloque de alineamiento usando "$MAP_DIR"
 done
 
 
@@ -193,8 +186,6 @@ done
   fi
   done
 
-#multiqc .
-
 
 # ---------- 4) QUANTIFICATION ----------------------------
 
@@ -228,9 +219,6 @@ done
 
 
 # ---------- 5) COUNT MATRIXES MERGE ----------------------
-
-
-#Finally, we call the last script to merge all the count matrixes
 
    if [ ! -d "$CWD/SAMPLES/DEA_results" ]; then
 
