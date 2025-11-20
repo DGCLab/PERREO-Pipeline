@@ -26,7 +26,6 @@ powers = c(c(1:10), seq(from = 12, to=20, by=2))
 sft = pickSoftThreshold(expression, powerVector = powers, verbose = 5)
 
 #Plotting the results
-#sizeGrWindow(9, 5)
 par(mfrow = c(1,2))
 cex1 = 0.9
 
@@ -41,12 +40,6 @@ if (is.na(softPower)) {
 }
 
 adjacency = adjacency(expression, power = softPower, type = "unsigned") #Calculating the adjacency matrix
-#help(adjacency )
-
-#TOM = TOMsimilarity(adjacency) #Calculating the topological overlap matrix
-
-#dissTOM = 1-TOM ##Calculating the dissimilarity
-
 
 
 temp_cor <- cor       
@@ -93,17 +86,13 @@ write_delim(module_df,
             delim = "\t")
 
 
-# Get Module Eigengenes per cluster
 MEs0 <- moduleEigengenes(expression,mergedColors)$eigengenes
 
-# Reorder modules so similar modules are next to each other
 MEs0 <- orderMEs(MEs0)
 module_order = names(MEs0) %>% gsub("ME","", .)
 
-# Add treatment names
 MEs0$sample = row.names(MEs0)
 
-# tidy & plot data
 mME = MEs0 %>%
   pivot_longer(-sample) %>%
   mutate(
@@ -114,7 +103,6 @@ mME = MEs0 %>%
 mME <- mME %>%
   mutate(sample = factor(sample))
 
-# We keep one row per sample
 samplesheet_simple <- samplesheet %>%
   distinct(sample, condition)
 
@@ -165,10 +153,8 @@ dev.off()
 ss <- samplesheet %>%
   distinct(sample, condition)
 
-# Reordering ss in order to keep the same order as MEs0
 ss <- ss[match(rownames(MEs0), ss$sample), ]
 
-# Basic check
 stopifnot(all(rownames(MEs0) == ss$sample))
 
 ME_cols <- grep("^ME", colnames(MEs0), value = TRUE)
@@ -217,7 +203,7 @@ moduleMaxCor <- sort(moduleMaxCor, decreasing = TRUE)
 
 # Keeping the top 3
 nTop <- min(3, length(moduleMaxCor))
-topModulesME <- names(moduleMaxCor)[1:nTop]   # p.ej. "MEturquoise", "MEblue", ...
+topModulesME <- names(moduleMaxCor)[1:nTop]  
 
 topModuleColors <- gsub("^ME", "", topModulesME)
 
@@ -225,29 +211,24 @@ topModulesME
 topModuleColors
 
 mergedColors = labels2colors(netwk$colors)
-# names(mergedColors) deberían ser los IDs de los genes, mismo orden que en expression
 geneNames <- names(mergedColors)
 
 library(WGCNA)
 
-# Asegúrate de que adjacency y mergedColors están en el mismo orden de genes
 stopifnot(all(rownames(adjacency) == geneNames),
           all(colnames(adjacency) == geneNames))
 
 for (col in topModuleColors) {
   message("Processing module: ", col)
   
-  # Genes pertenecientes a este módulo
   inModule <- mergedColors == col
   modGenes <- geneNames[inModule]
   
-  # Submatriz de adyacencia para el módulo
   modAdj <- adjacency[inModule, inModule]
   
-  # Opcional: umbral de adyacencia para la exportación (ajusta a tu gusto)
   thr <- 0.1
   
-  # Exportar a Cytoscape
+  # Exporting data needed for cytoscape visualization
   exportNetworkToCytoscape(
     modAdj,
     edgeFile = paste0(coexpression_dir,"/CytoscapeInput-edges-", col, ".txt"),
@@ -259,6 +240,7 @@ for (col in topModuleColors) {
     nodeAttr = mergedColors[inModule]
   )
 }
+
 
 
 
