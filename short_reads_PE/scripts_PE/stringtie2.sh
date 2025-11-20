@@ -1,7 +1,6 @@
 #!/bin/bash
 
 
-# ANOTACIÓN (modifica si quieres otra)
 repeat_annotation="$1"
 sample="$2"
 threads="$3"
