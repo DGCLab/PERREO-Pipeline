@@ -64,6 +64,10 @@ netwk <- blockwiseModules(expression,
 # For plotting it is necessary to convert to colors
 pdf(paste0(coexpression_dir,"/modules_dendrogram.pdf"), width = 8, height = 8)
 
+if (all(labels2colors(netwk$colors)=="grey")){
+    stop('Gene coexpression analysis is not performed as there are no coexpression modules after applying "blockwiseModules" function')
+}
+
 mergedColors = labels2colors(netwk$colors)
 plotDendroAndColors(
   netwk$dendrograms[[1]],
@@ -240,6 +244,7 @@ for (col in topModuleColors) {
     nodeAttr = mergedColors[inModule]
   )
 }
+
 
 
 
