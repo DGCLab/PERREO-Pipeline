@@ -7,12 +7,14 @@ CWD="$(pwd)"
 
 # Scripts paths that already exist (ajusta nombres/paths)
 DEA_SCRIPT="$CWD/scripts_long_reads/dea.R"
-BAMBU_SCRIPT="$CWD/scripts_long_reads/script_bambu.R"
+#BAMBU_SCRIPT="$CWD/scripts_long_reads/script_bambu.R"
 DEA_SCRIPT_multicond="$CWD/scripts_long_reads/dea_multicond.R"      
 PRED_MODEL="$CWD/scripts_long_reads/prediction_model.R"     
 WGCNA_SCRIPT="$CWD/scripts_long_reads/WGCNA.R"     
-ASSEMBLY_SCRIPT="$CWD/scripts_long_reads/stringtie.sh"     
-
+ASSEMBLY_SCRIPT="$CWD/scripts_long_reads/stringtie2.sh"   
+QUANT_SCRIPT="$CWD/scripts_long_reads/quant.R"       
+MERGE_QUANT_SCRIPT="$CWD/scripts_long_reads/merge_quant.R" 
+      
   # Parsing arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -73,9 +75,9 @@ done
 
 # ---------- 1) QUALITY CONTROL ---------------------------
 
-  awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
-  | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
-      [[ -z "$sample_id" ]] && continue
+  #awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
+  #| while IFS=$'\t' read -r sample_id STRAND CONDITION; do
+    #  [[ -z "$sample_id" ]] && continue
 
   # if [ ! -f "$SAMPLES_DIR/${sample_id}/QC_nanoplot" ];then
 
@@ -117,14 +119,14 @@ done
 
 # ---------- 3) BAMBU ----------------------------
 
-REP_GTF_PATH=$CWD/$repeat_gtf
+#REP_GTF_PATH=$CWD/$repeat_gtf
 
-GENOME_PATH=$CWD/$reference_genome
+#GENOME_PATH=$CWD/$reference_genome
 
-  if [[ ! -f "$CWD/se_multisample_bambu.rds" ]];then
+  #if [[ ! -f "$CWD/se_multisample_bambu.rds" ]];then
 
-      Rscript "$BAMBU_SCRIPT" "$REP_GTF_PATH" "$GENOME_PATH" "$SAMPLES_DIR" "$CWD"
-  fi
+#      Rscript "$BAMBU_SCRIPT" "$REP_GTF_PATH" "$GENOME_PATH" "$SAMPLES_DIR" "$CWD"
+#  fi
 
 
 # ---------- 4) FeatureCounts quantification ------------------
@@ -134,19 +136,13 @@ GENOME_PATH=$CWD/$reference_genome
       [[ -z "$sample_id" ]] && continue
 
       SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
-      #MAP_DIR="${SAMPLE_DIR}/alignment"
-
-   #if [ ! -d "${SAMPLE_DIR}/Quantification" ]; then 
-    #  mkdir ${SAMPLE_DIR}/Quantification
-   #fi
-
-      #QUANT_DIR="${SAMPLE_DIR}/Quantification"
 
       STRAND=$(echo "$STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
 
       REP_GTF_PATH=$CWD/$repeat_gtf 
 
    if [ ! -f "$SAMPLE_DIR/${sample_id}_quant.txt" ]; then
+   echo "Running quantification step"
 
    #Running Rsubread for quantification
       Rscript "$QUANT_SCRIPT" "$sample_id" "$REP_GTF_PATH" "$threads" "$STRAND" "$SAMPLE_DIR" 
@@ -173,7 +169,7 @@ GENOME_PATH=$CWD/$reference_genome
    if [ ! -f "$CWD/SAMPLES/count_data.txt" ]; then
      echo 'count_data.txt must be generated'
 
-     Rscript "$MERGE_QUANT_SCRIPT" "$CWD" "$SAMPLES_DIR" "$REP_GTF_PATH" "$threads" "$DEA_results"
+     Rscript "$MERGE_QUANT_SCRIPT" "$CWD" "$SAMPLES_DIR" "$REP_GTF_PATH" "$threads" "$DEA_results" "$sample_list"
      cd ..
    else
    echo 'count_data.txt already exists'
@@ -185,7 +181,14 @@ GENOME_PATH=$CWD/$reference_genome
 
 # ---------- 4) Transcriptome assembly ------------------------
 
- awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
+
+if [ ! -d "$CWD/Transcriptome_assembly" ]; then
+
+mkdir $CWD/Transcriptome_assembly
+
+fi
+
+ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
       [[ -z "$sample_id" ]] && continue
 
@@ -193,19 +196,12 @@ GENOME_PATH=$CWD/$reference_genome
 
       if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
 
-          bash "$ASSEMBLY_SCRIPT" "$repeat_gtf" "$sample_id" "$threads" "$STRAND"
+          bash "$ASSEMBLY_SCRIPT" "$CWD" "$repeat_gtf" "$sample_id" "$threads" "$STRAND"
+          
+          cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
+      fi
+    done
 
-
-
-# ----------- 5) WGCNA ----------------------------------------
-
-DEA_DIR=$SAMPLES_DIR/DEA_results
-
-mkdir=$CWD/Coexpression_analysis
-
-COEXPRESSION_DIR=$CWD/Coexpression_analysis
-
-Rscript "$WGCNA_SCRIPT" "$DEA_DIR" "$CWD" "$sample_list" "$COEXPRESSION_DIR"
 
 
 
@@ -244,6 +240,19 @@ fi
 
 
 
+# ----------- 5) WGCNA ----------------------------------------
+
+DEA_DIR=$SAMPLES_DIR/DEA_results
+
+   if [ ! -d "$CWD/Coexpression_analysis" ]; then
+     mkdir $CWD/Coexpression_analysis
+   fi
+
+COEXPRESSION_DIR=$CWD/Coexpression_analysis
+
+Rscript "$WGCNA_SCRIPT" "$DEA_DIR" "$CWD" "$sample_list" "$COEXPRESSION_DIR"
+
+
 
 # ---------- 5) PREDICTION MODEL ANALYSIS -----------------
 
@@ -251,7 +260,6 @@ rows=$(( $(wc -l < "$CWD/$sample_list") - 1 ))
 if [ "$rows" -gt 40 ]; then
 Rscript "$PRED_MODEL" "$CWD" "$sample_list"
 fi
-
 }
 
 
