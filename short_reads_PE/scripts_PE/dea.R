@@ -36,9 +36,6 @@ log2FC_thr <- as.numeric(args[[8]])
 SAMPLES_DIR <- paste0(CWD,"/SAMPLES/")
 DEA_results_DIR <- paste0(SAMPLES_DIR,"/DEA_results")
 
-#method <- "DESeq2"
-#batch <- FALSE
-
 if (batch == "yes"){batch = TRUE}else{batch=FALSE}
   
 ## Load libraries
@@ -133,7 +130,7 @@ if(batch == TRUE){
   
   library(RUVSeq)
   res <- RUVg(x=log(mat.tmm+0.1), cIdx=empirical, k=k_num ,isLog = T)
-  mat.tmm.ruv <- exp(res$normalizedCounts) ## Representation, WGCNA, Models...
+  mat.tmm <- exp(res$normalizedCounts) ## Representation, WGCNA, Models...
   
   Wdf <- as.data.frame(pData(res)[, grep("^W_", colnames(pData(res))), drop = FALSE]) 
   
@@ -233,7 +230,7 @@ if(batch == TRUE){
   ggsave(paste0(DEA_results_DIR,"/pca_nobatch.png"), plot = p, width = 8, height = 6, dpi = 300)
   ggsave(paste0(DEA_results_DIR,"/pca_nobatch.pdf"), plot = p, width = 8, height = 6, dpi = 300)
   
-  pca_corrected <- prcomp(t(mat.tmm.ruv),scale. = T)
+  pca_corrected <- prcomp(t(mat.tmm),scale. = T)
   pca_df_corrected <- as.data.frame(pca_corrected$x)
   pca_df_corrected$condition <- condition
   p_corrected <- ggplot(pca_df_corrected, aes(x=PC1, y=PC2, color=condition)) +
@@ -330,9 +327,9 @@ if(batch == TRUE){
 
 
 if (batch == TRUE){
-  mat.tmm.ruv.log <- log2(mat.tmm.ruv)
-  rownames(mat.tmm.ruv.log) <- gsub("#.*$","",rownames(mat.tmm.ruv.log))
-  expression_matrix <- mat.tmm.ruv.log
+  mat.tmm <- log2(mat.tmm)
+  rownames(mat.tmm) <- gsub("#.*$","",rownames(mat.tmm))
+  expression_matrix <- mat.tmm
 } else{
   if (method == "DESeq2") {
   vsd <- assay(vsd)
@@ -398,7 +395,7 @@ all_not_significant <- all(
 
 if (all_not_significant) {
   message("No differentially expressed genes were detected. The pipeline will stop here.")
-  quit(save = "no", status = 0)
+  next
 }
 
 grp_up   <- paste0("Upregulated in ", unique(condition)[2])
@@ -468,6 +465,7 @@ ann_colors <- list(
 
 heat_colors <- colorRampPalette(c("#455F80", "white", "#804A45"))(100)
 
+if (length(repeat_differentials) > 1){
 heatmap <- pheatmap(expression_differentials,
                     annotation_col = annotation_col,
                     clustering_distance_rows = "euclidean",
@@ -481,7 +479,7 @@ heatmap <- pheatmap(expression_differentials,
                     color = heat_colors,
                     border_color = NA,
                     annotation_names_col = if(length(samples) <= 30){TRUE}else{FALSE})
-
+ }
 png(paste0(DEA_results_DIR,"/heatmap_DEGs.png"), width = 2600, height = 2000, res = 300)
 grid.newpage()
 grid.draw(heatmap$gtable)
@@ -543,7 +541,48 @@ repeat_class_info <- gtf_differentials |>
   dplyr::select(gene_id, repeat_class) |> 
   distinct()
 
-message("Classificating repeats...")
+message("Classifying repeats...")
+  
+for (nm in res_names) {
+
+  
+  results <- get(nm)
+  
+  conds <- strsplit(sub("^results_contrast_", "", nm), "_vs_")[[1]]
+  
+  if (method == "DESeq2"){
+    log2FC <- results$log2FoldChange
+    FDR <- results$padj
+    dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(conds)[1]),
+                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]), 
+                                "Not significant"))
+    
+    volcano.df <- data.frame(
+      RepeatSequence = rownames(results),
+      log2FC = results$log2FoldChange,
+      negLog10P = -log10(results$padj),
+      DEG.Status = factor(dep.labels,
+                          levels = c(paste0("Upregulated in ", unique(conds)[1]), 
+                                     paste0("Downregulated in ", unique(conds)[1]),
+                                     "Not significant")))
+    
+  } else{
+    log2FC <- results$logFC
+    FDR <- results$FDR
+    dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(conds)[1]),
+                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]), 
+                                "Not significant"))
+    
+    volcano.df <- data.frame(
+      RepeatSequence = rownames(results),
+      log2FC = results$logFC,
+      negLog10P = -log10(results$FDR),
+      DEG.Status = factor(dep.labels,
+                          levels = c(paste0("Upregulated in ", unique(conds)[1]), 
+                                     paste0("Downregulated in ", unique(conds)[1]),
+                                     "Not significant")))
+  } 
+  
   
 DEGs_type <- volcano.df |>
   filter(DEG.Status != "Not significant") |> 
@@ -568,7 +607,7 @@ ggplot(type_df, aes(x = reorder(repeat_class, n), y = percentage)) +
             hjust = -0.1, size = 3.5) +
   coord_flip() +
   labs(
-    title = paste0("Repeat class types distribution for ", unique(condition)[1], " vs ", unique(condition)[2]," - DEGs"),
+    title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]," - DEGs"),
     subtitle = paste("Total genes: ", sum(type_df$n)-length(which(duplicated(DEGs_type$gene_id)))),
     x = "Repeat class type",
     y = "Percentage (%)",
@@ -581,10 +620,10 @@ ggplot(type_df, aes(x = reorder(repeat_class, n), y = percentage)) +
     axis.text.x = element_text(size = 10)
   )
 
-ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", ".png"),
+ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".png"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
-ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", ".pdf"),
+ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".pdf"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
 ## Plot All
@@ -613,7 +652,7 @@ ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
   coord_flip(clip = "off") +
   scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
   labs(
-    title = paste0("Repeat class types distribution for ", unique(condition)[1], " vs ", unique(condition)[2]),
+    title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]),
     subtitle = paste("Total elements:", sum(rep_type$n)),
     x = "Repeat class type",
     y = "Percentage (%)",
@@ -628,11 +667,13 @@ ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
   ) +
   expand_limits(y = max(rep_type$percentage) * 1.12)  
 
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", ".png"),
+ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".png"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", ".pdf"),
+ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".pdf"),
        width = 6000, height = 4500, dpi = 600, units = "px")
+
+}
 
 
 
@@ -687,5 +728,6 @@ ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
 
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), width = 8, height = 6, dpi = 300)
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), width = 8, height = 6, dpi = 300)
+
 
 
