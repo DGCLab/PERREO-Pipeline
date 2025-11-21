@@ -52,6 +52,8 @@ Rscript -e 'install.packages("mlbench", repos="https://cloud.r-project.org")'
 Rscript -e 'install.packages("caret", repos="https://cloud.r-project.org")'
 Rscript -e 'install.packages("caretEnsemble", repos="https://cloud.r-project.org")'
 Rscript -e 'install.packages("randomForest", repos="https://cloud.r-project.org")'
+Rscript -e 'install.packages("glmnet", repos="https://cloud.r-project.org")'
+
 ```
 
 Repeat annotations is a complex task and it can take many hours. In this case, we provide a worflow to obtain repeat annotations using RepeatModeler, MCHelper and Repeatmasker.<br> 
