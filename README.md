@@ -160,7 +160,8 @@ PERREO LR: For direct RNA-seq data generated with Nanopore long-reads technology
 
 <img width="1034" height="362" alt="image" src="https://github.com/user-attachments/assets/140b2173-e2bb-4963-8605-0e143804b89f" /><br>
 
-PERREO SR-PE arguments:<br> 
+# PERREO SR-PE 
+The required arguments for this mode are the following:<br> 
 
 ```bash
 -sample_list
