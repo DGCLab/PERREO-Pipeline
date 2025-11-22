@@ -100,35 +100,6 @@ PROJECT_FOLDER/
 
 The folder "scripts" located in this github must be downloaded and included inside the project folder.<br> 
 
-To run this pipeline it is necessary to indicate different parameters depending on the selected mode:<br> 
-
-Paired-end short-reads RNA-seq mode<br> 
-
-```bash
--sample_list
--reference_genome
--genome_gtf
--repeat_gtf: must contain a "repeat_class" column in order to study the type of repetitive elements identified in the analysis.
--threads #(default: threads=8)
--adapt_r1: If reads are already trimmed, the user can ignore this argument and trimming will be also performed to obtain high quality reads.
--adapt_r2: If reads are already trimmed, the user can ignore this argument and trimming will be also performed to obtain high quality reads.
--trimming_type: "trimming_extra" if  "trimming_simple". #trimming_simple/trimming_extra (default: trimming_type=trimming_simple)
--project_name
--remove_duplicates #yes/no
--batch_effect #yes/no
--method #edgeR/DESeq2
--k_num #(default: k_num=2)
-```
-
-Paired-end short-reads RNA-seq mode<br> 
-```bash
-
-```
-
-Long-reads direct RNA-seq mode<br> 
-```bash
-
-```
 
 The samplesheet structure should be like this:<br>
 ```bash
@@ -178,6 +149,35 @@ find . -type f \( -iname "*.fastq" -o -iname "*.fq" -o -iname "*.fastq.gz" -o -i
 The flow diagram describes the different steps taken into account in this pipeline.<br>
 
 ![FIGURA PAPER 1](https://github.com/user-attachments/assets/eedee39c-b058-4040-b282-a394f08500ec)
+<br>
+# PERREO modes<br>
+
+PERREO provides three models that can be run depending on the sequencing technology used:<br>
+
+PERREO SR-SE: For RNA-seq data generated with single-end short reads technology.<br>
+PERREO SR-PE: For RNA-seq data generated with paired-end short-reads technology.<br>
+PERREO LR: For direct RNA-seq data generated with Nanopore long-reads technology.<br>
+
+<img width="1034" height="362" alt="image" src="https://github.com/user-attachments/assets/140b2173-e2bb-4963-8605-0e143804b89f" /><br>
+
+PERREO SR-PE arguments:<br> 
+
+```bash
+-sample_list
+-reference_genome
+-genome_gtf
+-repeat_gtf: must contain a "repeat_class" column in order to study the type of repetitive elements identified in the analysis.
+-threads #(default: threads=8)
+-adapt_r1: If reads are already trimmed, the user can ignore this argument and trimming will be also performed to obtain high quality reads.
+-adapt_r2: If reads are already trimmed, the user can ignore this argument and trimming will be also performed to obtain high quality reads.
+-trimming_type: "trimming_extra" if  "trimming_simple". #trimming_simple/trimming_extra (default: trimming_type=trimming_simple)
+-project_name
+-remove_duplicates #yes/no
+-batch_effect #yes/no
+-method #edgeR/DESeq2
+-k_num #(default: k_num=2)
+```
+
 
 
 # Trimming
@@ -209,6 +209,20 @@ Duplications removal is not recommended generally in RNA-seq data analysis. Howe
 
 
 # Quantification
+
+
+PERREO SR-SE arguments<br> 
+```bash
+
+```
+
+For single-end data, the analysis is almost the same as for paired-end data. The scripts are the same but only with specific changes due to the technological differences.
+
+PERREO LR arguments<br> 
+```bash
+
+```
+
 
 
 # Differential Expression Analysis
