@@ -177,17 +177,19 @@ The required arguments for this mode are the following:<br>
 -batch_effect #yes/no
 -method #edgeR/DESeq2
 -k_num #(default: k_num=2)
+-log2FC #(default: log2FC=1)
+-FDR #(default: log2FC=0.05)
 ```
 
 
 
-# Trimming
+## Trimming
 In this step there are two main options: simple trimming with cutadapt and a more complex trimming performed firstly with cutadapt and then with trimGC.py script in order to remove additional GC nucleotides added by specific sequencing kits. <br>
 <br>
 Another possibility is that adapters have been removed previously and the trimming step should only be taken into account to remove low quality reads. In this case, user must not include -adapt_r1 and -adapt_r2 arguments while running the pipeline.<br>
 
 
-# Alignment
+## Alignment
 STAR aligner parameters are indicated by default allowing the multimapping and removing reads with more than a 10% of mismatches. outFilterMismatchNoverLmax parameter can be changed depending on the user experimental design and conditions.<br>
 
 ```bash
@@ -205,24 +207,37 @@ STAR --runThreadN $threads \
       --outSAMattributes NH HI AS nM NM MD
 ```
 
-# Duplications analysis
+## Duplications analysis
 Duplications removal is not recommended generally in RNA-seq data analysis. However, there are situations where the percentage of duplications is too high and remove them is a real option.
 
 
-# Quantification
+## Quantification
 
 
-PERREO SR-SE arguments<br> 
+# PERREO SR-SE<br> 
 ```bash
 
 ```
 
 For single-end data, the analysis is almost the same as for paired-end data. The scripts are the same but only with specific changes due to the technological differences.
 
-PERREO LR arguments<br> 
-```bash
+# PERREO LR <br> 
+The required arguments for this mode are the following:<br>
 
+```bash
+-sample_list
+-reference_genome
+-repeat_gtf: must contain a "repeat_class" column in order to study the type of repetitive elements identified in the analysis.
+-threads #(default: threads=8)
+-project_name
+-batch_effect #yes/no
+-method #edgeR/DESeq2
+-k_num #(default: k_num=2)
+-log2FC #(default: log2FC=1)
+-FDR #(default: log2FC=0.05)
 ```
+
+In this case, trimming parameters are not required as adapters and barcodes removal is carried out during the basecalling step.
 
 
 
