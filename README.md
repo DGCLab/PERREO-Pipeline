@@ -1,6 +1,6 @@
 # PERREO-Pipeline
 
-Instructions:<br> 
+# Software requirements:<br> 
 
 Create a conda environment
 
@@ -12,49 +12,7 @@ conda activate repeat_rnaseq
 
 The required software to use PERREO can be installed running the script "installation.sh": <br> 
 
-```bash
-conda install bioconda::multiqc
-conda install bioconda::fastqc
-conda install bioconda::star
-conda install bioconda::picard
-conda install bioconda::cutadapt
-conda install bioconda::gatk4
-conda install conda-forge::natsort
-conda install conda-forge::r-base
-conda install conda-forge::parallel
-conda install conda-forge::r-rjava
-conda install bioconda::nanoplot
-conda install bioconda::minimap2
-conda install bioconda::nanocount
 
-
-```
-
-```bash
-Rscript -e 'BiocManager::install("Rsubread")'
-Rscript -e 'BiocManager::install("DESeq2")'
-Rscript -e 'BiocManager::install("edgeR")'
-Rscript -e 'BiocManager::install("rtracklayer")'
-Rscript -e 'BiocManager::install("EDASeq")'
-Rscript -e 'BiocManager::install("RUVSeq")'
-Rscript -e 'BiocManager::install("WGCNA")'
-Rscript -e 'install.packages("tidyverse",repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("readxl",repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("openxlsx", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("dplyr", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("readr", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("tidyverse", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("ggplot2", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("pheatmap", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("ggpubr", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("ggrepel", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("mlbench", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("caret", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("caretEnsemble", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("randomForest", repos="https://cloud.r-project.org")'
-Rscript -e 'install.packages("glmnet", repos="https://cloud.r-project.org")'
-
-```
 
 Repeat annotations is a complex task and it can take many hours. In this case, we provide a worflow to obtain repeat annotations using RepeatModeler, MCHelper and Repeatmasker.<br> 
 <br>
