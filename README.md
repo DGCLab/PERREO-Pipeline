@@ -10,7 +10,7 @@ conda activate repeat_rnaseq
 
 ```
 
-Software requirements to run this pipeline for bash and R are the following: <br> 
+The required software to use PERREO can be installed running the script "installation.sh": <br> 
 
 ```bash
 conda install bioconda::multiqc
