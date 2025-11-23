@@ -73,17 +73,12 @@ SRR14506862	reverse	HC
 ```
 *** In the case the data belong to more than two experimental conditions and batch effect cause is known, another column called "batch" must be included in the samplesheet indicating the origin batch. <br>
 <br>
-For example: If samples come from different hospital, this column should be included and the hospital of origin has to be indicated for each sample.<br>
-<br>
-The pipeline can be run on both single-end and paired-end data. There are to main scripts to run the analysis depending on the type of data the user has to analyze.<br>
-<br>
--Paired-end data pipeline: repRPI_PE.sh<br>
--Single-end data pipeline: repRPI_SE.sh<br>
+For example: If samples come from different hospitals, this column should be included and the hospital of origin has to be indicated for each sample.<br>
 <br>
 Regarding the reference genome, the user can decide which reference genome and which annotations to use as the software does not provide any of these files. Consequently, this pipeline is applicable to any organism whose genome is sequenced and annotated.<br> 
 For human experiments, although reference and annotations can be freely chosen, we recommend to use T2T genome and its corresponding annotation as it is the most complete human reference, where repetitive regions are better described.<br>
 
-Here we provide the link to the T2T fasta file and GTF annotations to use in this workflow:https://github.com/marbl/CHM13.<br>
+Here we provide a link to the T2T fasta file and GTF annotations to use in this workflow:https://github.com/marbl/CHM13.<br>
 
 In the case you need to download other fasta files and specific GTF annotations of T2T, you can also use the UCSC table browser platform: https://genome.ucsc.edu/cgi-bin/hgTables.<br>
 <br>
@@ -118,8 +113,10 @@ PERREO LR: For direct RNA-seq data generated with Nanopore long-reads technology
 
 <img width="1034" height="362" alt="image" src="https://github.com/user-attachments/assets/140b2173-e2bb-4963-8605-0e143804b89f" /><br>
 
-# PERREO SR-PE 
-The required arguments for this mode are the following:<br> 
+# PERREO SR-PE and SR-SE
+The required arguments for both paired-end-derived data are the following:<br> 
+
+For SR-PE:<br> 
 
 ```bash
 -sample_list
@@ -139,16 +136,21 @@ The required arguments for this mode are the following:<br>
 -FDR #(default: log2FC=0.05)
 ```
 
+For SR-SE:<br> 
+
+```bash
+
+```
 
 
 ## Trimming
 In this step there are two main options: simple trimming with cutadapt and a more complex trimming performed firstly with cutadapt and then with trimGC.py script in order to remove additional GC nucleotides added by specific sequencing kits. <br>
 <br>
-Another possibility is that adapters have been removed previously and the trimming step should only be taken into account to remove low quality reads. In this case, user must not include -adapt_r1 and -adapt_r2 arguments while running the pipeline.<br>
+If adapters had been removed previously and the trimming step should only be taken into account to remove low quality reads, user must not include -adapt_r1 and -adapt_r2 arguments while running the pipeline.<br>
 
 
 ## Alignment
-STAR aligner parameters are indicated by default allowing the multimapping and removing reads with more than a 10% of mismatches. outFilterMismatchNoverLmax parameter can be changed depending on the user experimental design and conditions.<br>
+STAR aligner parameters are indicated by default allowing the multimapping and removing reads with more than a 5% of mismatches. This parameter can be changed depending on the user experimental design and conditions.<br>
 
 ```bash
 STAR --runThreadN $threads \
@@ -158,7 +160,7 @@ STAR --runThreadN $threads \
       --outSAMtype BAM SortedByCoordinate \
       --outFilterMultimapNmax 500 \
       --winAnchorMultimapNmax 500 \
-      --outFilterMismatchNoverLmax 0.1 \
+      --outFilterMismatchNoverLmax 0.05 \
       --outSAMmultNmax 500 \
       --outMultimapperOrder Random \
       --runRNGseed 42 \
@@ -168,16 +170,6 @@ STAR --runThreadN $threads \
 ## Duplications analysis
 Duplications removal is not recommended generally in RNA-seq data analysis. However, there are situations where the percentage of duplications is too high and remove them is a real option.
 
-
-## Quantification
-
-
-# PERREO SR-SE<br> 
-```bash
-
-```
-
-For single-end data, the analysis is almost the same as for paired-end data. The scripts are the same but only with specific changes due to the technological differences.
 
 # PERREO LR <br> 
 The required arguments for this mode are the following:<br>
@@ -195,8 +187,63 @@ The required arguments for this mode are the following:<br>
 -FDR #(default: log2FC=0.05)
 ```
 
-In this case, trimming parameters are not required as adapters and barcodes removal is carried out during the basecalling step.
+In this case, trimming parameters are not required as adapters and barcodes removal is carried out during the basecalling step and quality control is carried out using NanoPlot.<br>
 
+## Alignment
+Long reads are aligned against the reference genome using minimap2 with -ax splice -uf and -k14 parameters. Multimapping is also allowed indicating -N 100 parameter. 
+
+```bash
+minimap2 -t 14 -ax splice -uf -k14 -p 0.8 -N 100 "$CWD/genome_index.mmi"  "$SAMPLE_DIR/${sample_id}.fastq" > "$SAMPLE_DIR/${sample_id}.sam"
+```
+
+# Downstream analysis
+Quantification, differential expression analysis, coexpression analysis, transcriptome assembly and prediction models design steps are common between the three PERREO modes.
+
+## Quantification
+FeatureCounts performs features quantification allowing multimapping reads counts and fraction.<br>
+
+The following code line is run for data obtained from short reads sequencing techonology:
+
+```bash
+quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T, isPairedEnd = TRUE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,strandSpecific = strandness_fc)
+```
+
+For data derived from long-reads technology the code line is practically the same. Only the long-reads argument has to be activated:
+```bash
+     quant <- featureCounts(files = print(paste0(sample_dir,"/",sample_id,".bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T, isLongRead=T, isPairedEnd = FALSE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,strandSpecific = strandness_fc)
+
+```
+
+## Differential Expression Analysis
+Statistical analysis is performed by DESeq2 or edgeR functions using default thresholds: abs(log2FC) > 1 and FDR < 0.05. Different plots and files are exported from this step:<br>
+1) Repeat RNAs counts represented with violin plots.<br>
+2) PCA (if batch effect is corrected, PCA before and after batch effect reduction are exported).<br>
+3) Fold-Change barplots of differentially expressed features (DEFs) for each contrast.<br>
+4) Classification of all repeat RNAs identified by repeat classes.<br>
+5) Classification of differentially expressed repeat RNAs by repeat classes.<br>
+6) Expression matrix is CSV format.<br>
+7) Heatmap of DEFs in each contrast.<br>
+8) Volcano plot for each contrast.<br>
+
+## Transcriptome assembly
+Stringtie2 generates a GTF file for transcriptome assembly of each sample in the study. Strandedness has to be taken into account to perform the assembly. <br>
+
+```bash
+stringtie "$BAM" \
+        -L \
+        -p "$threads" \
+        -G "$repeat_annotation" \
+        -o "$OUTPUT_GTF" \
+        --fr \ #rf is strandness=reverse
+```
+
+## Coexpression analysis
+WGCNA R package generates coexpression networks from the given expression matrix. Power is automatically assigned when R value is 0.9 and the script is designed to select the three modules with the highest correlation value with respect any of the experimental conditions. The script exports:
+1) Information about nodes and edges of the three modules previously mentioned to generate Cytoscape networks.
+2) Correlation heatmap between modules and experimental conditions.
+3) Correlation heatmap between modules and samples.
+4) Repeat RNAs and the module they belong to in txt format.
+5) Modules dendrogram.  
 
 
 # Differential Expression Analysis
