@@ -38,6 +38,7 @@ while [[ $# -gt 0 ]]; do
       -FDR) FDR="$2"; shift 2 ;;
       -batch_effect) batch_effect="$2"; shift 2 ;;
       -method) method="$2"; shift 2 ;;
+      -prediction_model) method="$2"; shift 2 ;;
       *) echo "Opción desconocida: $1"; shift ;;
   esac
 done
@@ -313,9 +314,11 @@ Rscript "$WGCNA_SCRIPT" "$DEA_DIR" "$CWD" "$sample_list" "$COEXPRESSION_DIR"
 
 # ---------- 8) PREDICTION MODEL ANALYSIS -----------------
 
+if [ "$prediction_model" = "yes" ]; then
 rows=$(( $(wc -l < "$CWD/$sample_list") - 1 ))
 if [ "$rows" -gt 40 ]; then
 Rscript "$PRED_MODEL" "$CWD" "$sample_list"
+fi
 fi
 
 }
