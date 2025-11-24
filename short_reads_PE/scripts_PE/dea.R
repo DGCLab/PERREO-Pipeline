@@ -114,7 +114,7 @@ if(batch == TRUE){
   y <- DGEList(counts=mat, group=condition)
   y <- calcNormFactors(y, method="TMM")
   y <- estimateDisp(y, design)
-  mat.tmm <- cpm(y)
+  # mat.tmm <- cpm(y)
   fit <- glmFit(y, design)
   lrt <- glmLRT(fit, coef=colnames(design))
   
@@ -128,9 +128,13 @@ if(batch == TRUE){
   n_empirical <- ceiling(0.25 * nrow(top_all))
   empirical <- rownames(top_all)[1:n_empirical]
   
+  set <- newSeqExpressionSet(as.matrix(mat),
+                             phenoData = data.frame(coldata, row.names = colnames(cts)))
+  set <- betweenLaneNormalization(set, which = "upper") 
+  
   library(RUVSeq)
-  res <- RUVg(x=log(mat.tmm+0.1), cIdx=empirical, k=k_num ,isLog = T)
-  mat.tmm <- exp(res$normalizedCounts) ## Representation, WGCNA, Models...
+  res <- RUVg(x=set, cIdx=empirical, k=k_num ,isLog = F)
+  mat.tmm <- res@assayData$normalizedCounts
   
   Wdf <- as.data.frame(pData(res)[, grep("^W_", colnames(pData(res))), drop = FALSE]) 
   
