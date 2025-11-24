@@ -51,6 +51,7 @@ log2FC=${log2FC:-1.0}
 mismatch_align=${mismatch_align:-0.05}
 trimming_quality_threshold=${trimming_quality_threshold:-30}
 min_length_trim=${min_length_trim:-16}
+prediction_model=${prediction_model:-yes}
 
 # Function for running the analysis with all the samples
 
