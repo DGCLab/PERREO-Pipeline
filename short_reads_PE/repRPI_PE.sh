@@ -30,6 +30,7 @@ while [[ $# -gt 0 ]]; do
       -adapt_r2) adapt_r2="$2"; shift 2 ;;
       -trimming_quality_threshold) trimming_quality_threshold="$2"; shift 2 ;;
       -min_length_trim) min_length_trim="$2"; shift 2 ;;
+      -max_length_trim) min_length_trim="$2"; shift 2 ;;
       -trimming_type) trimming_type="$2"; shift 2 ;;
       -mismatch_align) mismatch_align="$2"; shift 2 ;;
       -project_name) project_name="$2"; shift 2 ;;
@@ -51,6 +52,7 @@ log2FC=${log2FC:-1.0}
 mismatch_align=${mismatch_align:-0.05}
 trimming_quality_threshold=${trimming_quality_threshold:-30}
 min_length_trim=${min_length_trim:-16}
+max_length_trim=${max_length_trim:-}
 prediction_model=${prediction_model:-yes}
 
 # Function for running the analysis with all the samples
