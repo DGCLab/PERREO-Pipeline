@@ -341,19 +341,39 @@ if(batch == TRUE){
 }
 
 
-if (batch == TRUE){
-  mat.tmm <- log2(mat.tmm)
-  rownames(mat.tmm) <- gsub("#.*$","",rownames(mat.tmm))
-  expression_matrix <- mat.tmm
-} else{
+if (batch == TRUE) {
+  
+  if (ruvg == TRUE) {
+    mat.tmm <- log2(mat.tmm)
+    rownames(mat.tmm) <- gsub("#.*$", "", rownames(mat.tmm))
+    expression_matrix <- mat.tmm
+    
+  } else {
+    if (method == "DESeq2") {
+      vsd <- assay(vsd)
+      rownames(vsd) <- gsub("#.*$", "", rownames(vsd))
+      expression_matrix <- removeBatchEffect(vsd, batch = coldata$Batch)
+      
+    } else {
+      mat.tmm.log <- log2(mat.tmm)
+      rownames(mat.tmm.log) <- gsub("#.*$", "", rownames(mat.tmm.log))
+      expression_matrix <- removeBatchEffect(mat.tmm.log, batch = coldata$Batch)
+    }
+  }
+  
+} else {
+  
   if (method == "DESeq2") {
-  vsd <- assay(vsd)
-  rownames(vsd) <- gsub("#.*$","",rownames(vsd))
-  expression_matrix <- vsd} else {
+    vsd <- assay(vsd)
+    rownames(vsd) <- gsub("#.*$", "", rownames(vsd))
+    expression_matrix <- vsd
+    
+  } else {
     mat.tmm.log <- log2(mat.tmm)
     rownames(mat.tmm.log) <- gsub("#.*$", "", rownames(mat.tmm.log))
-    expression_matrix <- mat.tmm.log}
-} 
+    expression_matrix <- mat.tmm.log
+  }
+}
 
 write.csv(expression_matrix, paste0(DEA_results_DIR,"/expression_matrix.csv"))
 write.csv(res_filtered, paste0(DEA_results_DIR,"/DEG.csv"))
