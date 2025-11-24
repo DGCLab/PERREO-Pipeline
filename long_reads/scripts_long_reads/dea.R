@@ -557,48 +557,41 @@ repeat_class_info <- gtf_differentials |>
   distinct()
 
 message("Classifying repeats...")
-  
-for (nm in res_names) {
 
+if (method == "DESeq2"){
+  log2FC <- results$log2FoldChange
+  FDR <- results$padj
+  dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(condition)[2]),
+                       ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(condition)[2]), 
+                              "Not significant"))
   
-  results <- get(nm)
+  volcano.df <- data.frame(
+    RepeatSequence = rownames(results),
+    log2FC = results$log2FoldChange,
+    negLog10P = -log10(results$padj),
+    DEG.Status = factor(dep.labels,
+                        levels = c(paste0("Upregulated in ", unique(condition)[2]), 
+                                   paste0("Downregulated in ", unique(condition)[2]),
+                                   "Not significant")))
   
-  conds <- strsplit(sub("^results_contrast_", "", nm), "_vs_")[[1]]
+} else{
+  log2FC <- results$logFC
+  FDR <- results$FDR
+  dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(condition)[2]),
+                       ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(condition)[2]), 
+                              "Not significant"))
   
-  if (method == "DESeq2"){
-    log2FC <- results$log2FoldChange
-    FDR <- results$padj
-    dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(conds)[1]),
-                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]), 
-                                "Not significant"))
-    
-    volcano.df <- data.frame(
-      RepeatSequence = rownames(results),
-      log2FC = results$log2FoldChange,
-      negLog10P = -log10(results$padj),
-      DEG.Status = factor(dep.labels,
-                          levels = c(paste0("Upregulated in ", unique(conds)[1]), 
-                                     paste0("Downregulated in ", unique(conds)[1]),
-                                     "Not significant")))
-    
-  } else{
-    log2FC <- results$logFC
-    FDR <- results$FDR
-    dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(conds)[1]),
-                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]), 
-                                "Not significant"))
-    
-    volcano.df <- data.frame(
-      RepeatSequence = rownames(results),
-      log2FC = results$logFC,
-      negLog10P = -log10(results$FDR),
-      DEG.Status = factor(dep.labels,
-                          levels = c(paste0("Upregulated in ", unique(conds)[1]), 
-                                     paste0("Downregulated in ", unique(conds)[1]),
-                                     "Not significant")))
-  } 
-  
-  
+  volcano.df <- data.frame(
+    RepeatSequence = rownames(results),
+    log2FC = results$logFC,
+    negLog10P = -log10(results$FDR),
+    DEG.Status = factor(dep.labels,
+                        levels = c(paste0("Upregulated in ", unique(condition)[2]), 
+                                   paste0("Downregulated in ", unique(condition)[2]),
+                                   "Not significant")))
+} 
+
+
 DEGs_type <- volcano.df |>
   filter(DEG.Status != "Not significant") |> 
   dplyr::rename(gene_id = RepeatSequence) |> 
@@ -622,7 +615,7 @@ ggplot(type_df, aes(x = reorder(repeat_class, n), y = percentage)) +
             hjust = -0.1, size = 3.5) +
   coord_flip() +
   labs(
-    title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]," - DEGs"),
+    title = paste0("Repeat class types distribution for ", unique(condition)[1], " vs ", unique(condition)[2]," - DEGs"),
     subtitle = paste("Total genes: ", sum(type_df$n)-length(which(duplicated(DEGs_type$gene_id)))),
     x = "Repeat class type",
     y = "Percentage (%)",
@@ -635,10 +628,10 @@ ggplot(type_df, aes(x = reorder(repeat_class, n), y = percentage)) +
     axis.text.x = element_text(size = 10)
   )
 
-ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".png"),
+ggsave(paste0(DEA_results_DIR,"/Classification_DEGs.png"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
-ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".pdf"),
+ggsave(paste0(DEA_results_DIR,"/Classification_DEGs.pdf"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
 ## Plot All
@@ -667,7 +660,7 @@ ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
   coord_flip(clip = "off") +
   scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
   labs(
-    title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]),
+    title = paste0("Repeat class types distribution for ", unique(condition)[1], " vs ", unique(condition)[2]),
     subtitle = paste("Total elements:", sum(rep_type$n)),
     x = "Repeat class type",
     y = "Percentage (%)",
@@ -682,16 +675,11 @@ ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
   ) +
   expand_limits(y = max(rep_type$percentage) * 1.12)  
 
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".png"),
+ggsave(paste0(DEA_results_DIR,"/Classification_All.png"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".pdf"),
+ggsave(paste0(DEA_results_DIR,"/Classification_All.pdf"),
        width = 6000, height = 4500, dpi = 600, units = "px")
-
-}
-
-
-
 
 
 ###############################################################################
