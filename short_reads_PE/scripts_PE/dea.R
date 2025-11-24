@@ -106,7 +106,7 @@ if(batch == TRUE){
   if(ruvg == TRUE){
   #Extracting counts data to build the EdgeR object
   library(edgeR)
-  message("Removing Batch Effect...")
+  message("Applying RUVg...")
   
   #Normalizing the object before applying RUVg algorithm
   
@@ -334,6 +334,7 @@ if (batch == TRUE){
   mat.tmm <- log2(mat.tmm)
   rownames(mat.tmm) <- gsub("#.*$","",rownames(mat.tmm))
   expression_matrix <- mat.tmm
+  vsd <- assay(vsd)
 } else{
   if (method == "DESeq2") {
   vsd <- assay(vsd)
