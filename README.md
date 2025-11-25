@@ -68,7 +68,7 @@ The samplesheet structure should be like this:<br>
 | SRR14506660     | reverse      | ESO       |
 | SRR14506859     | reverse      | HC        |
 
-*** In the case the data belong to more than two experimental conditions and batch effect cause is known, another column called "batch" must be included in the samplesheet indicating the origin batch. <br>
+In case data belong to more than two experimental conditions and batch effect cause is known, another column called "batch" must be included in the samplesheet indicating the origin batch. <br>
 <br>
 For example: If samples come from different hospitals, this column should be included and the hospital of origin has to be indicated for each sample.<br>
 
@@ -116,6 +116,20 @@ PERREO SR-PE: For RNA-seq data generated with paired-end short-reads technology.
 PERREO LR: For direct RNA-seq data generated with Nanopore long-reads technology.<br>
 
 <img width="1034" height="362" alt="image" src="https://github.com/user-attachments/assets/140b2173-e2bb-4963-8605-0e143804b89f" /><br>
+
+# General requirements:<br>
+
+| Input          | PERREO SR-SE | PERREO SR-PE | PERREO LR |
+|-----------------|--------------|-----------|-------|
+| single-end fastq files     | X      |        |X |
+| paired-end fastq files     |       | X       | |
+| reference genome     | X      | X        |X |
+| genome GTF     | X      | X       |  |
+| repeats GTF     | X      | X       |X |
+| adapters sequences     |       |         | |
+| Batch effect     | X      | X       |X |
+| Method     | X      | X       |X |
+| K-num     | X      | X        |X |
 
 # PERREO SR-PE and SR-SE
 The required arguments for both paired-end-derived data are the following:<br> 
