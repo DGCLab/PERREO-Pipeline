@@ -215,7 +215,7 @@ For data derived from long-reads technology the code line is practically the sam
 ```
 
 ## Differential Expression Analysis
-Statistical analysis is performed by DESeq2 or edgeR functions using default thresholds: abs(log2FC) > 1 and FDR < 0.05. DESeq2 is a very robust mnethod and is more conservative, while edgeR is specially sensitive for low-expressed genes due to its flexible dispersion estimation. Different plots and files are exported from this step:<br>
+Statistical analysis is performed by DESeq2 or edgeR functions using default thresholds: abs(log2FC) > 1 and FDR < 0.05. DESeq2 is a very robust mnethod and is more conservative, while edgeR is specially sensitive for low-expressed genes due to its flexible dispersion estimation. If batch effect = yes, RUVg will be run in case the sample sheet does not contain a batch column indicating the specific cause of this variability in the data. On the other hand, if this column is indicated in the sample sheet, that variable will be directly included in the formula. Different plots and files are exported from this step:<br>
 1) Repeat RNAs counts represented with violin plots.<br>
 2) PCA (if batch effect is corrected, PCA before and after batch effect reduction are exported).<br>
 3) Fold-Change barplots of differentially expressed features (DEFs) for each contrast.<br>
