@@ -147,7 +147,7 @@ Then, there are some arguments that have to be taken into account although it is
 The required arguments for both paired-end-derived data are the following:<br> 
 
 For SR-PE:<br> 
-
+```sql
 -sample_list  Sample sheet with sample, strandedness, condition and batch (if necessary).
 -reference_genome  Genome file in fasta.
 -genome_gtf  Genome annotations in GTF format.
@@ -162,7 +162,7 @@ For SR-PE:<br>
 -method  edgeR/DESeq2.
 -k_num  K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended to also increase the k number (default: 2).
 -log2FC  Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
--FDR  Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
+-FDR  Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).;
 
 For SR-SE:<br> 
 
