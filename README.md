@@ -60,20 +60,24 @@ The folder "scripts" located in this github must be downloaded and included insi
 
 
 The samplesheet structure should be like this:<br>
-```bash
-sample	strandedness	condition
-SRR14506659	reverse	ESO
-SRR14506660	reverse	ESO
-SRR14506661	reverse	ESO
-SRR14506662	reverse	ESO
-SRR14506859	reverse	HC
-SRR14506860	reverse	HC
-SRR14506861	reverse	HC
-SRR14506862	reverse	HC
-```
+
+
+| sample          | strandedness | condition |
+|-----------------|--------------|-----------|
+| SRR14506659     | reverse      | ESO       |
+| SRR14506660     | reverse      | ESO       |
+| SRR14506859     | reverse      | HC        |
+
 *** In the case the data belong to more than two experimental conditions and batch effect cause is known, another column called "batch" must be included in the samplesheet indicating the origin batch. <br>
 <br>
 For example: If samples come from different hospitals, this column should be included and the hospital of origin has to be indicated for each sample.<br>
+
+| sample          | strandedness | condition | batch |
+|-----------------|--------------|-----------|-------|
+| SRR14506659     | reverse      | ESO       |Hosp_A |
+| SRR14506660     | reverse      | ESO       |Hosp_B |
+| SRR14506859     | reverse      | HC        |Hosp_C |
+
 <br>
 Regarding the reference genome, the user can decide which reference genome and which annotations to use as the software does not provide any of these files. Consequently, this pipeline is applicable to any organism whose genome is sequenced and annotated.<br> 
 For human experiments, although reference and annotations can be freely chosen, we recommend to use T2T genome and its corresponding annotation as it is the most complete human reference, where repetitive regions are better described.<br>
