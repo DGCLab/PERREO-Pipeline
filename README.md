@@ -117,19 +117,31 @@ PERREO LR: For direct RNA-seq data generated with Nanopore long-reads technology
 
 <img width="1034" height="362" alt="image" src="https://github.com/user-attachments/assets/140b2173-e2bb-4963-8605-0e143804b89f" /><br>
 
-# General requirements:<br>
+# General requirements<br>
 
-| Input          | PERREO SR-SE | PERREO SR-PE | PERREO LR |
+These arguments are required for the correct performance of the corresponding modes:
+
+| Input/argument          | PERREO SR-SE | PERREO SR-PE | PERREO LR |
 |-----------------|--------------|-----------|-------|
 | Single-end fastq files     | X      |        |X |
 | Paired-end fastq files     |       | X       | |
 | Reference genome     | X      | X        |X |
 | Genome GTF     | X      | X       |  |
 | Repeats GTF     | X      | X       |X |
-| Adapters sequences     |       |         | |
 | Batch effect     | X      | X       |X |
 | Method     | X      | X       |X |
-| K-num     | X      | X        |X |
+| Remove duplicates     | X      | X       | |
+
+
+Then, there are some arguments that have to be taken into account although it is not mandatory to mention them in the command line because they have default values:
+| Arguments          | Default |
+|-----------------|--------------|
+| Threads     | 8      |
+| Trimming type     |  trimming_simple (not needed for PERREO LR)     | 
+| K_num     | 2     | 
+| log2FC     | 1     | 
+| FDR     | 0.05     | 
+
 
 # PERREO SR-PE and SR-SE
 The required arguments for both paired-end-derived data are the following:<br> 
