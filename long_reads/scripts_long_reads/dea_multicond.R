@@ -104,7 +104,7 @@ dds <- DESeqDataSetFromMatrix(
   design = ~  condition 
 )
 
-## Filter genes which have at least a zero between all samples
+## Filter genes which have at 10% zero between all samples
 
 keep <- apply(counts(dds), 1, function(x) {
   mean(x == 0) <= 0.10
@@ -128,6 +128,7 @@ outdir <- paste0(SAMPLES_DIR,"Contrasts")
 dir.create(outdir, showWarnings = FALSE)
 
 ## Correct Batch Effect
+
 if(batch == TRUE){
   ruvg <- TRUE
   message("Removing Batch Effect...")
@@ -146,13 +147,15 @@ if(batch == TRUE){
     thr  <- quantile(pvec, 0.75, na.rm = TRUE)
     neg_controls <- rownames(lrt)[keep & lrt$pvalue >= thr]
     
-    set <- newSeqExpressionSet(as.matrix(mat),
-                               phenoData = data.frame(coldata, row.names = colnames(cts)))
-    set <- betweenLaneNormalization(set, which = "upper")  
+    set <- newSeqExpressionSet(
+      counts = mat,
+      normalizedCounts = cpm(mat), # For PCA pre-BATCH
+      phenoData = data.frame(coldata, row.names = colnames(cts)))
     
     library(RUVSeq)
+    
     res <- RUVg(x=set, cIdx=neg_controls, k=k_num ,isLog = F)
-    mat.tmm <- res@assayData$normalizedCounts
+    mat.cpm.ruv <- res@assayData$normalizedCounts
     
     Wdf <- as.data.frame(pData(res)[, grep("^W_", colnames(pData(res))), drop = FALSE]) 
     
@@ -169,9 +172,10 @@ if(batch == TRUE){
       form <- as.formula(paste("~ ", paste(colnames(Wdf), collapse = " + "), "+ condition"))
       design <- model.matrix(form, data = sample_list)
       
-      
       dge <- estimateDisp(dge, design)
       fit <- glmQLFit(dge, design)
+      
+      mat.dge <- cpm(dge) # For model prediction
       
       coef_names <- colnames(design)
       cond_coef <- setNames(rep(NA_character_, length(lv)), lv)
@@ -223,9 +227,9 @@ if(batch == TRUE){
         write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
         message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
         
-        assign(paste0("results","_contrast_", cname), res_df)
-        
+        assign(paste0("res","_contrast_", cname), res_df)
       }
+      
     } else if (method == "DESeq2") {
       library(DESeq2)
       
@@ -251,18 +255,19 @@ if(batch == TRUE){
         res_df <- as.data.frame(res)
         res_df$gene <- rownames(res_df)
         
-        res_filtered <- subset(res_df, abs(res_df$log2FoldChange) > log2FC_thr & res_df$FDR < FDR_thr) 
+        res_filtered <- subset(res_df, abs(res_df$logFC) > log2FC_thr & res_df$FDR < FDR_thr) 
         assign(paste0("res_filtered","_contrast_", cname), res_filtered)
         
         write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
         message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
         
-        assign(paste0("results","_contrast_", cname), res_df)
+        assign(paste0("res","_contrast_", cname), res_df)
         
       }
       
-      vsd <- varianceStabilizingTransformation(dds)
+      vsd <- varianceStabilizingTransformation(dds) # For model prediction
     }
+    
   } else {
     if (method == "edgeR") {
       library(edgeR)
@@ -274,6 +279,8 @@ if(batch == TRUE){
       design <- model.matrix(~ batch + condition, data = sample_list)
       dge <- estimateDisp(dge, design)
       fit <- glmQLFit(dge, design)
+      
+      mat.dge <- cpm(dge) # For model prediction
       
       coef_names <- colnames(design)
       cond_coef <- setNames(rep(NA_character_, length(lv)), lv)
@@ -325,9 +332,10 @@ if(batch == TRUE){
         write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
         message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
         
-        assign(paste0("results","_contrast_", cname), res_df)
+        assign(paste0("res","_contrast_", cname), res_df)
         
       }
+      
     } else if (method == "DESeq2") 
     {
       library(DESeq2)
@@ -352,21 +360,22 @@ if(batch == TRUE){
         res_df <- as.data.frame(res)
         res_df$gene <- rownames(res_df)
         
-        res_filtered <- subset(res_df, abs(res_df$log2FoldChange) > log2FC_thr & res_df$FDR < FDR_thr) 
+        res_filtered <- subset(res_df, abs(res_df$logFC) > log2FC_thr & res_df$FDR < FDR_thr) 
         assign(paste0("res_filtered","_contrast_", cname), res_filtered)
         
         write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
         message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
         
-        assign(paste0("results","_contrast_", cname), res_df)
+        assign(paste0("res","_contrast_", cname), res_df)
         
       }
-      vsd <- varianceStabilizingTransformation(dds)
+      
+      vsd <- varianceStabilizingTransformation(dds) # For model prediction
     }
   }
   
-  #Once the batch effect is corrected we use the matrix for visualization
-  #PCA
+  # Once the batch effect is corrected we use the matrix for visualization
+  # PCA
   pca <- prcomp(t(set@assayData$normalizedCounts),scale. = T)
   pca_df <- as.data.frame(pca$x)
   pca_df$condition <- condition
@@ -386,7 +395,7 @@ if(batch == TRUE){
   ggsave(paste0(DEA_results_DIR,"/pca_nobatch.png"), plot = p, width = 8, height = 6, dpi = 300)
   
   
-  pca_corrected <- prcomp(t(mat.tmm),scale. = T)
+  pca_corrected <- prcomp(t(mat.cpm.ruv),scale. = T)
   pca_df_corrected <- as.data.frame(pca_corrected$x)
   pca_df_corrected$condition <- condition
   
@@ -414,7 +423,7 @@ if(batch == TRUE){
     dge <- estimateDisp(dge, design)
     fit <- glmQLFit(dge, design)
     
-    mat.tmm <- cpm(mat)
+    mat.dge <- cpm(dge) # For model prediction & PCA
     
     coef_names <- colnames(design)
     cond_coef <- setNames(rep(NA_character_, length(lv)), lv)
@@ -468,35 +477,35 @@ if(batch == TRUE){
       message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
       
       assign(paste0("results","_contrast_", cname), res_df)
-      
-      pca <- prcomp(t(mat.tmm),scale. = T)
-      pca_df <- as.data.frame(pca$x)
-      pca_df$condition <- condition
-      
-      base_colors <- c("#804A45", "#455F80","#F5A553", "#BAC6D4", "#2E8B57", "#323840", "#FFF1C2")
-      palette_auto <- base_colors[seq_len(length(unique(pca_df$condition)))]
-      
-      
-      p <- ggplot(pca_df, aes(x=PC1, y=PC2, color=condition)) +
-        scale_color_manual(values = palette_auto) +
-        geom_point(size=3) +
-        stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
-        labs(title="PCA",
-             x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
-             y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
-        theme_minimal() +
-        geom_point(size=3) +
-        stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
-        labs(title="PCA",
-             x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
-             y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
-        theme_minimal()
-      
-      ggsave(paste0(DEA_results_DIR,"/pca.png"), plot = p, width = 8, height = 6, dpi = 300)
-      ggsave(paste0(DEA_results_DIR,"/pca.pdf"), plot = p, width = 8, height = 6, dpi = 300)
-      
-      
     }
+    
+    pca <- prcomp(t(mat.dge),scale. = T)
+    pca_df <- as.data.frame(pca$x)
+    pca_df$condition <- condition
+    
+    base_colors <- c("#804A45", "#455F80","#F5A553", "#BAC6D4", "#2E8B57", "#323840", "#FFF1C2")
+    palette_auto <- base_colors[seq_len(length(unique(pca_df$condition)))]
+    
+    
+    p <- ggplot(pca_df, aes(x=PC1, y=PC2, color=condition)) +
+      scale_color_manual(values = palette_auto) +
+      geom_point(size=3) +
+      stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+      labs(title="PCA",
+           x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+           y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+      theme_minimal() +
+      geom_point(size=3) +
+      stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+      labs(title="PCA",
+           x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+           y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+      theme_minimal()
+    
+    ggsave(paste0(DEA_results_DIR,"/pca.png"), plot = p, width = 8, height = 6, dpi = 300)
+    ggsave(paste0(DEA_results_DIR,"/pca.pdf"), plot = p, width = 8, height = 6, dpi = 300)
+    
+    
   } else if (method == "DESeq2") 
   {
     library(DESeq2)
@@ -510,7 +519,7 @@ if(batch == TRUE){
     
     dds <- DESeq(dds)
     
-    vsd <- varianceStabilizingTransformation(dds)
+    vsd <- varianceStabilizingTransformation(dds) # For model prediction & PCA
     
     for (p in pairs) {
       num <- p[2]   
@@ -532,7 +541,6 @@ if(batch == TRUE){
       assign(paste0("results","_contrast_", cname), res_df)
       
     }
-    
     
     pca <- prcomp(t(assay(vsd)),scale. = T)
     pca_df <- as.data.frame(pca$x)
@@ -563,43 +571,18 @@ if(batch == TRUE){
   }
 }
 
-## Generate expression matrix for models
+## Generate Matrix for Prediction Model
 
-if (batch == TRUE) {
-  
-  if (ruvg == TRUE) {
-    mat.tmm <- log2(mat.tmm)
-    rownames(mat.tmm) <- gsub("#.*$", "", rownames(mat.tmm))
-    expression_matrix <- mat.tmm
-    
-  } else {
-    if (method == "DESeq2") {
-      vsd <- assay(vsd)
-      rownames(vsd) <- gsub("#.*$", "", rownames(vsd))
-      expression_matrix <- removeBatchEffect(vsd, batch = coldata$Batch)
-      
-    } else {
-      mat.tmm.log <- log2(mat.tmm)
-      rownames(mat.tmm.log) <- gsub("#.*$", "", rownames(mat.tmm.log))
-      expression_matrix <- removeBatchEffect(mat.tmm.log, batch = coldata$Batch)
-    }
-  }
+if (method == "DESeq2") {
+  expression_matrix <- assay(vsd)
+  rownames(expression_matrix) <- gsub("#.*$", "", rownames(expression_matrix))
   
 } else {
-  
-  if (method == "DESeq2") {
-    vsd <- assay(vsd)
-    rownames(vsd) <- gsub("#.*$", "", rownames(vsd))
-    expression_matrix <- vsd
-    
-  } else {
-    mat.tmm.log <- log2(mat.tmm)
-    rownames(mat.tmm.log) <- gsub("#.*$", "", rownames(mat.tmm.log))
-    expression_matrix <- mat.tmm.log
-  }
-}
+  mat.dge.log <- log2(mat.dge)
+  rownames(mat.dge.log) <- gsub("#.*$", "", rownames(mat.dge.log))
+  expression_matrix <- mat.dge.log}
 
-write.csv(expression_matrix, "expression_matrix.csv")
+write.csv(expression_matrix, paste0(DEA_results_DIR,"/expression_matrix.csv"))
 
 
 ###############################################################################
@@ -616,8 +599,6 @@ empty_filtered <- res_names_filtered[sapply(res_names_filtered, function(x) {
 empty_raw <- sub("^res_filtered_", "results_", empty_filtered)
 res_names <- ls(pattern = "^results_contrast_")
 res_names <- setdiff(res_names, empty_raw)
-
-print(res_names)
 
 for (nm in res_names) {
   
@@ -652,8 +633,6 @@ for (nm in res_names) {
                          ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]), 
                                 "Not significant"))
     
-    head(results)
-    
     volcano.df <- data.frame(
       RepeatSequence = rownames(results),
       log2FC = results$logFC,
@@ -664,21 +643,15 @@ for (nm in res_names) {
                                      "Not significant")))
   } 
   
-  head(volcano.df)
-  
   ## Check if there are DEGs
   all_not_significant <- all(
     volcano.df$DEG.Status == "Not significant" | is.na(volcano.df$DEG.Status)
   )
   
- head(volcano.df)
-  
-  #if (all_not_significant) {
-  #message("No differentially expressed genes were detected.")
-  #res_names <- res_names[res_names != nm]
-  #next
-  #}
-  
+  if (all_not_significant) {
+    message("No differentially expressed genes were detected. The pipeline will stop here.")
+    next
+  }
   
   grp_up   <- paste0("Upregulated in ", unique(conds)[1])
   grp_down <- paste0("Downregulated in ", unique(conds)[1])
@@ -690,6 +663,7 @@ for (nm in res_names) {
   top_up   <- volcano.df |>  filter(DEG.Status == grp_up)    |>  slice_max(negLog10P, n = 10)
   top_down <- volcano.df |> filter(DEG.Status == grp_down)  |>  slice_max(negLog10P, n = 10)
   top_labs <- bind_rows(top_up, top_down)
+  
   write.table(top_labs, paste0("toplabels_", nm,".txt"))
   write.table(
     top_up$RepeatSequence,
@@ -698,6 +672,7 @@ for (nm in res_names) {
     row.names = FALSE,
     col.names = FALSE
   )
+  
   
   ggplot(volcano.df, aes(x = log2FC, y = negLog10P)) +
     geom_point(aes(color = DEG.Status), alpha = 0.7, size = 1.5) +
@@ -722,12 +697,9 @@ for (nm in res_names) {
   
   ## ---------------- HEATMAP ----------------
   
-  
   repeat_differentials <- subset(volcano.df, DEG.Status != "Not significant")
   repeat_differentials <- repeat_differentials$RepeatSequence
-  #repeat_differentials <- gsub("#.*$","", repeat_differentials)
-  
-  print(repeat_differentials)
+  repeat_differentials <- gsub("#.*$","", repeat_differentials)
   
   expression_differentials <- expression_matrix[rownames(expression_matrix) %in% 
                                                   repeat_differentials,]
@@ -737,10 +709,6 @@ for (nm in res_names) {
   )
   rownames(annotation_col) <- colnames(expression_differentials)
   
-  #ord <- order(annotation_col$Condition)
-  #expression_differentials <- expression_differentials[,ord]
-  #annotation_col <- annotation_col[ord, , drop = FALSE]
-  
   cond_levels <- levels(annotation_col$Condition)
   base_colors <- c("#804A45", "#BAC6D4","#F5A553", "#2E8B57","#455F80", "#323840", "#FFF1C2")
   ann_colors <- list(
@@ -749,9 +717,8 @@ for (nm in res_names) {
   
   heat_colors <- colorRampPalette(c("#455F80", "white", "#804A45"))(100)
   
-  #print(class(expression_differentials))
-  
   if (length(repeat_differentials) > 1){
+    
     heatmap <- pheatmap(expression_differentials,
                         annotation_col = annotation_col,
                         clustering_distance_rows = "euclidean",
@@ -763,6 +730,7 @@ for (nm in res_names) {
                         main = paste0("DEGs between conditions (", unique(conds)[1], " vs ", unique(conds)[2], ")"),
                         annotation_colors = ann_colors,
                         color = heat_colors,
+                        border_color = NA,
                         annotation_names_col = if(length(samples) <= 30){TRUE}else{FALSE})
   }
   
@@ -824,10 +792,6 @@ message("Loading: ", repeatmasker_annotation_gtf)
 
 gtf <- rtracklayer::readGFF(repeatmasker_annotation_gtf)
 
-head(gtf)
-
-print(repeat_differentials)
-
 gtf_differentials <- gtf[gtf$gene_id %in% repeat_differentials,]
 gtf_differentials <- as.data.frame(gtf_differentials)
 
@@ -835,7 +799,7 @@ repeat_class_info <- gtf_differentials |>
   dplyr::select(gene_id, repeat_class) |> 
   distinct()
 
-message("Classificating repeats...")
+message("Classifying repeats...")
 
 for (nm in res_names) {
   
@@ -975,13 +939,14 @@ for (nm in res_names) {
 ####                                                                       ####
 ####                         Repeat RNAs distribution                      ####
 ####                                                                       ####
+
 ###############################################################################
 
 library(ggplot2)
 library(ggpubr)
 
 if (method == "DESeq2"){log_means <- colMeans(vsd, na.rm = TRUE)
-} else{log_means <- log10(colMeans(mat.tmm , na.rm = TRUE) + 1)} 
+} else{log_means <- log10(colMeans(mat.dge , na.rm = TRUE) + 1)} 
 
 df_means <- data.frame(
   condition = sample_list$condition,

@@ -272,7 +272,7 @@ if(batch == TRUE){
  
     #Once the batch effect is corrected we use the matrix for visualization
     #PCA
-    pca <- prcomp(t(cpm(mat)),scale. = T)
+    pca <- prcomp(t(assay(vsd)),scale. = T)
     pca_df <- as.data.frame(pca$x)
     pca_df$condition <- condition
     
@@ -740,7 +740,7 @@ library(ggplot2)
 library(ggpubr)
 
 if (method == "DESeq2"){log_means <- colMeans(vsd, na.rm = TRUE)
-} else{log_means <- log10(colMeans( cpm(mat), na.rm = TRUE) + 1)} 
+} else{log_means <- log10(colMeans(mat.dge, na.rm = TRUE) + 1)} 
 
 df_means <- data.frame(
   condition = sample_list$condition,

@@ -70,6 +70,12 @@ rownames(cts) <- rownames
 samples <- colnames(cts)
 
 if (!identical(samples, sample_list$sample)) {
+  sample_list <- sample_list[order(sample_list$sample),]
+}
+
+if (identical(as.character(samples), as.character(sample_list$sample))) {
+  print("Order of samples ids in `cts` and `samplesheet` do match!")
+} else {  
   stop("Order of samples ids in `cts` and `samplesheet` do not match!")
 }
 
@@ -80,7 +86,6 @@ coldata <- data.frame(row.names = samples,
 if (ncol(cts) != nrow(coldata)) {
   stop("Number of samples in `cts` and `coldata` do not match!")
 }
-
 
 cts <- round(cts)
 
@@ -109,6 +114,7 @@ outdir <- paste0(SAMPLES_DIR,"Contrasts")
 dir.create(outdir, showWarnings = FALSE)
 
 ## Correct Batch Effect
+
 if(batch == TRUE){
   ruvg <- TRUE
   message("Removing Batch Effect...")
@@ -127,13 +133,15 @@ if(batch == TRUE){
   thr  <- quantile(pvec, 0.75, na.rm = TRUE)
   neg_controls <- rownames(lrt)[keep & lrt$pvalue >= thr]
   
-  set <- newSeqExpressionSet(as.matrix(mat),
-                             phenoData = data.frame(coldata, row.names = colnames(cts)))
-  set <- betweenLaneNormalization(set, which = "upper")  
+  set <- newSeqExpressionSet(
+    counts = mat,
+    normalizedCounts = cpm(mat), # For PCA pre-BATCH
+    phenoData = data.frame(coldata, row.names = colnames(cts)))
   
   library(RUVSeq)
+  
   res <- RUVg(x=set, cIdx=neg_controls, k=k_num ,isLog = F)
-  mat.tmm <- res@assayData$normalizedCounts
+  mat.cpm.ruv <- res@assayData$normalizedCounts
   
   Wdf <- as.data.frame(pData(res)[, grep("^W_", colnames(pData(res))), drop = FALSE]) 
   
@@ -150,9 +158,10 @@ if(batch == TRUE){
     form <- as.formula(paste("~ ", paste(colnames(Wdf), collapse = " + "), "+ condition"))
     design <- model.matrix(form, data = sample_list)
     
-    
     dge <- estimateDisp(dge, design)
     fit <- glmQLFit(dge, design)
+    
+    mat.dge <- cpm(dge) # For model prediction
     
     coef_names <- colnames(design)
     cond_coef <- setNames(rep(NA_character_, length(lv)), lv)
@@ -205,8 +214,8 @@ if(batch == TRUE){
       message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
       
       assign(paste0("res","_contrast_", cname), res_df)
-      
     }
+    
   } else if (method == "DESeq2") {
     library(DESeq2)
     
@@ -242,8 +251,9 @@ if(batch == TRUE){
       
     }
     
-    vsd <- varianceStabilizingTransformation(dds)
+    vsd <- varianceStabilizingTransformation(dds) # For model prediction
   }
+  
   } else {
    if (method == "edgeR") {
     library(edgeR)
@@ -255,6 +265,8 @@ if(batch == TRUE){
     design <- model.matrix(~ batch + condition, data = sample_list)
     dge <- estimateDisp(dge, design)
     fit <- glmQLFit(dge, design)
+    
+    mat.dge <- cpm(dge) # For model prediction
     
     coef_names <- colnames(design)
     cond_coef <- setNames(rep(NA_character_, length(lv)), lv)
@@ -309,6 +321,7 @@ if(batch == TRUE){
       assign(paste0("res","_contrast_", cname), res_df)
       
     }
+    
   } else if (method == "DESeq2") 
     {
     library(DESeq2)
@@ -342,12 +355,13 @@ if(batch == TRUE){
       assign(paste0("res","_contrast_", cname), res_df)
       
     }
-    vsd <- varianceStabilizingTransformation(dds)
+    
+    vsd <- varianceStabilizingTransformation(dds) # For model prediction
     }
   }
   
-  #Once the batch effect is corrected we use the matrix for visualization
-  #PCA
+  # Once the batch effect is corrected we use the matrix for visualization
+  # PCA
   pca <- prcomp(t(set@assayData$normalizedCounts),scale. = T)
   pca_df <- as.data.frame(pca$x)
   pca_df$condition <- condition
@@ -367,7 +381,7 @@ if(batch == TRUE){
   ggsave(paste0(DEA_results_DIR,"/pca_nobatch.png"), plot = p, width = 8, height = 6, dpi = 300)
   
   
-  pca_corrected <- prcomp(t(mat.tmm),scale. = T)
+  pca_corrected <- prcomp(t(mat.cpm.ruv),scale. = T)
   pca_df_corrected <- as.data.frame(pca_corrected$x)
   pca_df_corrected$condition <- condition
   
@@ -395,7 +409,7 @@ if(batch == TRUE){
     dge <- estimateDisp(dge, design)
     fit <- glmQLFit(dge, design)
     
-    mat.tmm <- cpm(mat)
+    mat.dge <- cpm(dge) # For model prediction & PCA
     
     coef_names <- colnames(design)
     cond_coef <- setNames(rep(NA_character_, length(lv)), lv)
@@ -449,35 +463,35 @@ if(batch == TRUE){
       message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
       
       assign(paste0("results","_contrast_", cname), res_df)
-      
-      pca <- prcomp(t(mat.tmm),scale. = T)
-      pca_df <- as.data.frame(pca$x)
-      pca_df$condition <- condition
-      
-      base_colors <- c("#804A45", "#455F80","#F5A553", "#BAC6D4", "#2E8B57", "#323840", "#FFF1C2")
-      palette_auto <- base_colors[seq_len(length(unique(pca_df$condition)))]
-      
-      
-      p <- ggplot(pca_df, aes(x=PC1, y=PC2, color=condition)) +
-        scale_color_manual(values = palette_auto) +
-        geom_point(size=3) +
-        stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
-        labs(title="PCA",
-             x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
-             y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
-        theme_minimal() +
-        geom_point(size=3) +
-        stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
-        labs(title="PCA",
-             x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
-             y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
-        theme_minimal()
-      
-      ggsave(paste0(DEA_results_DIR,"/pca.png"), plot = p, width = 8, height = 6, dpi = 300)
-      ggsave(paste0(DEA_results_DIR,"/pca.pdf"), plot = p, width = 8, height = 6, dpi = 300)
-      
-      
     }
+    
+    pca <- prcomp(t(mat.dge),scale. = T)
+    pca_df <- as.data.frame(pca$x)
+    pca_df$condition <- condition
+    
+    base_colors <- c("#804A45", "#455F80","#F5A553", "#BAC6D4", "#2E8B57", "#323840", "#FFF1C2")
+    palette_auto <- base_colors[seq_len(length(unique(pca_df$condition)))]
+    
+    
+    p <- ggplot(pca_df, aes(x=PC1, y=PC2, color=condition)) +
+      scale_color_manual(values = palette_auto) +
+      geom_point(size=3) +
+      stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+      labs(title="PCA",
+           x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+           y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+      theme_minimal() +
+      geom_point(size=3) +
+      stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+      labs(title="PCA",
+           x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+           y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+      theme_minimal()
+    
+    ggsave(paste0(DEA_results_DIR,"/pca.png"), plot = p, width = 8, height = 6, dpi = 300)
+    ggsave(paste0(DEA_results_DIR,"/pca.pdf"), plot = p, width = 8, height = 6, dpi = 300)
+    
+    
   } else if (method == "DESeq2") 
   {
     library(DESeq2)
@@ -491,7 +505,7 @@ if(batch == TRUE){
     
     dds <- DESeq(dds)
     
-    vsd <- varianceStabilizingTransformation(dds)
+    vsd <- varianceStabilizingTransformation(dds) # For model prediction & PCA
     
     for (p in pairs) {
       num <- p[2]   
@@ -513,7 +527,6 @@ if(batch == TRUE){
       assign(paste0("results","_contrast_", cname), res_df)
       
     }
-    
     
     pca <- prcomp(t(assay(vsd)),scale. = T)
     pca_df <- as.data.frame(pca$x)
@@ -544,41 +557,16 @@ if(batch == TRUE){
   }
 }
 
-## Generate expression matrix for models
+## Generate Matrix for Prediction Model
 
-if (batch == TRUE) {
-  
-  if (ruvg == TRUE) {
-    mat.tmm <- log2(mat.tmm)
-    rownames(mat.tmm) <- gsub("#.*$", "", rownames(mat.tmm))
-    expression_matrix <- mat.tmm
-    
-  } else {
-    if (method == "DESeq2") {
-      vsd <- assay(vsd)
-      rownames(vsd) <- gsub("#.*$", "", rownames(vsd))
-      expression_matrix <- removeBatchEffect(vsd, batch = coldata$Batch)
-      
-    } else {
-      mat.tmm.log <- log2(mat.tmm)
-      rownames(mat.tmm.log) <- gsub("#.*$", "", rownames(mat.tmm.log))
-      expression_matrix <- removeBatchEffect(mat.tmm.log, batch = coldata$Batch)
-    }
-  }
+if (method == "DESeq2") {
+  expression_matrix <- assay(vsd)
+  rownames(expression_matrix) <- gsub("#.*$", "", rownames(expression_matrix))
   
 } else {
-  
-  if (method == "DESeq2") {
-    vsd <- assay(vsd)
-    rownames(vsd) <- gsub("#.*$", "", rownames(vsd))
-    expression_matrix <- vsd
-    
-  } else {
-    mat.tmm.log <- log2(mat.tmm)
-    rownames(mat.tmm.log) <- gsub("#.*$", "", rownames(mat.tmm.log))
-    expression_matrix <- mat.tmm.log
-  }
-}
+  mat.dge.log <- log2(mat.dge)
+  rownames(mat.dge.log) <- gsub("#.*$", "", rownames(mat.dge.log))
+  expression_matrix <- mat.dge.log}
 
 write.csv(expression_matrix, paste0(DEA_results_DIR,"/expression_matrix.csv"))
 
@@ -707,10 +695,6 @@ annotation_col <- data.frame(
 )
 rownames(annotation_col) <- colnames(expression_differentials)
 
-# ord <- order(annotation_col$Condition)
-# expression_differentials <- expression_differentials[, ord]
-# annotation_col <- annotation_col[ord, , drop = FALSE]
-
 cond_levels <- levels(annotation_col$Condition)
 base_colors <- c("#804A45", "#BAC6D4","#F5A553", "#2E8B57","#455F80", "#323840", "#FFF1C2")
 ann_colors <- list(
@@ -732,6 +716,7 @@ heatmap <- pheatmap(expression_differentials,
                     main = paste0("DEGs between conditions (", unique(conds)[1], " vs ", unique(conds)[2], ")"),
                     annotation_colors = ann_colors,
                     color = heat_colors,
+                    border_color = NA,
                     annotation_names_col = if(length(samples) <= 30){TRUE}else{FALSE})
            }
 
@@ -947,7 +932,7 @@ library(ggplot2)
 library(ggpubr)
 
 if (method == "DESeq2"){log_means <- colMeans(vsd, na.rm = TRUE)
-} else{log_means <- log10(colMeans(mat.tmm , na.rm = TRUE) + 1)} 
+} else{log_means <- log10(colMeans(mat.dge , na.rm = TRUE) + 1)} 
 
 df_means <- data.frame(
   condition = sample_list$condition,
