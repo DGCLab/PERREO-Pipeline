@@ -121,12 +121,12 @@ PERREO LR: For direct RNA-seq data generated with Nanopore long-reads technology
 
 | Input          | PERREO SR-SE | PERREO SR-PE | PERREO LR |
 |-----------------|--------------|-----------|-------|
-| single-end fastq files     | X      |        |X |
-| paired-end fastq files     |       | X       | |
-| reference genome     | X      | X        |X |
-| genome GTF     | X      | X       |  |
-| repeats GTF     | X      | X       |X |
-| adapters sequences     |       |         | |
+| Single-end fastq files     | X      |        |X |
+| Paired-end fastq files     |       | X       | |
+| Reference genome     | X      | X        |X |
+| Genome GTF     | X      | X       |  |
+| Repeats GTF     | X      | X       |X |
+| Adapters sequences     |       |         | |
 | Batch effect     | X      | X       |X |
 | Method     | X      | X       |X |
 | K-num     | X      | X        |X |
