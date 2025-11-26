@@ -240,19 +240,6 @@ The required arguments for this mode are the following:<br>
                        is higher than 40. 
 ```
 
-```bash
--sample_list
--reference_genome
--repeat_gtf #must contain a "repeat_class" column in order to study the type of repetitive elements identified in the analysis.
--threads #(default: threads=8)
--project_name
--batch_effect #yes/no. If yes, and batch column is included in the sample sheet, the batch effect will be reduced based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
--method #edgeR/DESeq2
--k_num #(default: k_num=2)
--log2FC #(default: log2FC=1)
--FDR #(default: log2FC=0.05)
-```
-
 In this case, trimming parameters are not required as adapters and barcodes removal is carried out during the basecalling step and quality control is carried out using NanoPlot.<br>
 
 ## Alignment
