@@ -151,16 +151,22 @@ For SR-PE:<br>
 -sample_list           Sample sheet with sample, strandedness, condition and batch (if necessary).
 -reference_genome      Genome file in fasta.
 -genome_gtf            Genome annotations in GTF format.
--repeat_gtf            Repeat annotations in GTF format. It must contain a "repeat_class" column in order to study the type of repetitive elements identified in the analysis.
+-repeat_gtf            Repeat annotations in GTF format. It must contain a "repeat_class" column in order to study the type
+                       of repetitive elements identified in the analysis.
 -threads               Number of threads used for the process (default: 8)
--adapt_r1              Adapter 1 sequence. If reads are already trimmed, the user can ignore this argument and trimming will be also performed to obtain high quality reads.
--adapt_r2              Adapter 2 sequence. If reads are already trimmed, the user can ignore this argument and trimming will be also performed to obtain high quality reads.
--trimming_type         trimming_simple/trimming_extra. The second must be selected if it is know that the kit used adds extra GC nucleotides (default: trimming_simple).
+-adapt_r1              Adapter 1 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
+                       be also performed to obtain high quality reads.
+-adapt_r2              Adapter 2 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
+                       be also performed to obtain high quality reads.
+-trimming_type         trimming_simple/trimming_extra. The second must be selected if it is know that the kit used adds extra
+                       GC nucleotides (default: trimming_simple).
 -project_name
 -remove_duplicates     yes/no. Generally it is not recommended to discard duplicates unless the proportion is really high.
--batch_effect          yes/no. If yes, and batch column is included in the sample sheet, the batch effect will be reduced based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
+-batch_effect          yes/no. If yes, and batch column is included in the sample sheet, the batch effect will be reduced
+                       based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
 -method                edgeR/DESeq2. 
--k_num                 K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended to also increase the k number (default: 2).
+-k_num                 K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended
+                       to also increase the k number (default: 2).
 -log2FC                Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                   Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
 ```
