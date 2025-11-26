@@ -303,7 +303,8 @@ WGCNA R package generates coexpression networks from the given expression matrix
 5) Modules dendrogram.  
 
 
-# Differential Expression Analysis
+## PDF report
+The generated report contains the plots previously mentioned in the Differential Expression and Coexpression analysis sections.
 <img width="6000" height="4500" alt="VolcanoPlot" src="https://github.com/user-attachments/assets/fbcd3692-6819-4f7e-a95f-46432376ff58" />
 <img width="2400" height="1800" alt="repetitive_counts_violin_box" src="https://github.com/user-attachments/assets/c7bde717-9a58-43da-89f2-2b35d2c12b94" />
 <img width="2400" height="1800" alt="pca" src="https://github.com/user-attachments/assets/a16a83d9-48bf-4048-91bc-e6553f1f734f" />
