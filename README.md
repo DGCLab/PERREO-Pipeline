@@ -253,17 +253,21 @@ minimap2 -t 14 -ax splice -uf -k14 -p 0.8 -N 100 "$CWD/genome_index.mmi"  "$SAMP
 Quantification, differential expression analysis, coexpression analysis, transcriptome assembly and prediction models design steps are common between the three PERREO modes.
 
 ## Quantification
-FeatureCounts performs features quantification allowing multimapping reads counts and fraction.<br>
+FeatureCounts performs features quantification allowing multimapping reads counts and fraction. It uses the strandedness indicated in the sample sheet.<br>
 
 The following code line is run for data obtained from short reads sequencing techonology:
 
-```bash
-quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T, isPairedEnd = TRUE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,strandSpecific = strandness_fc)
+```R
+quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,
+         isGTFAnnotationFile = T, isPairedEnd = TRUE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE,
+         fraction=TRUE,strandSpecific = strandness_fc)
 ```
 
 For data derived from long-reads technology the code line is practically the same. Only the long-reads argument has to be activated:
-```bash
-quant <- featureCounts(files = print(paste0(sample_dir,"/",sample_id,".bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T, isLongRead=T, isPairedEnd = FALSE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,strandSpecific = strandness_fc)
+```R
+quant <- featureCounts(files = print(paste0(sample_dir,"/",sample_id,".bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T,
+         isLongRead=T, isPairedEnd = FALSE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,
+         strandSpecific = strandness_fc)
 
 ```
 
