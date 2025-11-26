@@ -208,6 +208,22 @@ Duplications removal is not recommended generally in RNA-seq data analysis. Howe
 # PERREO LR <br> 
 The required arguments for this mode are the following:<br>
 
+```text
+-sample_list           Sample sheet with sample, strandedness, condition and batch (if necessary).
+-reference_genome      Genome file in fasta.
+-repeat_gtf            Repeat annotations in GTF format. It must contain a "repeat_class" column in order to study the type
+                       of repetitive elements identified in the analysis.
+-threads               Number of threads used for the process (default: 8)
+-project_name
+-batch_effect          yes/no. If yes, and batch column is included in the sample sheet, the batch effect will be reduced
+                       based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
+-method                edgeR/DESeq2. 
+-k_num                 K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended
+                       to also increase the k number (default: 2).
+-log2FC                Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
+-FDR                   Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
+```
+
 ```bash
 -sample_list
 -reference_genome
