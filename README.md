@@ -145,6 +145,8 @@ Then, there are some arguments that have to be taken into account although it is
 | K_num     | 2     | 
 | log2FC     | 1     | 
 | FDR     | 0.05     | 
+| Prediction model     | yes     | 
+
 
 For SR-LR mode, the parameters trimming_type, trimming_quality_threshold, min_length_trim and max_length_trim are not considered as trimming for long-reads should be performed during the basecalling before obtaining the fastq files.
 
@@ -154,27 +156,33 @@ The required arguments for both paired-end-derived data are the following:<br>
 
 For SR-PE:<br> 
 ```text
--sample_list           Sample sheet with sample, strandedness, condition and batch (if necessary).
--reference_genome      Genome file in fasta.
--genome_gtf            Genome annotations in GTF format.
--repeat_gtf            Repeat annotations in GTF format. It must contain a "repeat_class" column in order to study the type
-                       of repetitive elements identified in the analysis.
--threads               Number of threads used for the process (default: 8)
--adapt_r1              Adapter 1 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
-                       be also performed to obtain high quality reads.
--adapt_r2              Adapter 2 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
-                       be also performed to obtain high quality reads.
--trimming_type         trimming_simple/trimming_extra. The second must be selected if it is know that the kit used adds extra
-                       GC nucleotides (default: trimming_simple).
+-sample_list                  Sample sheet with sample, strandedness, condition and batch (if necessary).
+-reference_genome             Genome file in fasta.
+-genome_gtf                   Genome annotations in GTF format.
+-repeat_gtf                   Repeat annotations in GTF format. It must contain a "repeat_class" column in order to study the type
+                              of repetitive elements identified in the analysis.
+-threads                      Number of threads used for the process (default: 8)
+-adapt_r1                     Adapter 1 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
+                              be also performed to obtain high quality reads.
+-adapt_r2                     Adapter 2 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
+                              be also performed to obtain high quality reads.
+-trimming_type                trimming_simple/trimming_extra. The second must be selected if it is know that the kit used adds extra
+                              GC nucleotides (default: trimming_simple).
+-trimming_quality_threshold   Minimum quality permitted for reads to be kept after trimming (default: 30).
+-min_length_trim              Minimum reads length to not discard them after trimming (default: 16).
+-max_length_trim              Maximum reads length permitted for reads to be kept after trimming (default: ).
+-mismatch_align               Percentage of mismatches permitted for reads to be kept during alignment (default: 0.05).
 -project_name
--remove_duplicates     yes/no. Generally it is not recommended to discard duplicates unless the proportion is really high.
--batch_effect          yes/no. If yes, and batch column is included in the sample sheet, the batch effect will be reduced
-                       based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
--method                edgeR/DESeq2. 
--k_num                 K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended
-                       to also increase the k number (default: 2).
--log2FC                Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
--FDR                   Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
+-remove_duplicates            yes/no. Generally it is not recommended to discard duplicates unless the proportion is really high.
+-batch_effect                 yes/no. If yes, and batch column is included in the sample sheet, the batch effect will be reduced
+                              based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
+-method                       edgeR/DESeq2. 
+-k_num                        K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended
+                              to also increase the k number (default: 2).
+-log2FC                       Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
+-FDR                          Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
+-prediction_model             yes/no (default: yes). When activated, it only will design prediction models in case the number of samples
+                              is higher than 40. 
 ```
 For SR-SE:<br> 
 
@@ -228,6 +236,8 @@ The required arguments for this mode are the following:<br>
                        to also increase the k number (default: 2).
 -log2FC                Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                   Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
+-prediction_model      yes/no (default: yes). When activated, it only will design prediction models in case the number of samples
+                       is higher than 40. 
 ```
 
 ```bash
