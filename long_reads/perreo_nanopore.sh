@@ -181,32 +181,6 @@ done
 
 
 
-# ---------- 4) Transcriptome assembly ------------------------
-
-
-if [ ! -d "$CWD/Transcriptome_assembly" ]; then
-
-mkdir $CWD/Transcriptome_assembly
-
-fi
-
- awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
-  | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
-      [[ -z "$sample_id" ]] && continue
-
-      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
-
-      if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
-
-          bash "$ASSEMBLY_SCRIPT" "$CWD" "$repeat_gtf" "$sample_id" "$threads" "$STRAND"
-          
-          cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
-      fi
-    done
-
-
-
-
 # ---------- 4) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
 
@@ -239,6 +213,34 @@ Rscript "$DEA_SCRIPT" "$batch_effect" "$sample_list" "$method" "$CWD" "$REP_GTF_
 else
 Rscript "$DEA_SCRIPT_multicond" "$batch_effect" "$sample_list" "$method" "$CWD" "$REP_GTF_PATH" "$k_num" "$FDR" "$log2FC"
 fi
+
+
+# ---------- 4) Transcriptome assembly ------------------------
+
+
+if [ ! -d "$CWD/Transcriptome_assembly" ]; then
+
+mkdir $CWD/Transcriptome_assembly
+
+fi
+
+ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
+  | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
+      [[ -z "$sample_id" ]] && continue
+
+      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+
+      if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
+
+          bash "$ASSEMBLY_SCRIPT" "$CWD" "$repeat_gtf" "$sample_id" "$threads" "$STRAND"
+          
+          cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
+      fi
+    done
+
+
+
+
 
 
 
