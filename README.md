@@ -138,9 +138,15 @@ Then, there are some arguments that have to be taken into account although it is
 |-----------------|--------------|
 | Threads     | 8      |
 | Trimming type     |  trimming_simple (not needed for PERREO LR)     | 
+| Mismatch align     | 0.05     | 
+| Trimming quality threshold     | 30     | 
+| Minimum reads length (for trimming)     | 16     | 
+| Maximum reads length (for trimming)     |      | 
 | K_num     | 2     | 
 | log2FC     | 1     | 
 | FDR     | 0.05     | 
+
+For SR-LR mode, the parameters trimming_type, trimming_quality_threshold, min_length_trim and max_length_trim are not considered as trimming for long-reads should be performed during the basecalling before obtaining the fastq files.
 
 
 # PERREO SR-PE and SR-SE
