@@ -118,20 +118,7 @@ done
 
 
 
-
-# ---------- 3) BAMBU ----------------------------
-
-#REP_GTF_PATH=$CWD/$repeat_gtf
-
-#GENOME_PATH=$CWD/$reference_genome
-
-  #if [[ ! -f "$CWD/se_multisample_bambu.rds" ]];then
-
-#      Rscript "$BAMBU_SCRIPT" "$REP_GTF_PATH" "$GENOME_PATH" "$SAMPLES_DIR" "$CWD"
-#  fi
-
-
-# ---------- 4) FeatureCounts quantification ------------------
+# ---------- 3) FEATURECOUNTS QUANTIFICATION ------------------
 
   awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
@@ -156,7 +143,7 @@ done
 
 
 
-# -------- 5) Quantification merge ---------------------------
+# -------- 4) QUANTIFICATION MERGE ---------------------------
 #Finally, we call the last script to merge all the count matrixes
 
    if [ ! -d "$CWD/SAMPLES/DEA_results" ]; then
@@ -178,10 +165,7 @@ done
    fi
 
 
-
-
-
-# ---------- 4) DIFFERENTIAL EXPRESSION ANALYSIS ----------
+# ---------- 5) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
 
    if [ ! -d "$CWD/SAMPLES/DEA_results" ]; then
@@ -204,7 +188,6 @@ NR==1 {
 }
 ' $CWD/$sample_list | sort | uniq | wc -l)
 
-#BAMBU_object="$SAMPLES_DIR/se_multisample_bambu.rds"
 
 if [ "$cond" -eq 2 ]; then
 
@@ -215,7 +198,7 @@ Rscript "$DEA_SCRIPT_multicond" "$batch_effect" "$sample_list" "$method" "$CWD" 
 fi
 
 
-# ---------- 4) Transcriptome assembly ------------------------
+# ---------- 6) TRANSCRIPTOME ASSEMBLY ------------------------
 
 
 if [ ! -d "$CWD/Transcriptome_assembly" ]; then
@@ -244,7 +227,7 @@ fi
 
 
 
-# ----------- 5) WGCNA ----------------------------------------
+# ----------- 7) WGCNA ----------------------------------------
 
 DEA_DIR=$SAMPLES_DIR/DEA_results
 
@@ -258,7 +241,7 @@ Rscript "$WGCNA_SCRIPT" "$DEA_DIR" "$CWD" "$sample_list" "$COEXPRESSION_DIR"
 
 
 
-# ---------- 5) PREDICTION MODEL ANALYSIS -----------------
+# ---------- 8) PREDICTION MODEL ANALYSIS -----------------
 
 
 if [ "$prediction_model" = "yes" ]; then
