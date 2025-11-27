@@ -827,6 +827,16 @@ for (nm in res_names) {
                                      "Not significant")))
   } 
   
+  repeat_differentials <- subset(volcano.df, DEG.Status != "Not significant")
+  repeat_differentials <- repeat_differentials$RepeatSequence
+  repeat_differentials <- gsub("#.*$","", repeat_differentials)
+  
+  gtf_differentials <- gtf[gtf$gene_id %in% repeat_differentials,]
+  gtf_differentials <- as.data.frame(gtf_differentials)
+  
+  repeat_class_info <- gtf_differentials |> 
+    dplyr::select(gene_id, repeat_class) |> 
+    distinct()  
   
 DEGs_type <- volcano.df |>
   filter(DEG.Status != "Not significant") |> 

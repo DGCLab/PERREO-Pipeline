@@ -792,18 +792,12 @@ message("Loading: ", repeatmasker_annotation_gtf)
 
 gtf <- rtracklayer::readGFF(repeatmasker_annotation_gtf)
 
-gtf_differentials <- gtf[gtf$gene_id %in% repeat_differentials,]
-gtf_differentials <- as.data.frame(gtf_differentials)
-
-repeat_class_info <- gtf_differentials |> 
-  dplyr::select(gene_id, repeat_class) |> 
-  distinct()
-
 message("Classifying repeats...")
 
+
+
 for (nm in res_names) {
-  
-  
+
   results <- get(nm)
   
   conds <- strsplit(sub("^results_contrast_", "", nm), "_vs_")[[1]]
@@ -812,35 +806,45 @@ for (nm in res_names) {
     log2FC <- results$log2FoldChange
     FDR <- results$padj
     dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(conds)[1]),
-                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]), 
+                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]),
                                 "Not significant"))
-    
+
     volcano.df <- data.frame(
       RepeatSequence = rownames(results),
       log2FC = results$log2FoldChange,
       negLog10P = -log10(results$padj),
       DEG.Status = factor(dep.labels,
-                          levels = c(paste0("Upregulated in ", unique(conds)[1]), 
+                          levels = c(paste0("Upregulated in ", unique(conds)[1]),
                                      paste0("Downregulated in ", unique(conds)[1]),
                                      "Not significant")))
-    
+
   } else{
     log2FC <- results$logFC
     FDR <- results$FDR
     dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(conds)[1]),
-                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]), 
+                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(conds)[1]),
                                 "Not significant"))
-    
+
     volcano.df <- data.frame(
       RepeatSequence = rownames(results),
       log2FC = results$logFC,
       negLog10P = -log10(results$FDR),
       DEG.Status = factor(dep.labels,
-                          levels = c(paste0("Upregulated in ", unique(conds)[1]), 
+                          levels = c(paste0("Upregulated in ", unique(conds)[1]),
                                      paste0("Downregulated in ", unique(conds)[1]),
                                      "Not significant")))
-  } 
+  }
+
+  repeat_differentials <- subset(volcano.df, DEG.Status != "Not significant")
+  repeat_differentials <- repeat_differentials$RepeatSequence
+  repeat_differentials <- gsub("#.*$","", repeat_differentials)
   
+  gtf_differentials <- gtf[gtf$gene_id %in% repeat_differentials,]
+  gtf_differentials <- as.data.frame(gtf_differentials)
+  
+  repeat_class_info <- gtf_differentials |> 
+    dplyr::select(gene_id, repeat_class) |> 
+    distinct()
   
   DEGs_type <- volcano.df |>
     filter(DEG.Status != "Not significant") |> 
@@ -939,7 +943,6 @@ for (nm in res_names) {
 ####                                                                       ####
 ####                         Repeat RNAs distribution                      ####
 ####                                                                       ####
-
 ###############################################################################
 
 library(ggplot2)
