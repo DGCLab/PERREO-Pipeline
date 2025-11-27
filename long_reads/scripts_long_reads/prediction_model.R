@@ -2,6 +2,7 @@ args <- commandArgs(trailingOnly=TRUE)
 
 CWD <- args[[1]] #project path
 sample_list <- args[[2]] 
+threads <- as.numeric(args[[3]])
 
 dir.create(paste0(CWD,"/prediction_models"))
 
@@ -14,6 +15,8 @@ library(readxl)
 library(caretEnsemble)
 library(randomForest)
 library(MLmetrics)
+library(doParallel)
+
 #Importing normalized matrix
 data <- read.csv(paste0(CWD,"/SAMPLES/DEA_results/expression_matrix.csv"),sep=",",header=T)
 
@@ -34,52 +37,72 @@ data <- t(data)
 condition <- samplesheet$condition
 data <- cbind(data,condition)
 data <- as.data.frame(data)
-#data$condition <- factor(data$condition, levels = levels(data$condition))
 
-if (length(unique(condition))){
+
+num_cores <- threads - 1
+cl <- makePSOCKcluster(num_cores)
+
+registerDoParallel(cl)
+
+if (length(unique(condition))>2){
 
 control <- trainControl(
   method = "repeatedcv",
-  number = 10,
-  repeats=3,
+  number = 5,
+  repeats=5,
   classProbs = TRUE,
   savePredictions = "final",
-  summaryFunction = multiClassSummary)
+  summaryFunction = multiClassSummary,
+allowParallel=TRUE)
 }else{
 control <- trainControl(
   method = "repeatedcv",
-  number = 10,
-  repeats=3,
+  number = 5,
+  repeats=5,
   classProbs = TRUE,
   savePredictions = "final",
-  summaryFunction = twoClassSummary)
+  summaryFunction = twoClassSummary,
+allowParallel=TRUE)
 }
 
 
+if (length(unique(condition))>2){
 
-#models <- c("rf","svmRadial","gbm","glmnet","lda")
-
-#library(doParallel)
-#registerDoSEQ()  # Deactivating paralelism
-
+print("Running RandomForest...")
 
 set.seed(123)
-rf_model <- train(condition ~ ., data=data, method="rf",trControl=control)
+
+
+rf_model <- train(condition ~ ., data=data, method="rf",metric="Accuracy",trControl=control)
+
+
+print("Running GLMnet...")
 
 set.seed(123)
-svmradial_model <- train(condition ~ ., data=data, method="svmRadial",trControl=control)
+glmnet_model <- train(condition ~ ., data=data, method="glmnet",metric="Accuracy",trControl=control)
+}else{
+print("Running RandomForest...")
 
 set.seed(123)
-gbm_model <- train(condition ~ ., data=data, method="gbm",trControl=control)
+
+
+rf_model <- train(condition ~ ., data=data, method="rf",metric="ROC",trControl=control)
+
+
+print("Running GLMnet...")
 
 set.seed(123)
-glmnet_model <- train(condition ~ ., data=data, method="glmnet",trControl=control)
+glmnet_model <- train(condition ~ ., data=data, method="glmnet",metric="ROC",trControl=control)
+}
 
 
 #Comparing results of the 4 models
 
-results <- resamples(list(RF=rf_model,SVMR=svmradial_model,GBM=gbm_model,
+results <- resamples(list(RF=rf_model,
                           GLMnet=glmnet_model))
+
+stopCluster(cl)
+registerDoSEQ()
 
 #Generating plots 
 
@@ -90,13 +113,13 @@ p3<-densityplot(results)
 
 
 #Saving plots 
-png(paste0(prediction_models_dir,"bwplot.png"), width = 1200, height = 800, res = 150)
+pdf(paste0(prediction_models_dir,"/bwplot.pdf"), width = 10, height = 8)
 print(p1)
 dev.off()
-png(paste0(prediction_models_dir,"dotplot.png"), width = 1200, height = 800, res = 150)
+pdf(paste0(prediction_models_dir,"/dotplot.pdf"), width = 10, height = 8)
 print(p2)
 dev.off()
-png(paste0(prediction_models_dir,"density.png"), width = 1200, height = 800, res = 150)
+pdf(paste0(prediction_models_dir,"/density.pdf"), width = 10, height = 8)
 print(p3)
 dev.off()
 
@@ -113,7 +136,7 @@ means <- data.frame(
   Mean = colMeans(results_table[,-1])
 )
 
-write.csv(means,paste0(prediction_models_dir,"models_metrics.csv"), row.names = FALSE)
+write.csv(means,paste0(prediction_models_dir,"/models_metrics.csv"), row.names = FALSE)
 
 #Cleaner format
 
@@ -121,47 +144,149 @@ library(tidyr)
 results_wide <- means %>%
   pivot_wider(names_from = Metric, values_from = Mean)
 
-write.csv(results_wide,paste0(prediction_models_dir,"summary_metrics.csv"), row.names = FALSE)
+write.csv(results_wide,paste0(prediction_models_dir,"/summary_metrics.csv"), row.names = FALSE)
 
 #ROC curves
 
 library(pROC)
 
-head(rf_model$pred)
-roc_rf <- roc(rf_model$pred$obs, rf_model$pred$LUAD)
-r_rf<-plot(roc_rf, main = "ROC curve - Random Forest")
-auc(roc_rf)
-
-head(svmradial_model$pred)
-roc_svmr <- roc(svmradial_model$pred$obs, svmradial_model$pred$LUAD)
-r_svmr<-plot(roc_svmr, main = "ROC curve - SVMRadial")
-auc(roc_svmr)
-
-head(gbm_model$pred)
-roc_gbm <- roc(gbm_model$pred$obs, gbm_model$pred$LUAD)
-r_gbm<-plot(roc_gbm, main = "ROC curve - GBM")
-auc(roc_gbm)
-
-head(glmnet_model$pred)
-roc_glmnet <- roc(glmnet_model$pred$obs, glmnet_model$pred$LUAD)
-r_glmnet<-plot(roc_glmnet, main = "ROC curve - GLMnet")
-auc(roc_glmnet)
-
-#Saving ROC curves
-#Saving plots 
-png(paste0(prediction_models_dir,"ROC-rf.png"), width = 1200, height = 800, res = 150)
-plot(roc_rf, main = "ROC curve - Random Forest")
-dev.off()
-png(paste0(prediction_models_dir,"ROC-svmr.png"), width = 1200, height = 800, res = 150)
-plot(roc_svmr, main = "ROC curve - SVMRadial")
-dev.off()
-png(paste0(prediction_models_dir,"ROC-gbm.png"), width = 1200, height = 800, res = 150)
-plot(roc_gbm, main = "ROC curve - GBM")
-dev.off()
-png(paste0(prediction_models_dir,"ROC-glmnet.png"), width = 1200, height = 800, res = 150)
-plot(roc_glmnet, main = "ROC curve - GLMnet")
-dev.off()
+pred <- rf_model$pred
+pred$obs <- droplevels(pred$obs)
+clases <- levels(pred$obs)
 
 
+if (length(clases) == 2) {
+  
+  ## --------- BINARY CASE ---------
+  positiva <- clases[2]  # By default, the second class is the POSITIVE
+  
+  roc_rf <- roc(
+    response  = pred$obs,
+    predictor = pred[[positiva]],  
+    levels    = clases           
+  )
+  
+  plot(roc_rf, main = "ROC curve - Random Forest")
+  auc(roc_rf)
+  
+  pdf(paste0(prediction_models_dir,"/ROC-rf.pdf"), width = 10, height = 8)
+  plot(roc_rf, main = "ROC curve - Random Forest")
+  dev.off()
+  
+  
+} else {
+  
+  ## --------- MULTICLASS CASE ---------
+   # 1) Model global AUC
+  prob_mat <- as.matrix(pred[, clases])
+  roc_multi <- multiclass.roc(
+    response  = pred$obs,
+    predictor = prob_mat
+  )
+  print(roc_multi$auc)   
+  
+  # 2) One vs all curves
+  roc_list <- lapply(clases, function(cl) {
+    resp_bin <- factor(ifelse(pred$obs == cl, cl, "other"),
+                       levels = c("other", cl))  # cl es la positiva
+    roc(
+      response  = resp_bin,
+      predictor = pred[[cl]],
+      levels    = c("other", cl)
+    )
+  })
+  names(roc_list) <- clases
+  
+  # 3) Saving PDFs with all the curves
+  pdf("ROC_RandomForest_multiclass.pdf")
+  plot(
+    roc_list[[1]],
+    main = paste0("Multiclass ROC - Random Forest (AUC global = ",
+                  round(as.numeric(roc_multi$auc), 3), ")"),
+    col  = 1
+  )
+  if (length(clases) > 1) {
+    for (i in 2:length(clases)) {
+      plot(roc_list[[i]], add = TRUE, col = i)
+    }
+  }
+  legend(
+    "bottomright",
+    legend = paste0(clases, " (AUC=", round(sapply(roc_list, auc), 3), ")"),
+    col = seq_along(clases),
+    lty = 1,
+    cex = 0.8
+  )
+  dev.off()  
+  
+  
+}
 
 
+pred <- glmnet_model$pred
+pred$obs <- droplevels(pred$obs)
+clases <- levels(pred$obs)
+
+
+if (length(clases) == 2) {
+  ## --------- BINARY CASE ---------
+  positiva <- clases[2]  
+  
+  roc_glmnet <- roc(
+    response  = pred$obs,
+    predictor = pred[[positiva]],  
+    levels    = clases             
+  )
+  
+  plot(roc_glmnet, main = "ROC curve - Random Forest")
+  auc(roc_glmnet)
+  
+  pdf(paste0(prediction_models_dir,"/ROC-rf.df"), width = 10, height = 8)
+  plot(roc_glmnet, main = "ROC curve - Random Forest")
+  dev.off()
+  
+} else {
+  ## --------- MULTICLASS CASE ---------
+  
+   # 1) Model global AUC
+  prob_mat <- as.matrix(pred[, clases])
+  roc_multi <- multiclass.roc(
+    response  = pred$obs,
+    predictor = prob_mat
+  )
+  print(roc_multi$auc)   
+  
+  # 2) One vs all curves
+  roc_list <- lapply(clases, function(cl) {
+    resp_bin <- factor(ifelse(pred$obs == cl, cl, "other"),
+                       levels = c("other", cl))
+    roc(
+      response  = resp_bin,
+      predictor = pred[[cl]],
+      levels    = c("other", cl)
+    )
+  })
+  names(roc_list) <- clases
+  
+  # 3) Saving PDFs for all the curves
+  pdf("ROC_RandomForest_multiclass.pdf")
+  plot(
+    roc_list[[1]],
+    main = paste0("Multiclass ROC - Random Forest (AUC global = ",
+                  round(as.numeric(roc_multi$auc), 3), ")"),
+    col  = 1
+  )
+  if (length(clases) > 1) {
+    for (i in 2:length(clases)) {
+      plot(roc_list[[i]], add = TRUE, col = i)
+    }
+  }
+  legend(
+    "bottomright",
+    legend = paste0(clases, " (AUC=", round(sapply(roc_list, auc), 3), ")"),
+    col = seq_along(clases),
+    lty = 1,
+    cex = 0.8
+  )
+  dev.off() 
+}
