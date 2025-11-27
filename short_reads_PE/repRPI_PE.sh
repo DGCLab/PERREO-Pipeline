@@ -55,6 +55,7 @@ min_length_trim=${min_length_trim:-16}
 max_length_trim=${max_length_trim:-}
 prediction_model=${prediction_model:-yes}
 
+
 # Function for running the analysis with all the samples
 
 run_pipeline_sample() {
