@@ -150,20 +150,21 @@ write.csv(results_wide,paste0(prediction_models_dir,"/summary_metrics.csv"), row
 
 library(pROC)
 
-pred <- rf_model$pred
-pred$obs <- droplevels(pred$obs)
-clases <- levels(pred$obs)
+#RANDOM FOREST
 
+pred_rf <- rf_model$pred
+pred$obs <- droplevels(pred_rf$obs)
+clases_rf <- levels(pred_rf$obs)
 
-if (length(clases) == 2) {
+if (length(clases_rf) == 2) {
   
   ## --------- BINARY CASE ---------
-  positiva <- clases[2]  # By default, the second class is the POSITIVE
+  positiva <- clases_rf[2]  # By default, the second class is the POSITIVE
   
   roc_rf <- roc(
-    response  = pred$obs,
-    predictor = pred[[positiva]],  
-    levels    = clases           
+    response  = pred_rf$obs,
+    predictor = pred_rf[[positiva]],  
+    levels    = clases_rf           
   )
   
   plot(roc_rf, main = "ROC curve - Random Forest")
@@ -178,42 +179,42 @@ if (length(clases) == 2) {
   
   ## --------- MULTICLASS CASE ---------
    # 1) Model global AUC
-  prob_mat <- as.matrix(pred[, clases])
-  roc_multi <- multiclass.roc(
-    response  = pred$obs,
-    predictor = prob_mat
+  prob_mat_rf <- as.matrix(pred_rf[, clases_rf])
+  roc_multi_rf <- multiclass.roc(
+    response  = pred_rf$obs,
+    predictor = prob_mat_rf
   )
-  print(roc_multi$auc)   
+  print(roc_multi_rf$auc)   
   
   # 2) One vs all curves
-  roc_list <- lapply(clases, function(cl) {
-    resp_bin <- factor(ifelse(pred$obs == cl, cl, "other"),
+  roc_list_rf <- lapply(clases_rf, function(cl) {
+    resp_bin_rf <- factor(ifelse(pred_rf$obs == cl, cl, "other"),
                        levels = c("other", cl))  # cl es la positiva
     roc(
-      response  = resp_bin,
+      response  = resp_bin_rf,
       predictor = pred[[cl]],
       levels    = c("other", cl)
     )
   })
-  names(roc_list) <- clases
+  names(roc_list_rf) <- clases_rf
   
   # 3) Saving PDFs with all the curves
   pdf("ROC_RandomForest_multiclass.pdf")
   plot(
     roc_list[[1]],
     main = paste0("Multiclass ROC - Random Forest (AUC global = ",
-                  round(as.numeric(roc_multi$auc), 3), ")"),
+                  round(as.numeric(roc_multi_rf$auc), 3), ")"),
     col  = 1
   )
-  if (length(clases) > 1) {
-    for (i in 2:length(clases)) {
-      plot(roc_list[[i]], add = TRUE, col = i)
+  if (length(clases_rf) > 1) {
+    for (i in 2:length(clases_rf)) {
+      plot(roc_list_rf[[i]], add = TRUE, col = i)
     }
   }
   legend(
     "bottomright",
-    legend = paste0(clases, " (AUC=", round(sapply(roc_list, auc), 3), ")"),
-    col = seq_along(clases),
+    legend = paste0(clases_rf, " (AUC=", round(sapply(roc_list_rf, auc), 3), ")"),
+    col = seq_along(clases_rf),
     lty = 1,
     cex = 0.8
   )
@@ -223,70 +224,73 @@ if (length(clases) == 2) {
 }
 
 
-pred <- glmnet_model$pred
-pred$obs <- droplevels(pred$obs)
-clases <- levels(pred$obs)
+#GLMNET
+
+pred_glm <- glmnet_model$pred
+pred_glm$obs <- droplevels(pred_glm$obs)
+clases_glm <- levels(pred_glm$obs)
 
 
 if (length(clases) == 2) {
   ## --------- BINARY CASE ---------
-  positiva <- clases[2]  
+  positiva <- clases_glm[2]  
   
   roc_glmnet <- roc(
-    response  = pred$obs,
-    predictor = pred[[positiva]],  
-    levels    = clases             
+    response  = pred_glm$obs,
+    predictor = pred_glm[[positiva]],  
+    levels    = clases_glm             
   )
   
-  plot(roc_glmnet, main = "ROC curve - Random Forest")
+  plot(roc_glmnet, main = "ROC curve - GLMnet")
   auc(roc_glmnet)
   
-  pdf(paste0(prediction_models_dir,"/ROC-rf.df"), width = 10, height = 8)
-  plot(roc_glmnet, main = "ROC curve - Random Forest")
+  pdf(paste0(prediction_models_dir,"/ROC-glmnet.df"), width = 10, height = 8)
+  plot(roc_glmnet, main = "ROC curve - GLMnet")
   dev.off()
   
 } else {
   ## --------- MULTICLASS CASE ---------
   
    # 1) Model global AUC
-  prob_mat <- as.matrix(pred[, clases])
-  roc_multi <- multiclass.roc(
-    response  = pred$obs,
-    predictor = prob_mat
+  prob_mat_glm <- as.matrix(pred_glm[, clases_glm])
+  roc_multi_glm <- multiclass.roc(
+    response  = pred_glm$obs,
+    predictor = prob_mat_glm
   )
-  print(roc_multi$auc)   
+  print(roc_multi_glm$auc)   
   
   # 2) One vs all curves
-  roc_list <- lapply(clases, function(cl) {
-    resp_bin <- factor(ifelse(pred$obs == cl, cl, "other"),
+  roc_list_glm <- lapply(clases, function(cl) {
+    resp_bin_glm <- factor(ifelse(pred_glm$obs == cl, cl, "other"),
                        levels = c("other", cl))
     roc(
-      response  = resp_bin,
-      predictor = pred[[cl]],
+      response  = resp_bin_glm,
+      predictor = pred_glm[[cl]],
       levels    = c("other", cl)
     )
   })
-  names(roc_list) <- clases
+  names(roc_list_glm) <- clases
   
   # 3) Saving PDFs for all the curves
-  pdf("ROC_RandomForest_multiclass.pdf")
+  pdf("ROC_GLMnet_multiclass.pdf")
   plot(
-    roc_list[[1]],
-    main = paste0("Multiclass ROC - Random Forest (AUC global = ",
-                  round(as.numeric(roc_multi$auc), 3), ")"),
+    roc_list_glm[[1]],
+    main = paste0("Multiclass ROC - GLMnet (AUC global = ",
+                  round(as.numeric(roc_multi_glm$auc), 3), ")"),
     col  = 1
   )
-  if (length(clases) > 1) {
-    for (i in 2:length(clases)) {
-      plot(roc_list[[i]], add = TRUE, col = i)
+  if (length(clases_glm) > 1) {
+    for (i in 2:length(clases_glm)) {
+      plot(roc_list_glm[[i]], add = TRUE, col = i)
     }
   }
   legend(
     "bottomright",
-    legend = paste0(clases, " (AUC=", round(sapply(roc_list, auc), 3), ")"),
-    col = seq_along(clases),
+    legend = paste0(clases_glm, " (AUC=", round(sapply(roc_list_glm, auc), 3), ")"),
+    col = seq_along(clases_glm),
     lty = 1,
     cex = 0.8
   )
   dev.off() 
 }
+
