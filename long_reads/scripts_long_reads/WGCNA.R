@@ -13,7 +13,7 @@ library(stringr)
 
 samplesheet <- read.table(paste0(cwd,"/",sample_list),sep="\t",header = T)
 
-expression_matrix <- read.csv2(paste0(cwd,"/SAMPLES/expression_matrix.csv"),sep=",",header=T)
+expression_matrix <- read.csv2(paste0(DEA_DIR,"/expression_matrix.csv"),sep=",",header=T)
 expression_matrix <- as.data.frame(expression_matrix)
 expression_matrix <-expression_matrix[!duplicated(expression_matrix$X),]
 rownames(expression_matrix) <- expression_matrix$X
