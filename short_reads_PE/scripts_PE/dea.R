@@ -76,8 +76,10 @@ if (identical(as.character(samples), as.character(sample_list$sample))) {
 }
 
 condition <- sample_list$condition
-coldata <- data.frame(row.names = samples,
-                      condition = factor(condition))
+coldata <- within(data.frame(row.names = samples,
+                             condition = factor(condition)), {
+                               if ("batch" %in% colnames(sample_list))
+                                 batch <- sample_list$batch})
 
 if (ncol(cts) != nrow(coldata)) {
   stop("Number of samples in `cts` and `coldata` do not match!")

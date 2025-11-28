@@ -88,8 +88,10 @@ if (identical(as.character(samples), as.character(sample_list$sample))) {
 }
 
 condition <- sample_list$condition
-coldata <- data.frame(row.names = samples,
-                      condition = factor(condition))
+coldata <- within(data.frame(row.names = samples,
+                             condition = factor(condition)), {
+                               if ("batch" %in% colnames(sample_list))
+                                 batch <- sample_list$batch})
 
 if (ncol(cts) != nrow(coldata)) {
   stop("Number of samples in `cts` and `coldata` do not match!")
@@ -888,56 +890,54 @@ for (nm in res_names) {
   ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".pdf"),
          width = 6000, height = 4500, dpi = 600, units = "px")
   
-  ## Plot All
-  repeat_class_info_all <- gtf |> 
-    dplyr::select(gene_id, repeat_class) |> 
-    distinct()
-  
-  rep_type <- volcano.df |> 
-    dplyr::rename(gene_id = RepeatSequence) |> 
-    mutate(gene_id = gsub("#.*$", "", gene_id)) |>    
-    left_join(repeat_class_info_all, by = "gene_id")
-  
-  rep_type <- rep_type |>
-    dplyr::mutate(repeat_class = ifelse(is.na(repeat_class), "(Unknown)", repeat_class)) |>
-    dplyr::count(repeat_class, name = "n") |>
-    arrange(n) |>
-    mutate(
-      percentage = 100 * n / sum(n),
-      percentage_label = sprintf("%.1f%%", percentage),
-      repeat_class = factor(repeat_class, levels = repeat_class))
-  
-  ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
-    geom_col(fill = "#BAC6D4", alpha = 0.8, width = 0.7) +
-    geom_text(aes(label = percentage_label),
-              hjust = -0.1, size = 3.5) +
-    coord_flip(clip = "off") +
-    scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
-    labs(
-      title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]),
-      subtitle = paste("Total elements:", sum(rep_type$n)),
-      x = "Repeat class type",
-      y = "Percentage (%)",
-      caption = "DEA data analysis"
-    ) +
-    theme_minimal(base_size = 12) +
-    theme(
-      plot.title = element_text(size = 14, face = "bold"),
-      axis.text.y = element_text(size = 10),
-      axis.text.x = element_text(size = 10),
-      plot.margin = margin(5.5, 30, 5.5, 5.5) 
-    ) +
-    expand_limits(y = max(rep_type$percentage) * 1.12)  
-  
-  ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".png"),
-         width = 6000, height = 4500, dpi = 600, units = "px")
-  
-  ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".pdf"),
-         width = 6000, height = 4500, dpi = 600, units = "px")
-  
 }
 
+## Plot All
+repeat_class_info_all <- gtf |> 
+  dplyr::select(gene_id, repeat_class) |> 
+  distinct()
 
+rep_type <- volcano.df |> 
+  dplyr::rename(gene_id = RepeatSequence) |> 
+  mutate(gene_id = gsub("#.*$", "", gene_id)) |>    
+  left_join(repeat_class_info_all, by = "gene_id")
+
+rep_type <- rep_type |>
+  dplyr::mutate(repeat_class = ifelse(is.na(repeat_class), "(Unknown)", repeat_class)) |>
+  dplyr::count(repeat_class, name = "n") |>
+  arrange(n) |>
+  mutate(
+    percentage = 100 * n / sum(n),
+    percentage_label = sprintf("%.1f%%", percentage),
+    repeat_class = factor(repeat_class, levels = repeat_class))
+
+ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
+  geom_col(fill = "#BAC6D4", alpha = 0.8, width = 0.7) +
+  geom_text(aes(label = percentage_label),
+            hjust = -0.1, size = 3.5) +
+  coord_flip(clip = "off") +
+  scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
+  labs(
+    title = paste0("Repeat class types distribution between all samples"),
+    subtitle = paste("Total elements:", sum(rep_type$n)),
+    x = "Repeat class type",
+    y = "Percentage (%)",
+    caption = "DEA data analysis"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10),
+    plot.margin = margin(5.5, 30, 5.5, 5.5) 
+  ) +
+  expand_limits(y = max(rep_type$percentage) * 1.12)  
+
+ggsave(paste0(DEA_results_DIR,"/Classification_All.png"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
+
+ggsave(paste0(DEA_results_DIR,"/Classification_All.pdf"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
 
 ###############################################################################
 ####                                                                       ####

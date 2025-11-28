@@ -80,8 +80,10 @@ if (identical(as.character(samples), as.character(sample_list$sample))) {
 }
 
 condition <- sample_list$condition
-coldata <- data.frame(row.names = samples,
-                      condition = factor(condition))
+coldata <- within(data.frame(row.names = samples,
+                             condition = factor(condition)), {
+                               if ("batch" %in% colnames(sample_list))
+                                 batch <- sample_list$batch})
 
 if (ncol(cts) != nrow(coldata)) {
   stop("Number of samples in `cts` and `coldata` do not match!")
@@ -880,6 +882,9 @@ ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".png"),
 ggsave(paste0(DEA_results_DIR,"/Classification_DEGs_", nm, ".pdf"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
+}
+
+
 ## Plot All
 repeat_class_info_all <- gtf |> 
   dplyr::select(gene_id, repeat_class) |> 
@@ -906,7 +911,7 @@ ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
   coord_flip(clip = "off") +
   scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
   labs(
-    title = paste0("Repeat class types distribution for ", unique(conds)[1], " vs ", unique(conds)[2]),
+    title = paste0("Repeat class types distribution between all samples"),
     subtitle = paste("Total elements:", sum(rep_type$n)),
     x = "Repeat class type",
     y = "Percentage (%)",
@@ -921,15 +926,11 @@ ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
   ) +
   expand_limits(y = max(rep_type$percentage) * 1.12)  
 
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".png"),
+ggsave(paste0(DEA_results_DIR,"/Classification_All.png"),
        width = 6000, height = 4500, dpi = 600, units = "px")
 
-ggsave(paste0(DEA_results_DIR,"/Classification_All_", nm,".pdf"),
+ggsave(paste0(DEA_results_DIR,"/Classification_All.pdf"),
        width = 6000, height = 4500, dpi = 600, units = "px")
-
-}
-
-
 
 ###############################################################################
 ####                                                                       ####
