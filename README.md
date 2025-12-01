@@ -8,13 +8,6 @@ conda env create -f perreo.yml
 
 ```
 
-
-
-
-Repeat annotations is a complex task and it can take many hours. In this case, we provide a worflow to obtain repeat annotations using RepeatModeler, MCHelper and Repeatmasker.<br> 
-<br>
-In case the user prefers to use prebuilt annotations, our pipeline can be run providing customized annotations publicly available in different platforms.<br> 
-
 # Repeat annotation
 
 Firstly, it is necessary to build a database from a reference genome and to run RepeatModeler using the following code lines:<br> 
