@@ -4,8 +4,7 @@
 
 It is necessary to create a conda environment with all the required packages and programs to perform the whole analysis. To do it, the user can run this yaml file. In this way, the complete environment will be installed automatically. 
 ```bash
-conda create --name repeat_rnaseq
-conda activate repeat_rnaseq
+conda env create -f perreo.yml
 
 ```
 
