@@ -942,7 +942,7 @@ ggsave(paste0(DEA_results_DIR,"/Classification_All.pdf"),
 library(ggplot2)
 library(ggpubr)
 
-if (method == "DESeq2"){log_means <- colMeans(vsd, na.rm = TRUE)
+if (method == "DESeq2"){log_means <- colMeans(assay(vsd), na.rm = TRUE)
 } else{log_means <- log10(colMeans(mat.dge , na.rm = TRUE) + 1)} 
 
 df_means <- data.frame(
@@ -981,6 +981,7 @@ ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
 
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), width = 8, height = 6, dpi = 300)
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), width = 8, height = 6, dpi = 300)
+
 
 
 
