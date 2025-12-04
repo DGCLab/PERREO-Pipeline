@@ -741,7 +741,7 @@ ggsave(paste0(DEA_results_DIR,"/Classification_All.pdf"),
 library(ggplot2)
 library(ggpubr)
 
-if (method == "DESeq2"){log_means <- colMeans(vsd, na.rm = TRUE)
+if (method == "DESeq2"){log_means <- colMeans(assay(vsd), na.rm = TRUE)
 } else{log_means <- log10(colMeans(mat.dge, na.rm = TRUE) + 1)} 
 
 df_means <- data.frame(
