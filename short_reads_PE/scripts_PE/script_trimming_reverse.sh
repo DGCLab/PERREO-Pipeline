@@ -20,7 +20,6 @@ echo $adapt_r2
 echo $trimming_type
 echo $threads
 echo $trimming_quality
-echo $max_length
 
 #Run cutadapt
 if [[ -f "trim/${sample_id}_trimmed_1.fastq.gz" && -f "trim/${sample_id}_trimmed_2.fastq.gz" ]]; then
