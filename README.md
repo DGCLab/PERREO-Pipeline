@@ -94,7 +94,7 @@ find . -type f \( -iname "*.fastq" -o -iname "*.fq" -o -iname "*.fastq.gz" -o -i
 # Workflow summary<br>
 
 The flow diagram describes the different steps taken into account in this pipeline.<br>
-<img width="1397" height="2119" alt="workflow_perreo" src="https://github.com/user-attachments/assets/42a1f2ca-2a60-4c45-9395-413ec1b9f8e4" />
+![workflow_perreo](https://github.com/user-attachments/assets/a737c6e9-a09d-457a-86ca-304b3e702e7f)
 
 
 <br>
@@ -105,6 +105,8 @@ PERREO provides three models that can be run depending on the sequencing technol
 PERREO SR-SE: For RNA-seq data generated with single-end short reads technology.<br>
 PERREO SR-PE: For RNA-seq data generated with paired-end short-reads technology.<br>
 PERREO LR: For direct RNA-seq data generated with Nanopore long-reads technology.<br>
+
+<img width="2437" height="875" alt="logos" src="https://github.com/user-attachments/assets/5240009a-2645-4fd1-9fff-7e5ced4cf3b5" />
 
 
 # General requirements<br>
