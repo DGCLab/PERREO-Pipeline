@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-repeat_annotation="$1"
+combined_annotation="$1"
 sample="$2"
 threads="$3"
 strandedness="$4"
@@ -10,7 +10,7 @@ strandedness="$4"
 echo "---------------------------------------------"
 echo "   Running StringTie2 short-reads Assembly"
 echo "---------------------------------------------"
-echo "Annotation: $repeat_annotation"
+echo "Annotation: $combined_annotation"
 echo "Threads: $threads"
 echo ""
 
@@ -46,7 +46,7 @@ fi
     stringtie "$BAM" \
         -L \
         -p "$threads" \
-        -G "$repeat_annotation" \
+        -G "$combined_annotation" \
         -o "$OUTPUT_GTF" \
         --fr \
 	-l perreo
@@ -57,7 +57,7 @@ fi
     stringtie "$BAM" \
         -L \
         -p "$threads" \
-        -G "$repeat_annotation" \
+        -G "$combined_annotation" \
         -o "$OUTPUT_GTF" \
         --rf \
 	-l perreo
