@@ -52,7 +52,6 @@ log2FC=${log2FC:-1.0}
 mismatch_align=${mismatch_align:-0.05}
 trimming_quality_threshold=${trimming_quality_threshold:-30}
 min_length_trim=${min_length_trim:-16}
-max_length_trim=${max_length_trim:-}
 prediction_model=${prediction_model:-yes}
 
 
@@ -132,10 +131,10 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
         # ------------ 1) TRIMMING READS ---------------------------
         case "$STRAND" in
           forward)
-            bash "$TRIM_FW_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming_type" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$max_length_trim"
+            bash "$TRIM_FW_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming_type" "$threads" "$trimming_quality_threshold" "$min_length_trim"
             ;;
           reverse)
-            bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming_type" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$max_length_trim"
+            bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming_type" "$threads" "$trimming_quality_threshold" "$min_length_trim"
             ;;
           *)
             echo "[WARN] $sample_id: unknown strandedness '$STRAND' (expected forward/reverse)" >&2
