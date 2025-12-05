@@ -15,6 +15,8 @@ MERGE_QUANT_SCRIPT="$CWD/scripts_PE/merge_quant.R"
 DEA_SCRIPT="$CWD/scripts_PE/dea.R"
 DEA_SCRIPT_multicond="$CWD/scripts_PE/dea_multicond.R"
 ASSEMBLY_SCRIPT="$CWD/scripts_PE/stringtie2.sh"   
+ASSEMBLY_SCRIPT_2="$CWD/scripts_PE/stringtie2_2.0.sh" 
+PREPDE_SCRIPT="$CWD/scripts_PE/prepDE.py3" 
 WGCNA_SCRIPT="$CWD/scripts_PE/WGCNA.R"         
 PRED_MODEL="$CWD/scripts_PE/prediction_model.R"     
 
@@ -297,6 +299,14 @@ fi
       fi
 done
 
+
+if [ ! -d "$CWD/Transcriptome_assembly_novels" ]; then
+
+mkdir $CWD/Transcriptome_assembly_novels
+
+fi
+
+bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$repeat_gtf" "$sample_list"
 
 
 
