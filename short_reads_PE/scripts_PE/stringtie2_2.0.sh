@@ -10,46 +10,32 @@ sample_list="$6"
 sample_list="$CWD/$sample_list"
 
 
-##############################
-# PARÁMETROS A EDITAR
-##############################
+# Folder where all the GTFs from stringtie are stored
+GTF_DIR="$CWD/Transcriptome_assembly"                       
 
-# Carpeta donde tienes TODOS los GTF de la 1ª pasada de StringTie
-GTF_DIR="$CWD/Transcriptome_assembly"                       # <-- tu carpeta con los .gtf de cada muestra
+# Genome GTF
+REF_GTF="$CWD/$genome_gtf"               
 
-# Anotación de genes SIN TEs (Gencode/Ensembl)
-REF_GTF="$CWD/$genome_gtf"               # pon aquí tu GTF de genes
-
-# Directorio con las muestras y sus BAM
-# Estructura esperada:
-# SAMPLES/<sample>/alignment/<sample>_Aligned.sortedByCoord.out.bam
+# SAMPLES directory
 SAMPLES_DIR="$CWD/SAMPLES"
 
-# Fichero RepeatMasker en BED (mismo genoma)
+# Repeats annotations
 RM_GTF="$CWD/$repat_gtf"
 
-# Salidas
-MERGELIST="mergelist.txt"
-MERGED_GTF="merged.gtf"
+# Outputs
 SECOND_DIR="$CWD/Transcriptome_assembly_novels"
+MERGELIST="$SECOND_DIR/mergelist.txt"
+MERGED_GTF="$SECOND_DIR/merged.gtf"
 
-# Hilos
-THREADS="$threads"
-
-# Ruta al prepDE.py
+# prepDE.py script location
 PREPDE_SCRIPT="$PREPDE_SCRIPT"
 
-##############################
-# 0) CREAR MERGELIST.TXT DESDE GTF_DIR
-##############################
+#Creating merge list from the GTFs stored in Transcriptome_assembly folder
 
-echo "[INFO] Creando mergelist.txt desde $GTF_DIR..."
 ls "$GTF_DIR"/*.gtf > "$MERGELIST"
-echo "[OK] mergelist.txt con $(wc -l < "$MERGELIST") GTF"
 
-##############################
-# 1) MERGE DE TRANSCRITOS
-##############################
+
+# 1) Performing stringtie --merge on all the GTFs
 
 echo "[INFO] Ejecutando stringtie --merge..."
 stringtie --merge \
@@ -59,25 +45,19 @@ stringtie --merge \
 
 echo "[OK] merged.gtf generado: $MERGED_GTF"
 
-##############################
-# 2) gffcompare PARA CLASS_CODE (NOVEL vs GENES)
-##############################
 
-echo "[INFO] Ejecutando gffcompare..."
+# 2) gffcompare for CLASS_CODE (NOVEL vs GENES)
+# This step is necessary to mark novels transcripts with respect to genome annotations
+
 gffcompare -r "$REF_GTF" -o gffcmp "$MERGED_GTF"
 
-echo "[OK] gffcmp.annotated.gtf generado (class_code, ref_gene_id, etc.)"
 
-##############################
-# 3) 2ª PASADA DE STRINGTIE CON merged.gtf
-#    (TODOS LOS GTF DIRECTAMENTE EN SECOND_DIR)
-##############################
+# 3) New stringtie analysis using the merge gtf
 
 mkdir -p "$SECOND_DIR"
 echo "sample,sample_gff" > sample_list.csv
 
-# sample_list: fichero con cabecera en la 1ª línea (p.ej. sample<TAB>condition<TAB>bam)
-# aquí solo usamos la 1ª columna (sample)
+# sample_list: to take the first column with sample_ids
 tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col; do
     sample_dir="$SAMPLES_DIR/$sample"
     [ -d "$sample_dir" ] || continue
@@ -86,7 +66,7 @@ tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col; do
 
     bam="$sample_dir/alignment/${sample}_Aligned.sortedByCoord.out.bam"
     if [ ! -f "$bam" ]; then
-        echo "[WARN] No se ha encontrado el BAM esperado: $bam. Se salta esta muestra."
+        echo "[WARN] Expected BAM not found: $bam. Sample skipped."
         continue
     fi
     echo "    BAM: $bam"
@@ -95,45 +75,44 @@ tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col; do
 
     stringtie "$bam" \
       -G "$MERGED_GTF" \
-      -e -B -p "$THREADS" \
+      -e -B -p "$threads" \
       -o "$out_gtf"
 
-    # Añadimos al sample_list.csv para prepDE.py
+    # Add to sample_list.csv for prepDE.py
     echo "${sample},${out_gtf}" >> sample_list.csv
 done
 
-##############################
-# 4) MATRICES DE CONTEOS CON prepDE.py
-##############################
+
+# 4) Generating count matrixes with prepDE.py3
 
 echo "[INFO] Ejecutando prepDE.py..."
 python "$PREPDE_SCRIPT" -i sample_list.csv
 
-echo "[OK] Generados gene_count_matrix.csv y transcript_count_matrix.csv"
+echo "[OK] gene_count_matrix.csv and transcript_count_matrix.csv generated"
 
-##############################
-# 5) SOLAPAMIENTO TRANSCRITOS–TE USANDO SOLO GTF
-##############################
 
-# 5.1. Exones de merged.gtf (transcritos observados)
-echo "[INFO] Extrayendo exones de merged.gtf..."
+# 5) Overlapping transcripts-TE using only GTF
+
+# 5.1. Exons of merged.gtf (observed transcripts)
+echo "[INFO] Extracting exons from merged.gtf..."
 awk '$3=="exon"' "$MERGED_GTF" > merged_exons.gtf
 
-# 5.2. Exones de repeatmasker.gtf (features de TE)
-echo "[INFO] Extrayendo exones de repeatmasker.gtf..."
+# 5.2. Exons of repeatmasker.gtf (repeats features)
+echo "[INFO] Extracting exons from repeats.gtf..."
 awk '$3=="exon"' "$RM_GTF" > repeat_exons.gtf
 
 # 5.3. bedtools intersect directamente sobre GTF (-wa -wb para conservar atributos)
-echo "[INFO] Intersectando exones de transcritos con exones de TE..."
+echo "[INFO] Intersecting transcripts and repeats exons..."
 bedtools intersect -wa -wb \
   -a merged_exons.gtf \
   -b repeat_exons.gtf \
   > TE_exon_overlap.gtf
 
-echo "[OK] Generado TE_exon_overlap.gtf (GTF+GTF con info de solapamiento)"
+
+echo "[OK] TE_exon_overlap.gtf generated (GTF + GTF with overlapping information"
 
 cat << 'EOF'
-[RESUMEN]
+[SUMMARY]
 - merged.gtf                 -> catálogo global de transcritos
 - gffcmp.annotated.gtf       -> class_code (novel vs genes)
 - ${SECOND_DIR}/*.gtf        -> 2ª pasada de StringTie (un GTF por muestra)
