@@ -10,7 +10,6 @@ trimming_type="$7"
 threads="$8"
 trimming_quality="$9"
 min_length="${10}"
-max_length="${11}"
 
 echo $sample_id
 echo $IN1
@@ -30,14 +29,14 @@ else
   if [[ -z "$adapt_r1" && -z "$adapt_r2" ]]; then
     echo 'Performing trimming without removing adapters(already removed)'
     cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
-        --trim-n -m "$min_length" -M "$max_length" \
+        --trim-n -m "$min_length" \
         -o "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" \
         -p "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" \
         "$IN1" "$IN2" > cutadapt.log 2>&1
   else
     echo 'Performing trimming removing adapters'
    cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
-        -a "$adapt_r1" -A "$adapt_r2" --trim-n -m "$min_length" -M "$max_length" \
+        -a "$adapt_r1" -A "$adapt_r2" --trim-n -m "$min_length" \
         -o "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" \
         -p "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" \
         "$IN1" "$IN2" > cutadapt.log 2>&1
