@@ -273,6 +273,10 @@ fi
 # ---------- 7) TRANSCRIPTOME ASSEMBLY ---------------------
 
 
+cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
+
+combined_annotations="$CWD/combined_annotations.gtf"
+
 if [ ! -d "$CWD/Transcriptome_assembly" ]; then
 
 mkdir $CWD/Transcriptome_assembly
@@ -287,7 +291,7 @@ fi
 
       if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
 
-          bash "$ASSEMBLY_SCRIPT" "$CWD/$repeat_gtf" "$sample_id" "$threads" "$STRAND"
+          bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
           
           cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
       
