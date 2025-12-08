@@ -74,10 +74,23 @@ tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col; do
 
     out_gtf="$SECOND_DIR/${sample}.gtf"
 
-    stringtie "$bam" \
+      if [ "$strandedness" = "forward" ]; then
+    echo "Using forward parameter"
+        stringtie "$bam" \
+      -G "$MERGED_GTF" \
+      -e -B -p "$threads" \
+      -o "$out_gtf" --fr
+    fi
+
+    if [ "$strandedness" = "reverse" ]; then
+    echo "Using reverse parameter"
+        stringtie "$bam" \
       -G "$MERGED_GTF" \
       -e -B -p "$threads" \
       -o "$out_gtf" --rf
+    fi
+
+
 
     # Add to sample_list.csv for prepDE.py
     echo "${sample},${out_gtf}" >> sample_list.csv
