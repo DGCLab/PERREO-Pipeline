@@ -8,6 +8,7 @@ genome_gtf="$4"
 repeat_gtf="$5"
 sample_list="$6"
 sample_list="$CWD/$sample_list"
+strandedness="$7"
 
 
 # Folder where all the GTFs from stringtie are stored
