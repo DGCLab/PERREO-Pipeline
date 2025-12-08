@@ -76,7 +76,7 @@ tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col; do
     stringtie "$bam" \
       -G "$MERGED_GTF" \
       -e -B -p "$threads" \
-      -o "$out_gtf"
+      -o "$out_gtf" --rf
 
     # Add to sample_list.csv for prepDE.py
     echo "${sample},${out_gtf}" >> sample_list.csv
