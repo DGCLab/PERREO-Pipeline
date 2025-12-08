@@ -95,9 +95,8 @@ find . -type f \( -iname "*.fastq" -o -iname "*.fq" -o -iname "*.fastq.gz" -o -i
 
 The flow diagram describes the different steps taken into account in this pipeline.<br>
 ![workflow_perreo](https://github.com/user-attachments/assets/a737c6e9-a09d-457a-86ca-304b3e702e7f)
-
-
 <br>
+
 # PERREO modes<br>
 
 PERREO provides three models that can be run depending on the sequencing technology used:<br>
@@ -275,15 +274,23 @@ Statistical analysis is performed by DESeq2 or edgeR functions using default thr
 8) Volcano plot for each contrast.<br>
 
 ## Transcriptome assembly
-Stringtie2 generates a GTF file for transcriptome assembly of each sample in the study. Strandedness has to be taken into account to perform the assembly. <br>
+Stringtie2 generates a GTF file for transcriptome assembly of each sample in the study using a combined GTF of genomic and repeat annotations as reference. Strandedness has to be taken into account to perform the assembly. <br>
 
 ```bash
 stringtie "$BAM" \
         -L \
         -p "$threads" \
-        -G "$repeat_annotation" \
+        -G "$combined_annotation" \
         -o "$OUTPUT_GTF" \
         --fr \ #rf is strandness=reverse
+```
+
+Then, stringtie2 is applied to merge the transcriptome assemblies in an unique table, and then, stringtie2 is again used to quantify only those transcripts that were stored in the merged file. <br>
+```bash
+    stringtie "$bam" \
+      -G "$MERGED_GTF" \
+      -e -B -p "$threads" \
+      -o "$out_gtf"
 ```
 
 ## Coexpression analysis
