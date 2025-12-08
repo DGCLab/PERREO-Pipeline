@@ -306,7 +306,7 @@ mkdir $CWD/Transcriptome_assembly_novels
 
 fi
 
-bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$repeat_gtf" "$sample_list"
+bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$repeat_gtf" "$sample_list" "$STRAND" 
 
 
 
