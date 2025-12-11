@@ -3,7 +3,7 @@
 
 # ANOTACIÓN (modifica si quieres otra)
 CWD="$1"
-repeat_annotation="$2"
+combined_annotation="$2"
 sample="$3"
 threads="$4"
 strandedness="$5"
@@ -11,7 +11,7 @@ strandedness="$5"
 echo "---------------------------------------------"
 echo "   Running StringTie2 Long-Reads Assembly"
 echo "---------------------------------------------"
-echo "Annotation: $repeat_annotation"
+echo "Annotation: $combined_annotation"
 echo "Threads: $threads"
 echo ""
 
@@ -46,7 +46,7 @@ fi
     stringtie "$BAM" \
         -L \
         -p "$threads" \
-        -G "$CWD/$repeat_annotation" \
+        -G "$combined_annotation" \
         -o "$OUTPUT_GTF" \
         --fr \
 	-l perreo
@@ -57,7 +57,7 @@ fi
     stringtie "$BAM" \
         -L \
         -p "$threads" \
-        -G "$CWD/$repeat_annotation" \
+        -G "$combined_annotation" \
         -o "$OUTPUT_GTF" \
         --rf \
 	-l perreo
