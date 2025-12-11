@@ -12,6 +12,8 @@ DEA_SCRIPT_multicond="$CWD/scripts_long_reads/dea_multicond.R"
 PRED_MODEL="$CWD/scripts_long_reads/prediction_model.R"     
 WGCNA_SCRIPT="$CWD/scripts_long_reads/WGCNA.R"     
 ASSEMBLY_SCRIPT="$CWD/scripts_long_reads/stringtie2.sh"   
+ASSEMBLY_SCRIPT_2="$CWD/scripts_long_reads/stringtie2_2.0.sh" 
+PREPDE_SCRIPT="$CWD/scripts_long_reads/prepDE.py3" 
 QUANT_SCRIPT="$CWD/scripts_long_reads/quant.R"       
 MERGE_QUANT_SCRIPT="$CWD/scripts_long_reads/merge_quant.R" 
       
@@ -200,6 +202,9 @@ fi
 
 # ---------- 6) TRANSCRIPTOME ASSEMBLY ------------------------
 
+cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
+
+combined_annotations="$CWD/combined_annotations.gtf"
 
 if [ ! -d "$CWD/Transcriptome_assembly" ]; then
 
@@ -215,12 +220,20 @@ fi
 
       if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
 
-          bash "$ASSEMBLY_SCRIPT" "$CWD" "$repeat_gtf" "$sample_id" "$threads" "$STRAND"
+          bash "$ASSEMBLY_SCRIPT" "$CWD" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
           
           cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
       fi
     done
 
+
+if [ ! -d "$CWD/Transcriptome_assembly_novels" ]; then
+
+mkdir $CWD/Transcriptome_assembly_novels
+
+fi
+
+bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$repeat_gtf" "$sample_list" "$STRAND" 
 
 
 
