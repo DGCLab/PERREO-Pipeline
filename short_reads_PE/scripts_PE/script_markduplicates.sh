@@ -26,6 +26,9 @@ remove_duplicates="$4"
          M="$MAP_DIR/${sample_id}_marked_dup_metrics_STAR.txt" \
          REMOVE_DUPLICATES=$remove_duplicates
 
+       samtools sort -@ 8 $MAP_DIR/${sample_id}_marked_duplicates_STAR.bam -o $MAP_DIR/${sample_id}_marked_duplicates_STAR_sorted.bam
+       samtools index $MAP_DIR/${sample_id}_marked_duplicates_STAR_sorted.bam
+
        echo "Procesamiento completado para $sample_id"
     
        # Returning to base directory for the next iteration
