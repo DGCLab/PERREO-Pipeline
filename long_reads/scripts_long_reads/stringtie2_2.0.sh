@@ -65,7 +65,7 @@ tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col; do
 
     echo "[INFO] Procesando muestra $sample"
 
-    bam="$sample_dir/alignment/${sample}_marked_duplicates_STAR.bam"
+    bam="$sample_dir/alignment/${sample}.bam"
     if [ ! -f "$bam" ]; then
         echo "[WARN] Expected BAM not found: $bam. Sample skipped."
         continue
