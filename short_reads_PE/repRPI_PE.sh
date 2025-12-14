@@ -284,7 +284,7 @@ mkdir $CWD/Transcriptome_assembly
 
 fi
  
- awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
+ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
       [[ -z "$sample_id" ]] && continue
 
