@@ -46,12 +46,13 @@ msg_error <- function(x) {
 }
 
 
-
+suppressPackageStartupMessages({
 library(WGCNA)
 library(tidyverse)     
 library(magrittr) 
 library(scales)
 library(stringr)
+})
 
 samplesheet <- read.table(paste0(cwd,"/",sample_list),sep="\t",header = T)
 
@@ -76,9 +77,9 @@ targetR2 <- 0.9
 softPower <- sft$fitIndices$Power[which(sft$fitIndices$SFT.R.sq > targetR2)[1]]
 if (is.na(softPower)) {
   softPower <- max(sft$fitIndices$Power)
-  msg_warn("No power reaches R² ≥ ", targetR2, ". Using the maximum: ", softPower)
+  msg_warn(paste0("No power reaches R² ≥ ", targetR2, ". Using the maximum: ", softPower))
 } else {
-  msg_ok("SoftPower automatically selected: ", softPower)
+  msg_ok(paste0("SoftPower automatically selected: ", softPower))
 }
 
 adjacency = adjacency(expression, power = softPower, type = "unsigned") #Calculating the adjacency matrix
@@ -260,7 +261,8 @@ topModuleColors
 mergedColors = labels2colors(netwk$colors)
 geneNames <- names(mergedColors)
 
-library(WGCNA)
+suppressPackageStartupMessages({
+library(WGCNA)})
 
 stopifnot(all(rownames(adjacency) == geneNames),
           all(colnames(adjacency) == geneNames))

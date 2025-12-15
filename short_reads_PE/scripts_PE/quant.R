@@ -54,9 +54,10 @@ if(strandness=="reverse"){
   strandness_fc = 2
 }
 
-
+suppressPackageStartupMessages({
 library(Rsubread)
 library(openxlsx)
+})
 
 if (!file.exists(paste0(sample_dir,"_quant.txt"))){
      quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T, isPairedEnd = TRUE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,strandSpecific = strandness_fc)

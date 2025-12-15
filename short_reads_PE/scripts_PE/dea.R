@@ -93,6 +93,8 @@ library(ggrepel)
 library(grid)
 library(rtracklayer)
 library(EDASeq)
+library(edgeR)
+library(RUVSeq)
 })  
 
 ## Loading the metadata:
@@ -161,7 +163,6 @@ if(batch == TRUE){
   if(ruvg == TRUE){
     
   # Extracting counts data to build the EdgeR object
-  library(edgeR)
   msg_info("Applying RUVg...")
   
   # Normalizing the object before applying RUVg algorithm
@@ -189,8 +190,6 @@ if(batch == TRUE){
     normalizedCounts = cpm(mat), # For PCA pre-BATCH
     phenoData = data.frame(coldata, row.names = colnames(cts)))
   
-  library(RUVSeq)
-  
   res <- RUVg(x=set, cIdx=empirical, k=k_num ,isLog = F)
   mat.cpm.ruv <- res@assayData$normalizedCounts # For PCA post-BATCH
   
@@ -201,7 +200,6 @@ if(batch == TRUE){
   
   
   if (method == "edgeR") {
-    library(edgeR)
     
     msg_info("DEA is being performed by edgeR")
     
@@ -225,7 +223,6 @@ if(batch == TRUE){
     mat.dge <- cpm(dge) # For prediction model
     
   } else if (method == "DESeq2") {
-    library(DESeq2)
     
     msg_info("DEA is being performed by DESeq2")
     
@@ -280,7 +277,6 @@ if(batch == TRUE){
   
   } else {
     if (method == "edgeR") {
-      library(edgeR)
       
       msg_info("DEA is being performed by edgeR")
       
@@ -300,7 +296,6 @@ if(batch == TRUE){
       mat.dge <- cpm(dge) # For prediction model
       
     } else if (method == "DESeq2") {
-      library(DESeq2)
       
       msg_info("DEA is being performed by DESeq2")
       
@@ -355,7 +350,6 @@ if(batch == TRUE){
   
 } else {
   if (method == "edgeR") {
-    library(edgeR)
     
     msg_info("DEA is being performed by edgeR")
     
@@ -395,7 +389,6 @@ if(batch == TRUE){
     ggsave(paste0(DEA_results_DIR,"/pca.pdf"),plot = p, width = 8, height = 6, dpi = 300)
     
   } else if (method == "DESeq2") {
-    library(DESeq2)
     
     msg_info("DEA is being performed by DESeq2")
     
@@ -563,6 +556,8 @@ annotation_col <- data.frame(
 )
 rownames(annotation_col) <- colnames(expression_differentials)
 
+expression_differentials <- expression_differentials[,order(annotation_col)]
+
 cond_levels <- levels(annotation_col$Condition)
 base_colors <- c("#804A45", "#BAC6D4","#F5A553", "#2E8B57","#455F80", "#323840", "#FFF1C2")
 ann_colors <- list(
@@ -637,7 +632,7 @@ ggsave(paste0(DEA_results_DIR,"/BarPlotUpDown.pdf"),
 ###############################################################################
 
 ## Read & Preprocess GTF
-msg_info("Loading: ", repeatmasker_annotation_gtf)
+msg_info(paste0("Loading: ", repeatmasker_annotation_gtf))
 
 gtf <- rtracklayer::readGFF(repeatmasker_annotation_gtf)
 

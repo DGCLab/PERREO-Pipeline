@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Setting up colors for messages
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/logging.sh"
 
@@ -7,10 +9,6 @@ combined_annotation="$1"
 sample="$2"
 threads="$3"
 strandedness="$4"
-
-# Setting up colors for messages
-
-source "${CWD}/logging.sh"
 
 # Checking samples folders
 if [ $# -eq 0 ]; then

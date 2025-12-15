@@ -96,6 +96,7 @@ library(rtracklayer)
 library(edgeR)
 library(limma)
 library(EDASeq)
+library(RUVSeq)
 })
   
 # Loading the metadata:
@@ -184,7 +185,6 @@ if(batch == TRUE){
     normalizedCounts = cpm(mat), # For PCA pre-BATCH
     phenoData = data.frame(coldata, row.names = colnames(cts)))
   
-  library(RUVSeq)
   
   res <- RUVg(x=set, cIdx=neg_controls, k=k_num ,isLog = F)
   mat.cpm.ruv <- res@assayData$normalizedCounts
@@ -195,7 +195,7 @@ if(batch == TRUE){
   sample_list <- cbind(sample_list, Wdf)
   
   if (method == "edgeR") {
-    library(edgeR)
+
     msg_info("DEA is being performed by EdgeR")
     
     dge <- DGEList(counts = mat, samples = samples)
@@ -264,7 +264,6 @@ if(batch == TRUE){
     }
     
   } else if (method == "DESeq2") {
-    library(DESeq2)
     
     msg_info("DEA is being performed by DESeq2")
     
@@ -303,7 +302,7 @@ if(batch == TRUE){
   
   } else {
    if (method == "edgeR") {
-    library(edgeR)
+
     msg_info("DEA is being performed by EdgeR")
     
     dge <- DGEList(counts = mat, samples = samples)
@@ -372,7 +371,6 @@ if(batch == TRUE){
     
   } else if (method == "DESeq2") 
     {
-    library(DESeq2)
     
     msg_info("DEA is being performed by DESeq2")
     
@@ -447,7 +445,6 @@ if(batch == TRUE){
 
   } else {
   if (method == "edgeR") {
-    library(edgeR)
     msg_info("DEA is being performed by EdgeR")
     
     dge <- DGEList(counts = mat, samples = samples)
@@ -543,7 +540,6 @@ if(batch == TRUE){
     
   } else if (method == "DESeq2") 
   {
-    library(DESeq2)
     
     msg_info("DEA is being performed by DESeq2")
     
@@ -744,6 +740,8 @@ annotation_col <- data.frame(
 )
 rownames(annotation_col) <- colnames(expression_differentials)
 
+expression_differentials <- expression_differentials[,order(annotation_col)]
+
 cond_levels <- levels(annotation_col$Condition)
 base_colors <- c("#804A45", "#BAC6D4","#F5A553", "#2E8B57","#455F80", "#323840", "#FFF1C2")
 ann_colors <- list(
@@ -823,7 +821,7 @@ ggsave(paste0(DEA_results_DIR,"/BarPlotUpDown_", nm,".pdf"),
 ###############################################################################
 
 ## Read & Preprocess GTF
-msg_info("Loading: ", repeatmasker_annotation_gtf)
+msg_info(paste0("Loading: ", repeatmasker_annotation_gtf))
 
 gtf <- rtracklayer::readGFF(repeatmasker_annotation_gtf)
 
