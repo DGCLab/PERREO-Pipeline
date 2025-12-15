@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
 #set -euo pipefail
 
-threads="$1"
-PREPDE_SCRIPT="$2"
-CWD="$3"
-genome_gtf="$4"
-repeat_gtf="$5"
-sample_list="$6"
-sample_list="$CWD/$sample_list"
-strandedness="$7"
+# Setting up colors for messages
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/logging.sh"
 
 
 # Folder where all the GTFs from stringtie are stored
@@ -38,13 +34,13 @@ ls "$GTF_DIR"/*.gtf > "$MERGELIST"
 
 # 1) Performing stringtie --merge on all the GTFs
 
-echo "[INFO] Ejecutando stringtie --merge..."
+msg_info "[STRINGTIE2] Executing --merge..."
 stringtie --merge \
   -G "$REF_GTF" \
   -o "$MERGED_GTF" \
   "$MERGELIST"
 
-echo "[OK] merged.gtf generado: $MERGED_GTF"
+msg_ok "[STRINGTIE2] Generated: $MERGED_GTF"
 
 
 # 2) gffcompare for CLASS_CODE (NOVEL vs GENES)
@@ -63,19 +59,19 @@ tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col str
     sample_dir="$SAMPLES_DIR/$sample"
     [ -d "$sample_dir" ] || continue
 
-    echo "[INFO] Procesando muestra $sample"
+    msg_info "[STRINGTIE2] Processing $sample"
 
     bam="$sample_dir/alignment/${sample}_marked_duplicates_STAR.bam"
     if [ ! -f "$bam" ]; then
-        echo "[WARN] Expected BAM not found: $bam. Sample skipped."
+        msg_warn "[STRINGTIE2] Expected BAM not found: $bam. Sample skipped."
         continue
     fi
-    echo "    BAM: $bam"
+    msg_ok "[STRINGTIE2] BAM: $bam"
 
     out_gtf="$SECOND_DIR/${sample}.gtf"
 
       if [ "$strandedness" = "forward" ]; then
-    echo "Using forward parameter"
+    msg_info "[STRINGTIE2] Using forward parameter"
         stringtie "$bam" \
       -G "$MERGED_GTF" \
       -e -B -p "$threads" \
@@ -83,7 +79,7 @@ tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col str
     fi
 
     if [ "$strandedness" = "reverse" ]; then
-    echo "Using reverse parameter"
+    msg_info "[STRINGTIE2] Using reverse parameter"
         stringtie "$bam" \
       -G "$MERGED_GTF" \
       -e -B -p "$threads" \
@@ -99,40 +95,40 @@ done
 
 # 4) Generating count matrixes with prepDE.py3
 
-echo "[INFO] Ejecutando prepDE.py..."
+msg_info "[STRINGTIE2] Executing prepDE.py..."
 python "$PREPDE_SCRIPT" -i sample_list.csv
 
-echo "[OK] gene_count_matrix.csv and transcript_count_matrix.csv generated"
+msg_ok "[STRINGTIE2] gene_count_matrix.csv and transcript_count_matrix.csv generated"
 
 
 # 5) Overlapping transcripts-TE using only GTF
 
 # 5.1. Exons of merged.gtf (observed transcripts)
-echo "[INFO] Extracting exons from merged.gtf..."
+msg_info "[STRINGTIE2] Extracting exons from merged.gtf..."
 awk '$3=="exon"' "$MERGED_GTF" > merged_exons.gtf
 
 # 5.2. Exons of repeatmasker.gtf (repeats features)
-echo "[INFO] Extracting exons from repeats.gtf..."
+msg_info "[STRINGTIE2] Extracting exons from repeats.gtf..."
 awk '$3=="exon"' "$RM_GTF" > repeat_exons.gtf
 
 # 5.3. bedtools intersect directamente sobre GTF (-wa -wb para conservar atributos)
-echo "[INFO] Intersecting transcripts and repeats exons..."
+msg_info "[STRINGTIE2] Intersecting transcripts and repeats exons..."
 bedtools intersect -wa -wb \
   -a merged_exons.gtf \
   -b repeat_exons.gtf \
   > TE_exon_overlap.gtf
 
 
-echo "[OK] TE_exon_overlap.gtf generated (GTF + GTF with overlapping information"
+msg_ok "[STRINGTIE2] TE_exon_overlap.gtf generated (GTF + GTF with overlapping information"
 
 cat << 'EOF'
 [SUMMARY]
-- merged.gtf                 -> catálogo global de transcritos
-- gffcmp.annotated.gtf       -> class_code (novel vs genes)
-- ${SECOND_DIR}/*.gtf        -> 2ª pasada de StringTie (un GTF por muestra)
+- merged.gtf                 -> global transcript catalog
+- gffcmp.annotated.gtf       -> class_code (novel vs known genes)
+- ${SECOND_DIR}/*.gtf        -> StringTie 2nd pass (one GTF per sample)
 - gene_count_matrix.csv
 - transcript_count_matrix.csv
-- merged_exons.gtf           -> exones de transcritos (StringTie)
-- repeat_exons.gtf           -> exones de TE
-- TE_exon_overlap.gtf        -> lineas exon_tx + exon_TE solapados
+- merged_exons.gtf           -> transcript exons (StringTie)
+- repeat_exons.gtf           -> TE exons
+- TE_exon_overlap.gtf        -> overlapping exon_tx + exon_TE entries
 EOF

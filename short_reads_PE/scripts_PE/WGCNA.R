@@ -5,6 +5,48 @@ cwd <- args[[2]]
 sample_list <- args[[3]]
 coexpression_dir <- args[[4]]
 
+## ==============================
+## Logging coloured (R)
+## ==============================
+
+use_color <- interactive() || Sys.getenv("TERM") != ""
+
+if (use_color) {
+  COL_INFO  <- "\033[34m"
+  COL_OK    <- "\033[32m"
+  COL_WARN  <- "\033[33m"
+  COL_ERR   <- "\033[31m"
+  COL_BOLD  <- "\033[1m"
+  COL_RESET <- "\033[0m"
+  
+  SYM_OK   <- "✔"
+  SYM_WARN <- "⚠"
+  SYM_ERR  <- "✖"
+} else {
+  COL_INFO <- COL_OK <- COL_WARN <- COL_ERR <- COL_BOLD <- COL_RESET <- ""
+  SYM_OK   <- "[OK]"
+  SYM_WARN <- "[WARN]"
+  SYM_ERR  <- "[ERROR]"
+}
+
+msg_info <- function(x) {
+  cat(COL_INFO, COL_BOLD, "[INFO] ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_ok <- function(x) {
+  cat(COL_OK, COL_BOLD, SYM_OK, " ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_warn <- function(x) {
+  cat(COL_WARN, COL_BOLD, SYM_WARN, " ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_error <- function(x) {
+  cat(COL_ERR, COL_BOLD, SYM_ERR, " ", COL_RESET, x, "\n", sep = "")
+}
+
+
+
 library(WGCNA)
 library(tidyverse)     
 library(magrittr) 
@@ -34,9 +76,9 @@ targetR2 <- 0.9
 softPower <- sft$fitIndices$Power[which(sft$fitIndices$SFT.R.sq > targetR2)[1]]
 if (is.na(softPower)) {
   softPower <- max(sft$fitIndices$Power)
-  message("⚠️ Ninguna potencia alcanza R² ≥ ", targetR2, ". Usando la máxima: ", softPower)
+  msg_warn("No power reaches R² ≥ ", targetR2, ". Using the maximum: ", softPower)
 } else {
-  message("✅ SoftPower elegido automáticamente: ", softPower)
+  msg_ok("SoftPower automatically selected: ", softPower)
 }
 
 adjacency = adjacency(expression, power = softPower, type = "unsigned") #Calculating the adjacency matrix
@@ -65,7 +107,8 @@ netwk <- blockwiseModules(expression,
 pdf(paste0(coexpression_dir,"/modules_dendrogram.pdf"), width = 8, height = 8)
 
 if (all(labels2colors(netwk$colors)=="grey")){
-    stop('Gene coexpression analysis is not performed as there are no coexpression modules after applying "blockwiseModules" function')
+  msg_error('Gene coexpression analysis is not performed as there are no coexpression modules after applying "blockwiseModules" function')
+  stop("The condition is not met.", call. = FALSE)
 }
 
 mergedColors = labels2colors(netwk$colors)

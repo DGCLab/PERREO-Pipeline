@@ -7,11 +7,45 @@ threads <- as.integer(args[[4]])
 DEA_results <- args[[5]]
 sample_list <- args[[6]]
 
-print(GLOBAL_DIR)
-print(REP_GTF_PATH)
-print(threads)
-print(DEA_results)
+## ==============================
+## Logging coloured (R)
+## ==============================
 
+use_color <- interactive() || Sys.getenv("TERM") != ""
+
+if (use_color) {
+  COL_INFO  <- "\033[34m"
+  COL_OK    <- "\033[32m"
+  COL_WARN  <- "\033[33m"
+  COL_ERR   <- "\033[31m"
+  COL_BOLD  <- "\033[1m"
+  COL_RESET <- "\033[0m"
+  
+  SYM_OK   <- "✔"
+  SYM_WARN <- "⚠"
+  SYM_ERR  <- "✖"
+} else {
+  COL_INFO <- COL_OK <- COL_WARN <- COL_ERR <- COL_BOLD <- COL_RESET <- ""
+  SYM_OK   <- "[OK]"
+  SYM_WARN <- "[WARN]"
+  SYM_ERR  <- "[ERROR]"
+}
+
+msg_info <- function(x) {
+  cat(COL_INFO, COL_BOLD, "[INFO] ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_ok <- function(x) {
+  cat(COL_OK, COL_BOLD, SYM_OK, " ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_warn <- function(x) {
+  cat(COL_WARN, COL_BOLD, SYM_WARN, " ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_error <- function(x) {
+  cat(COL_ERR, COL_BOLD, SYM_ERR, " ", COL_RESET, x, "\n", sep = "")
+}
 
 # Required packages
 library(readr)
@@ -61,10 +95,9 @@ todos_iguales <- all(sapply(txt_files, function(tab) {
 }))
 
 if (todos_iguales) {
-  message("✅ All the tables have the same rownames order.")
+  msg_ok("[FEATURECOUNTS] All the tables have the same rownames order.")
 } else {
-  message("⚠️ Tables do NOT have the same rownames order..")
-  
+  msg_warn("[FEATURECOUNTS] Tables do NOT have the same rownames order..")
 }
 
 
@@ -85,7 +118,8 @@ if (todos_iguales) {
   write.table(countData, "count_data.txt",row.names = T)
 
 }else{
-  stop("❌ The condition is not met. Stopping the execution.")
+  msg_error("[FEATURECOUNTS] The condition is not met. Stopping the execution.")
+  stop("[FEATURECOUNTS] The condition is not met.", call. = FALSE)
 }
 
 

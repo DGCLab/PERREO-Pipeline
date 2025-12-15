@@ -1,23 +1,20 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/logging.sh"
 
 combined_annotation="$1"
 sample="$2"
 threads="$3"
 strandedness="$4"
 
+# Setting up colors for messages
 
-echo "---------------------------------------------"
-echo "   Running StringTie2 short-reads Assembly"
-echo "---------------------------------------------"
-echo "Annotation: $combined_annotation"
-echo "Threads: $threads"
-echo ""
+source "${CWD}/logging.sh"
 
 # Checking samples folders
 if [ $# -eq 0 ]; then
-    echo "ERROR: No has especificado carpetas."
-    echo "Uso: bash run_stringtie.sh carpeta1 carpeta2 ..."
+    msg_error "[STRINGTIE2] You didn’t specify any directories."
     exit 1
 fi
 
@@ -28,10 +25,10 @@ fi
     BAM=$(find "$sample/alignment" -maxdepth 1 -name "*marked_duplicates_STAR.bam" | head -n 1)
 
     if [ -z "$BAM" ]; then
-        echo "  ERROR: NO .bam found inside $sample"
+        msg_error "[STRINGTIE2] No .bam found inside $sample"
     fi
 
-    echo "  BAM found: $BAM"
+    msg_ok "[STRINGTIE2] BAM found: $BAM"
 
     # Basename of the folder
     BASENAME=$(basename "$sample")
@@ -39,10 +36,10 @@ fi
     # Output name
     OUTPUT_GTF="$sample/${BASENAME}_transcriptome.gtf"
 
-    echo "  Running StringTie..."
+    msg_info "[STRINGTIE2] Running StringTie..."
 
     if [ "$strandedness" = "forward" ]; then
-    echo "Using forward parameter"
+    msg_info "[STRINGTIE2] Using forward parameter"
     stringtie "$BAM" \
         -L \
         -p "$threads" \
@@ -53,7 +50,7 @@ fi
     fi
 
     if [ "$strandedness" = "reverse" ]; then
-    echo "Using reverse parameter"
+    msg_info "[STRINGTIE2] Using reverse parameter"
     stringtie "$BAM" \
         -L \
         -p "$threads" \
@@ -63,9 +60,8 @@ fi
 	-l perreo
     fi
 
-    echo "  ✔ Transcriptome generated: $OUTPUT_GTF"
-    echo ""
+    msg_ok "[STRINGTIE2] Transcriptome generated: $OUTPUT_GTF"
 
-echo "---------------------------------------------"
-echo "   FINISHED"
-echo "---------------------------------------------"
+msg_info "---------------------------------------------"
+msg_info "   FINISHED"
+msg_info "---------------------------------------------"

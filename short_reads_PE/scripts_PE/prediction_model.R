@@ -9,6 +9,39 @@ dir.create(paste0(CWD,"/prediction_models"))
 prediction_models_dir <- paste0(CWD,"/prediction_models/")
 
 
+## ==============================
+## Logging coloured (R)
+## ==============================
+
+use_color <- interactive() || Sys.getenv("TERM") != ""
+
+if (use_color) {
+  COL_INFO  <- "\033[34m"
+  COL_OK    <- "\033[32m"
+  COL_WARN  <- "\033[33m"
+  COL_ERR   <- "\033[31m"
+  COL_BOLD  <- "\033[1m"
+  COL_RESET <- "\033[0m"
+  
+  SYM_OK   <- "✔"
+  SYM_WARN <- "⚠"
+  SYM_ERR  <- "✖"
+} else {
+  COL_INFO <- COL_OK <- COL_WARN <- COL_ERR <- COL_BOLD <- COL_RESET <- ""
+  SYM_OK   <- "[OK]"
+  SYM_WARN <- "[WARN]"
+  SYM_ERR  <- "[ERROR]"
+}
+
+msg_info <- function(x) {
+  cat(COL_INFO, COL_BOLD, "[INFO] ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_error <- function(x) {
+  cat(COL_ERR, COL_BOLD, SYM_ERR, " ", COL_RESET, x, "\n", sep = "")
+}
+
+
 library(mlbench)
 library(caret)
 library(readxl)
@@ -30,7 +63,8 @@ rownames(data) <- rownames
 
 #Assigning condition vector
 if (!identical(colnames(data),samplesheet$sample)){
-  stop("Sample-ids order in expression matriz and metadata does not match")
+  msg_error("Sample-ids order in expression matriz and metadata does not match")
+  stop("The condition is not met.", call. = FALSE)
 }
 
 data <- t(data)
@@ -68,7 +102,7 @@ allowParallel=TRUE)
 
 if (length(unique(condition))>2){
 
-print("Running RandomForest...")
+msg_info("[1/2] Running RandomForest...")
 
 set.seed(123)
 
@@ -76,12 +110,13 @@ set.seed(123)
 rf_model <- train(condition ~ ., data=data, method="rf",metric="Accuracy",trControl=control)
 
 
-print("Running GLMnet...")
+msg_info("[2/2] Running GLMnet...")
 
 set.seed(123)
 glmnet_model <- train(condition ~ ., data=data, method="glmnet",metric="Accuracy",trControl=control)
 }else{
-print("Running RandomForest...")
+  
+msg_info("[1/2] Running RandomForest...")
 
 set.seed(123)
 
@@ -89,7 +124,7 @@ set.seed(123)
 rf_model <- train(condition ~ ., data=data, method="rf",metric="ROC",trControl=control)
 
 
-print("Running GLMnet...")
+msg_info("[2/2] Running GLMnet...")
 
 set.seed(123)
 glmnet_model <- train(condition ~ ., data=data, method="glmnet",metric="ROC",trControl=control)

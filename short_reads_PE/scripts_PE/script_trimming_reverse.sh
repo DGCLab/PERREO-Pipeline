@@ -11,29 +11,37 @@ threads="$8"
 trimming_quality="$9"
 min_length="${10}"
 
-echo $sample_id
-echo $IN1
-echo $IN2
-echo $TRIM_DIR
-echo $adapt_r1
-echo $adapt_r2
-echo $trimming_type
-echo $threads
-echo $trimming_quality
+# Setting up colors for messages
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/logging.sh"
+
+####
+
+msg_info $sample_id
+msg_info $IN1
+msg_info $IN2
+msg_info $TRIM_DIR
+msg_info $adapt_r1
+msg_info $adapt_r2
+msg_info $trimming_type
+msg_info $threads
+msg_info $trimming_quality
+msg_info $min_length
 
 #Run cutadapt
 if [[ -f "trim/${sample_id}_trimmed_1.fastq.gz" && -f "trim/${sample_id}_trimmed_2.fastq.gz" ]]; then
-    echo "✅ Files already exist in trim folder, creation omitted."
+    msg_ok "[CUTADAPT] Files already exist in trim folder, creation omitted."
 else
   if [[ -z "$adapt_r1" && -z "$adapt_r2" ]]; then
-    echo 'Performing trimming without removing adapters(already removed)'
+    msg_info '[CUTADAPT] Performing trimming without removing adapters(already removed)'
     cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
         --trim-n -m "$min_length" \
         -o "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" \
         -p "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" \
         "$IN1" "$IN2" > cutadapt.log 2>&1
   else
-    echo 'Performing trimming removing adapters'
+   msg_info '[CUTADAPT] Performing trimming removing adapters'
    cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
         -a "$adapt_r1" -A "$adapt_r2" --trim-n -m "$min_length" \
         -o "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" \
@@ -45,7 +53,7 @@ else
 
 
   if [[ "$trimming_type" == "trimming_extra" ]]; then
-       echo "→ Performing extra trimming"
+       msg_info "[CUTADAPT] → Performing extra trimming"
        gzip "${TRIM_DIR}/${sample_id}_trimmed_1.fastq"
        gzip "${TRIM_DIR}/${sample_id}_trimmed_2.fastq"
            
@@ -60,11 +68,11 @@ else
 
 
        else
-          echo "ERROR: Trimmed files not found"
+          msg_error "[CUTADAPT] Trimmed files not found"
        fi 
    
   else
-       echo "→ Skipping extra trimming"
+       msg_info "[CUTADAPT] → Skipping extra trimming"
        
   fi
 fi

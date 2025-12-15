@@ -4,6 +4,13 @@ set -euo pipefail
 #Defining current path
 CWD="$(pwd)"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/scripts_PE/logging.sh"
+
+# Create .log
+exec > >(tee -a "${SCRIPT_DIR}/pipeline.log") \
+     2> >(tee -a "${SCRIPT_DIR}/pipeline.err" >&2)
+
 # Scripts paths that already exist (ajusta nombres/paths)
 TRIM_FW_SCRIPT="$CWD/scripts_PE/script_trimming_forward.sh"   
 TRIM_RV_SCRIPT="$CWD/scripts_PE/script_trimming_reverse.sh"
@@ -20,7 +27,7 @@ PREPDE_SCRIPT="$CWD/scripts_PE/prepDE.py3"
 WGCNA_SCRIPT="$CWD/scripts_PE/WGCNA.R"         
 PRED_MODEL="$CWD/scripts_PE/prediction_model.R"     
 
-  # Parsing arguments
+# Parsing arguments
 while [[ $# -gt 0 ]]; do
   case $1 in
       -sample_list) sample_list="$2"; shift 2 ;;
@@ -59,30 +66,34 @@ prediction_model=${prediction_model:-yes}
 
 # Function for running the analysis with all the samples
 
+msg_info "Starting PERREO pipeline"
+
 run_pipeline_sample() {
-  echo " ----- Pipeline paramters summary -----"
-  echo "samplesheet: $sample_list"
-  echo "Reference: $reference_genome"
-  echo "GTF: $genome_gtf"
-  echo "Repeats: $repeat_gtf"
-  echo "Threads: $threads"
-  echo "R1 adaptor: $adapt_r1"
-  echo "R2 adaptor: $adapt_r2"
-  echo "trimming type: $trimming_type"
-  echo "trimming_quality_threshold: $trimming_quality_threshold" 
-  echo "minimum_length_trim: $min_length_trim"
-  echo "mismatch_align type: $mismatch_align"
-  echo "Proyect: $project_name"
-  echo "Remove duplicates: $remove_duplicates"
-  echo "Batch effect: $batch_effect"
-  echo "Method: $method"
-  echo "log2FC: $log2FC"
-  echo "FDR: $FDR"
+  msg_info " ----- Pipeline paramters summary -----"
+  msg_info "samplesheet: ${GREEN}$sample_list${RESET}"
+  msg_info "Reference: ${GREEN}$reference_genome${RESET}"
+  msg_info "GTF: ${GREEN}$genome_gtf${RESET}"
+  msg_info "Repeats: ${GREEN}$repeat_gtf${RESET}"
+  msg_info "Threads: ${GREEN}$threads${RESET}"
+  msg_info "R1 adaptor: ${GREEN}$adapt_r1${RESET}"
+  msg_info "R2 adaptor: ${GREEN}$adapt_r2${RESET}"
+  msg_info "trimming type: ${GREEN}$trimming_type${RESET}"
+  msg_info "trimming_quality_threshold: ${GREEN}$trimming_quality_threshold${RESET}" 
+  msg_info "minimum_length_trim: ${GREEN}$min_length_trim${RESET}"
+  msg_info "mismatch_align type: ${GREEN}$mismatch_align${RESET}"
+  msg_info "Proyect: ${GREEN}$project_name${RESET}"
+  msg_info "Remove duplicates: ${GREEN}$remove_duplicates${RESET}"
+  msg_info "Batch effect: ${GREEN}$batch_effect${RESET}"
+  msg_info "Method: ${GREEN}$method${RESET}"
+  msg_info "log2FC: ${GREEN}$log2FC${RESET}"
+  msg_info "FDR: ${GREEN}$FDR${RESET}"
+
+###
 
 if [ -d "genome_index" ]; then
-  echo "✅ Genome index already exists in genome_index, creation omitted."
+  msg_ok "Genome index already exists in genome_index, creation omitted."
 else
-  echo "Creating genome index..."
+  msg_info "[STAR] Creating genome index..."
   STAR --runMode genomeGenerate --runThreadN $threads --genomeDir genome_index --genomeFastaFiles "$reference_genome" --sjdbGTFfile "$genome_gtf" --sjdbOverhang 100
 fi
 
@@ -102,7 +113,7 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
     STRAND=$(echo "$STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
     CONDITION=$(echo "${CONDITION:-}" | xargs)
 
-    echo "Processing $sample_id with strandedness=$STRAND and condition=$CONDITION"
+    msg_info "[CUTADAPT] Processing ${GREEN}$sample_id${RESET} with strandedness=${GREEN}$STRAND${RESET} and condition=${GREEN}$CONDITION${RESET}"
 
     # Path per sample
     SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
@@ -115,16 +126,13 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
     mkdir -p "$SAMPLE_DIR"
 
     # Enter the sample folder
-    cd "$SAMPLE_DIR" || { echo "Error: Unable to enter in $SAMPLE_DIR"; exit 1; }
+    cd "$SAMPLE_DIR" || { msg_error "[CUTADAPT] Unable to enter in $SAMPLE_DIR"; exit 1; }
 
     # Checking the raw inputs
     if [[ ! -f "$IN1" || ! -f "$IN2" ]]; then
-        echo "⚠️  Raw files not found for $sample_id (IN1=$IN1, IN2=$IN2)"
+        msg_error "[CUTADAPT] Raw files not found for $sample_id (IN1=$IN1, IN2=$IN2)"
         continue
     fi
-    echo "IN1: $IN1"
-    echo "IN2: $IN2"
-    echo "STRAND: [$STRAND]"
 
     # Performing trimming only if trimmed fastq files do not exist
     if [[ ! -f "$TRIM_DIR/${sample_id}_trimmed_1.fastq" || ! -f "$TRIM_DIR/${sample_id}_trimmed_2.fastq" ]]; then
@@ -139,12 +147,12 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
             bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming_type" "$threads" "$trimming_quality_threshold" "$min_length_trim"
             ;;
           *)
-            echo "[WARN] $sample_id: unknown strandedness '$STRAND' (expected forward/reverse)" >&2
+            msg_warn "[CUTADAPT] $sample_id: unknown strandedness '$STRAND' (expected forward/reverse)" >&2
             continue
             ;;
         esac
     else
-        echo "✓ Trimmed FASTQs already exist for $sample_id — skipping trimming."
+        msg_ok "[CUTADAPT] Trimmed FASTQs already exist for $sample_id — skipping trimming."
     fi
 
 done
@@ -161,19 +169,20 @@ done
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
      [[ -z "$sample_id" ]] && continue
 
-     STRAND=$(echo "$STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
+     STRAND=$(msg_info "[STAR] $STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
      TRIM_DIR="${SAMPLE_DIR}/trim"
      MAP_DIR="${SAMPLE_DIR}/alignment"
 
   if [[ -f "$MAP_DIR/${sample_id}_Aligned.sortedByCoord.out.bam" ]];then
-        echo 'Skipping mapping...'
+        msg_info '[STAR] Skipping mapping...'
   else
         bash "$MAP_SCRIPT" "$sample_id" "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" "$threads" "$MAP_DIR" "$GENOME_DIR" "$mismatch_align"
   fi
   done
 
-
+  msg_ok "[STAR] Alignment for all samples completed"
+  
 # -----------3) MARKDUPLICATES ----------------------------
 
   
@@ -185,7 +194,7 @@ done
   MAP_DIR="${SAMPLE_DIR}/alignment"
 
   if [[ -f "$MAP_DIR/${sample_id}_marked_duplicates_STAR.bam" ]];then
-        echo 'Skipping Markduplicates...'
+        msg_info '[MARKDUPLICATES] Skipping Markduplicates...'
   else
         REMOVE_DUPLICATES=false
         bash "$MARKDUP_SCRIPT" "$sample_id" "$threads" "$MAP_DIR" "$remove_duplicates"
@@ -204,11 +213,12 @@ done
 
    if [ ! -d "${SAMPLE_DIR}/Quantification" ]; then 
       mkdir ${SAMPLE_DIR}/Quantification
+      msg_info "[FEATURECOUNTS] Starting ${sample_id} quantification..."
    fi
 
       QUANT_DIR="${SAMPLE_DIR}/Quantification"
 
-      STRAND=$(echo "$STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
+      STRAND=$(msg_info "[FEATURECOUNTS] $STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
 
       REP_GTF_PATH=$CWD/$repeat_gtf 
 
@@ -217,7 +227,7 @@ done
    #Running Rsubread for quantification
       Rscript "$QUANT_SCRIPT" "$MAP_DIR" "$sample_id" "$REP_GTF_PATH" "$threads" "$STRAND" "$SAMPLE_DIR" "$QUANT_DIR"
    else
-   echo 'Skipping quantification step'
+   msg_warn "[FEATURECOUNTS] ${sample_id}_quant.txt alredy exists, skipping."
    fi
 
   done
@@ -236,12 +246,12 @@ done
    REP_GTF_PATH=$CWD/$repeat_gtf 
 
    if [ ! -f "$CWD/SAMPLES/count_data.txt" ]; then
-     echo 'count_data.txt must be generated'
-
+     msg_warn '[FEATURECOUNTS] count_data.txt must be generated'
+     msg_info '[FEATURECOUNTS] generating...'
      Rscript "$MERGE_QUANT_SCRIPT" "$CWD" "$SAMPLES_DIR" "$REP_GTF_PATH" "$threads" "$DEA_results" "$sample_list"
      cd ..
    else
-   echo 'count_data.txt already exists'
+   msg_ok '[FEATURECOUNTS] count_data.txt already exists'
    fi
 
 
@@ -269,10 +279,9 @@ else
 Rscript "$DEA_SCRIPT_multicond" "$batch_effect" "$sample_list" "$method" "$CWD" "$REP_GTF_PATH" "$k_num" "$FDR" "$log2FC"
 fi
 
-
+msg_ok "DEA Analysis completed"
 
 # ---------- 7) TRANSCRIPTOME ASSEMBLY ---------------------
-
 
 cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
 
@@ -316,6 +325,8 @@ bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$rep
 
 DEA_DIR=$SAMPLES_DIR/DEA_results
 
+msg_info "Starting WGCNA coexpression analysis..."
+
 if [ ! -d "$CWD/Coexpression_analysis" ]; then
 
 mkdir $CWD/Coexpression_analysis
@@ -326,7 +337,7 @@ COEXPRESSION_DIR=$CWD/Coexpression_analysis
 
 Rscript "$WGCNA_SCRIPT" "$DEA_DIR" "$CWD" "$sample_list" "$COEXPRESSION_DIR"
 
-
+msg_ok "WGCNA coexpression analysis completed"
 
 
 # ---------- 8) PREDICTION MODEL ANALYSIS -----------------
@@ -334,9 +345,16 @@ Rscript "$WGCNA_SCRIPT" "$DEA_DIR" "$CWD" "$sample_list" "$COEXPRESSION_DIR"
 if [ "$prediction_model" = "yes" ]; then
 rows=$(( $(wc -l < "$CWD/$sample_list") - 1 ))
 if [ "$rows" -gt 40 ]; then
+msg_info "Starting prediction model analysis..."
 Rscript "$PRED_MODEL" "$CWD" "$sample_list" "$threads"
 fi
 fi
+
+msg_ok "Prediction model generated"
+
+
+msg_ok "PERREO successfully completed"
+
 
 }
 

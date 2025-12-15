@@ -8,12 +8,18 @@ MAP_DIR="$5"
 GENOME_DIR="$6"
 mismatch_align="$7"
 
+# Setting up colors for messages
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/logging.sh"
+
+
 # Script to process multiples SRA files creating results folders
 
  
-    echo "==============================================="
-    echo "Procesando muestra $SAMPLE_COUNT: $sample_id"
-    echo "==============================================="
+    msg_info "==============================================="
+    msg_info "Processing sample $SAMPLE_COUNT: $sample_id"
+    msg_info "==============================================="
     
    
     # Verify fastq files do exist
@@ -22,16 +28,16 @@ mismatch_align="$7"
         trimmed2="trim/${sample_id}_trimmed_2.fastq"
     fi
     
-    echo "Usando archivos: $trimmed1 y $trimmed2"
+    msg_info "[STAR] Using files: $trimmed1 and $trimmed2"
     
     # Verify genome index does exist
     if [ ! -d "../../$genome_index" ]; then
-        echo "ERROR: The directory of genome index does not exist: genome_index"
+        msg_error "[STAR] The directory of genome index does not exist: genome_index"
         exit 1
     fi
     
     # STAR alignment
-    echo "Realizando alineamiento con STAR para $sample_id..."
+    msg_info "[STAR] Performing alignment for $sample_id..."
     STAR --runThreadN $threads \
       --genomeDir "$GENOME_DIR" \
       --readFilesIn "$trimmed1" "$trimmed2" \
@@ -48,11 +54,11 @@ mismatch_align="$7"
     
     # Verify BAM was created
     if [ ! -f "$MAP_DIR/${sample_id}_Aligned.sortedByCoord.out.bam" ]; then
-        echo "ERROR: STAR alignment did not generate the expected BAM"
+        msg_error "[STAR] Alignment did not generate the expected BAM"
         cd "$CWD"
     fi
 
     samtools flagstat $MAP_DIR/${sample_id}_Aligned.sortedByCoord.out.bam
+    msg_ok "[STAR] $SAMPLE_COUNT: $sample_id alignment completed"
 
 
-echo "Alignment for all samples completed"

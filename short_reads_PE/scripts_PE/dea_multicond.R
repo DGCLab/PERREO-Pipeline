@@ -7,6 +7,48 @@
 ####                                                                       ####
 ###############################################################################
 
+
+## ==============================
+## Logging coloured (R)
+## ==============================
+
+use_color <- interactive() || Sys.getenv("TERM") != ""
+
+if (use_color) {
+  COL_INFO  <- "\033[34m"
+  COL_OK    <- "\033[32m"
+  COL_WARN  <- "\033[33m"
+  COL_ERR   <- "\033[31m"
+  COL_BOLD  <- "\033[1m"
+  COL_RESET <- "\033[0m"
+  
+  SYM_OK   <- "✔"
+  SYM_WARN <- "⚠"
+  SYM_ERR  <- "✖"
+} else {
+  COL_INFO <- COL_OK <- COL_WARN <- COL_ERR <- COL_BOLD <- COL_RESET <- ""
+  SYM_OK   <- "[OK]"
+  SYM_WARN <- "[WARN]"
+  SYM_ERR  <- "[ERROR]"
+}
+
+msg_info <- function(x) {
+  cat(COL_INFO, COL_BOLD, "[INFO] ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_ok <- function(x) {
+  cat(COL_OK, COL_BOLD, SYM_OK, " ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_warn <- function(x) {
+  cat(COL_WARN, COL_BOLD, SYM_WARN, " ", COL_RESET, x, "\n", sep = "")
+}
+
+msg_error <- function(x) {
+  cat(COL_ERR, COL_BOLD, SYM_ERR, " ", COL_RESET, x, "\n", sep = "")
+}
+
+
 version <- "v1.0"
 cat(sprintf("
            /^ ^\\                                    /^ ^\\
@@ -74,9 +116,10 @@ if (!identical(samples, sample_list$sample)) {
 }
 
 if (identical(as.character(samples), as.character(sample_list$sample))) {
-  print("Order of samples ids in `cts` and `samplesheet` do match!")
+  msg_ok("Order of samples ids in `cts` and `samplesheet` do match!")
 } else {  
-  stop("Order of samples ids in `cts` and `samplesheet` do not match!")
+  msg_error("Order of samples ids in `cts` and `samplesheet` do not match!")
+  stop("The condition is not met.", call. = FALSE)
 }
 
 condition <- sample_list$condition
@@ -86,7 +129,8 @@ coldata <- within(data.frame(row.names = samples,
                                  batch <- sample_list$batch})
 
 if (ncol(cts) != nrow(coldata)) {
-  stop("Number of samples in `cts` and `coldata` do not match!")
+  msg_error("Number of samples in `cts` and `coldata` do not match!")
+  stop("The condition is not met.", call. = FALSE)
 }
 
 cts <- round(cts)
@@ -119,7 +163,7 @@ dir.create(outdir, showWarnings = FALSE)
 
 if(batch == TRUE){
   ruvg <- TRUE
-  message("Removing Batch Effect...")
+  msg_info("Removing Batch Effect...")
   
   if ("batch" %in% colnames(sample_list)) {
     ruvg <- FALSE
@@ -152,7 +196,7 @@ if(batch == TRUE){
   
   if (method == "edgeR") {
     library(edgeR)
-    message("DEA is being performed by EdgeR")
+    msg_info("DEA is being performed by EdgeR")
     
     dge <- DGEList(counts = mat, samples = samples)
     dge <- calcNormFactors(dge, method="TMM")
@@ -187,7 +231,8 @@ if(batch == TRUE){
       # 2) num = baseline y den != baseline  -> coef = - condition<den>
       # 3) num != baseline y den != baseline -> contrast vector: +cond<num> -cond<den>
       if (is.na(cond_coef[num]) && is.na(cond_coef[den])) {
-        stop("Error: both conditions are baselines.")
+        msg_error("Both conditions are baselines.")
+        stop("The condition is not met.", call. = FALSE)
       }
       
       if (!is.na(cond_coef[num]) && is.na(cond_coef[den])) {
@@ -213,7 +258,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
       
       assign(paste0("res","_contrast_", cname), res_df)
     }
@@ -221,7 +266,7 @@ if(batch == TRUE){
   } else if (method == "DESeq2") {
     library(DESeq2)
     
-    message("DEA is being performed by DESeq2")
+    msg_info("DEA is being performed by DESeq2")
     
     form <- as.formula(paste("~ ", paste(colnames(Wdf), collapse = " + "), "+ condition"))
     
@@ -247,7 +292,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
       
       assign(paste0("res","_contrast_", cname), res_df)
       
@@ -259,7 +304,7 @@ if(batch == TRUE){
   } else {
    if (method == "edgeR") {
     library(edgeR)
-    message("DEA is being performed by EdgeR")
+    msg_info("DEA is being performed by EdgeR")
     
     dge <- DGEList(counts = mat, samples = samples)
     dge <- calcNormFactors(dge, method="TMM")
@@ -292,7 +337,8 @@ if(batch == TRUE){
       # 2) num = baseline y den != baseline  -> coef = - condition<den>
       # 3) num != baseline y den != baseline -> contrast vector: +cond<num> -cond<den>
       if (is.na(cond_coef[num]) && is.na(cond_coef[den])) {
-        stop("Error: both conditions are baselines.")
+        msg_error("Both conditions are baselines.")
+        stop("The condition is not met.", call. = FALSE)
       }
       
       if (!is.na(cond_coef[num]) && is.na(cond_coef[den])) {
@@ -318,7 +364,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
       
       assign(paste0("res","_contrast_", cname), res_df)
       
@@ -328,7 +374,7 @@ if(batch == TRUE){
     {
     library(DESeq2)
     
-    message("DEA is being performed by DESeq2")
+    msg_info("DEA is being performed by DESeq2")
     
     dds <- DESeqDataSetFromMatrix(
       countData = mat,
@@ -352,7 +398,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
       
       assign(paste0("res","_contrast_", cname), res_df)
       
@@ -402,7 +448,7 @@ if(batch == TRUE){
   } else {
   if (method == "edgeR") {
     library(edgeR)
-    message("DEA is being performed by EdgeR")
+    msg_info("DEA is being performed by EdgeR")
     
     dge <- DGEList(counts = mat, samples = samples)
     dge <- calcNormFactors(dge, method="TMM")
@@ -435,7 +481,8 @@ if(batch == TRUE){
       # 2) num = baseline y den != baseline  -> coef = - condition<den>
       # 3) num != baseline y den != baseline -> contrast vector: +cond<num> -cond<den>
       if (is.na(cond_coef[num]) && is.na(cond_coef[den])) {
-        stop("Error: both conditions are baselines.")
+        msg_error("Error: both conditions are baselines.")
+        stop("The condition is not met.", call. = FALSE)
       }
       
       if (!is.na(cond_coef[num]) && is.na(cond_coef[den])) {
@@ -462,7 +509,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
       
       assign(paste0("results","_contrast_", cname), res_df)
     }
@@ -498,7 +545,7 @@ if(batch == TRUE){
   {
     library(DESeq2)
     
-    message("DEA is being performed by DESeq2")
+    msg_info("DEA is being performed by DESeq2")
     
     dds <- DESeqDataSetFromMatrix(
       countData = mat,
@@ -524,7 +571,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      message("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
       
       assign(paste0("results","_contrast_", cname), res_df)
       
@@ -637,7 +684,7 @@ all_not_significant <- all(
 )
 
 if (all_not_significant) {
-  message("No differentially expressed genes were detected. The pipeline will stop here.")
+  msg_error("No differentially expressed genes were detected. The pipeline will stop here.")
   next
 }
 
@@ -776,7 +823,7 @@ ggsave(paste0(DEA_results_DIR,"/BarPlotUpDown_", nm,".pdf"),
 ###############################################################################
 
 ## Read & Preprocess GTF
-message("Loading: ", repeatmasker_annotation_gtf)
+msg_info("Loading: ", repeatmasker_annotation_gtf)
 
 gtf <- rtracklayer::readGFF(repeatmasker_annotation_gtf)
 
@@ -787,7 +834,7 @@ repeat_class_info <- gtf_differentials |>
   dplyr::select(gene_id, repeat_class) |> 
   distinct()
 
-message("Classifying repeats...")
+msg_info("Classifying repeats...")
 
 for (nm in res_names) {
 
