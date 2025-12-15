@@ -33,11 +33,11 @@ if (use_color) {
 }
 
 msg_info <- function(x) {
-  cat(COL_INFO, COL_BOLD, "[INFO] ", COL_RESET, x, "\n", sep = "")
+  cat(COL_INFO, COL_BOLD, x, COL_RESET, "\n", sep = "")
 }
 
 msg_ok <- function(x) {
-  cat(COL_OK, COL_BOLD, SYM_OK, " ", COL_RESET, x, "\n", sep = "")
+  cat(COL_OK, COL_BOLD, SYM_OK, " ",  x, COL_RESET, "\n", sep = "")
 }
 
 

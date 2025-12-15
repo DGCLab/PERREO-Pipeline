@@ -30,19 +30,19 @@ if (use_color) {
 }
 
 msg_info <- function(x) {
-  cat(COL_INFO, COL_BOLD, "[INFO] ", COL_RESET, x, "\n", sep = "")
+  cat(COL_INFO, COL_BOLD, x, COL_RESET, "\n", sep = "")
 }
 
 msg_ok <- function(x) {
-  cat(COL_OK, COL_BOLD, SYM_OK, " ", COL_RESET, x, "\n", sep = "")
+  cat(COL_OK, COL_BOLD, SYM_OK, " ",  x, COL_RESET, "\n", sep = "")
 }
 
 msg_warn <- function(x) {
-  cat(COL_WARN, COL_BOLD, SYM_WARN, " ", COL_RESET, x, "\n", sep = "")
+  cat(COL_WARN, COL_BOLD, SYM_WARN, " ",  x, COL_RESET, "\n", sep = "")
 }
 
 msg_error <- function(x) {
-  cat(COL_ERR, COL_BOLD, SYM_ERR, " ", COL_RESET, x, "\n", sep = "")
+  cat(COL_ERR, COL_BOLD, SYM_ERR, " ",  x, COL_RESET, "\n", sep = "")
 }
 
 
