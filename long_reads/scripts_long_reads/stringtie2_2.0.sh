@@ -59,7 +59,7 @@ mkdir -p "$SECOND_DIR"
 echo "sample,sample_gff" > sample_list.csv
 
 # sample_list: to take the first column with sample_ids
-tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col; do
+tail -n +2 "$sample_list" | while IFS=$'\t' read -r sample condition bam_col strandedness; do
     sample_dir="$SAMPLES_DIR/$sample"
     [ -d "$sample_dir" ] || continue
 
