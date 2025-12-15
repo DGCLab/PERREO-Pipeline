@@ -255,9 +255,45 @@ done
    msg_ok '[FEATURECOUNTS] count_data.txt already exists'
    fi
 
+# ---------- 6) TRANSCRIPTOME ASSEMBLY ---------------------
+
+cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
+
+echo 'Annotations combined'
+
+combined_annotations="$CWD/combined_annotations.gtf"
+
+if [ ! -d "$CWD/Transcriptome_assembly" ]; then
+
+mkdir $CWD/Transcriptome_assembly
+
+fi
+ 
+ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
+  | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
+      [[ -z "$sample_id" ]] && continue
+
+      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+
+      if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
+
+          bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
+
+          cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
+
+      fi
+done
 
 
-# ---------- 6) DIFFERENTIAL EXPRESSION ANALYSIS ----------
+if [ ! -d "$CWD/Transcriptome_assembly_novels" ]; then
+
+mkdir $CWD/Transcriptome_assembly_novels
+
+fi
+
+bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$repeat_gtf" "$sample_list"
+
+# ---------- 7) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
 cond=$(awk '
 BEGIN { FS = "\t" }  # Usa tabulador; cambia a FS="," si es CSV
@@ -282,47 +318,9 @@ fi
 
 msg_ok "DEA Analysis completed"
 
-# ---------- 7) TRANSCRIPTOME ASSEMBLY ---------------------
-
-cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
-
-combined_annotations="$CWD/combined_annotations.gtf"
-
-if [ ! -d "$CWD/Transcriptome_assembly" ]; then
-
-mkdir $CWD/Transcriptome_assembly
-
-fi
- 
- awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
-  | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
-      [[ -z "$sample_id" ]] && continue
-
-      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
-
-      if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
-
-          bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
-          
-          cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
-      
-      fi
-done
 
 
-if [ ! -d "$CWD/Transcriptome_assembly_novels" ]; then
-
-mkdir $CWD/Transcriptome_assembly_novels
-
-fi
-
-bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$repeat_gtf" "$sample_list"
-
-
-
-
-
-# ---------- 7) WGCNA COEXPRESSION ANALYSIS ---------------
+# ---------- 8) WGCNA COEXPRESSION ANALYSIS ---------------
 
 DEA_DIR=$SAMPLES_DIR/DEA_results
 
@@ -341,7 +339,7 @@ Rscript "$WGCNA_SCRIPT" "$DEA_DIR" "$CWD" "$sample_list" "$COEXPRESSION_DIR"
 msg_ok "WGCNA coexpression analysis completed"
 
 
-# ---------- 8) PREDICTION MODEL ANALYSIS -----------------
+# ---------- 9) PREDICTION MODEL ANALYSIS -----------------
 
 if [ "$prediction_model" = "yes" ]; then
 rows=$(( $(wc -l < "$CWD/$sample_list") - 1 ))
