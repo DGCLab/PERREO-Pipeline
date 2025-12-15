@@ -213,12 +213,13 @@ done
 
    if [ ! -d "${SAMPLE_DIR}/Quantification" ]; then 
       mkdir ${SAMPLE_DIR}/Quantification
-      msg_info "[FEATURECOUNTS] Starting ${sample_id} quantification..."
    fi
-
+   
+      msg_info "[FEATURECOUNTS] Starting ${sample_id} quantification..."
+      
       QUANT_DIR="${SAMPLE_DIR}/Quantification"
 
-      STRAND=$(msg_info "[FEATURECOUNTS] $STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
+      STRAND=$(echo "$STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
 
       REP_GTF_PATH=$CWD/$repeat_gtf 
 
