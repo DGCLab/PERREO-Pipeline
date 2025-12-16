@@ -273,8 +273,9 @@ fi
 
       SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
 
-      if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
-
+      if [[ ! -f "$CWD/Transcriptome_assembly/${sample_id}_transcriptome.gtf" ]];then
+          
+          msg_info "[STRINGTIE2] Starting transcriptome assembly..."
           bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
           
           cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
@@ -282,6 +283,7 @@ fi
       fi
 done
 
+msg_ok "[STRINGTIE2] All .gtf generated"
 
 if [ ! -d "$CWD/Transcriptome_assembly_novels" ]; then
 
@@ -289,7 +291,9 @@ mkdir $CWD/Transcriptome_assembly_novels
 
 fi
 
+msg_info "[STRINGTIE2] Merging all .gtf..."
 bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$repeat_gtf" "$sample_list"
+msg_ok "[STRINGTIE2] Merged completed, transcriptome assembly was generated successfully."
 
 # ---------- 7) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
