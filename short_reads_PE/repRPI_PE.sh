@@ -283,13 +283,7 @@ fi
       fi
 done
 
-msg_ok "[STRINGTIE2] All .gtf generated"
-
-if [ ! -d "$CWD/Transcriptome_assembly_novels" ]; then
-
-mkdir $CWD/Transcriptome_assembly_novels
-
-fi
+msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
 
 
 # ---------- 7) DIFFERENTIAL EXPRESSION ANALYSIS ----------
