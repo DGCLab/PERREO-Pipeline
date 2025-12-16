@@ -302,27 +302,31 @@ msg_ok "Modified repeat GTF successfully generated"
 fi
 
 
+# Variables para pasar al script
 repeat_gtf_v=""
 genome_gtf_v=""
 
-if [[ -f "$CWD/genome_gtf_2.gtf" ]]; then
-    genome_gtf_v="$CWD/genome_gtf_2.gtf"
-else
-    genome_gtf_v="$CWD/$genome_gtf"
-fi
+# # Comprobar qué versiones existen
+# if [[ -f "$CWD/genome_gtf_2.gtf" ]]; then
+#     genome_gtf_v="genome_gtf_2.gtf"
+# else
+#     genome_gtf_v="$genome_gtf"
+# fi
+# 
+# if [[ -f "$CWD/repeat_gtf_2.gtf" ]]; then
+#     repeat_gtf_v="repeat_gtf_2.gtf"
+# else
+#     repeat_gtf_v="$repeat_gtf"
+# fi
 
-if [[ -f "$CWD/repeat_gtf_2.gtf" ]]; then
-    repeat_gtf_v="$CWD/repeat_gtf_2.gtf"
-else
-    repeat_gtf_v="$CWD/$repeat_gtf"
-fi
 
+
+#Then, we call this script to quantify reads that map uniquely to genes, uniquely to repeats and reads that map to both genes and repetitive regions
 
 if [[ ! -f "$CWD/hybrid_transcripts_summary.tsv" ]]; then
 
 msg_info "Calculating hybrid transcripts..."
-bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf_v" "$repeat_gtf_v" > $CWD/hybrid_transcripts_summary.tsv
-
+bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf" "$repeat_gtf" > $CWD/hybrid_transcripts_summary.tsv
 
 fi
 

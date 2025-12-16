@@ -1,14 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/scripts_PE/logging.sh"
-
 GTF_DIR="$1"
 CWD="$2"
 genome_gtf="$3"
 repeat_gtf="$4"
 
+echo -e "sample\ttotal_tx\tgene_only\trepeat_only\thybrid\thybrid_frac"
 
 for gtf in "$GTF_DIR"/*.gtf; do
   sample="$(basename "$gtf" .gtf)"
@@ -40,4 +38,5 @@ for gtf in "$GTF_DIR"/*.gtf; do
 
   frac=$(awk -v h="$hybrid" -v t="$total" 'BEGIN{if(t>0) printf "%.4f", h/t; else print 0}')
 
+  echo -e "$sample\t$total\t$gene_only\t$repeat_only\t$hybrid\t$frac"
 done
