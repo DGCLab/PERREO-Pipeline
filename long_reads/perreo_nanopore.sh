@@ -205,14 +205,14 @@ done
 
 msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
 
-if awk 'BEGIN{FS="\t"} $1 ~ /^chr/ {exit 0} END{exit 1}' $CWD/$genome_gtf; then
+if grep -q '^chr' "$CWD/$genome_gtf"; then
 msg_info "Generating modified genome GTF"
 sed 's/^chr//' $CWD/$genome_gtf > $CWD/genome_gtf_2.gtf
 msg_ok "Modified genome GTF successfully generated"
 
 fi
 
-if awk 'BEGIN{FS="\t"} $1 ~ /^chr/ {exit 0} END{exit 1}' $CWD/$repeat_gtf; then
+if grep -q '^chr' "$CWD/$genome_gtf"; then
 msg_info "Generating modified repeat GTF"
 sed 's/^chr//' $CWD/$repeat_gtf > $CWD/repeat_gtf_2.gtf
 msg_ok "Modified repeat GTF successfully generated"
@@ -236,7 +236,7 @@ else
 fi
 
 
-if [[ -f "$CWD/hybrid_transcripts_summary.tsv" ]]; then
+if [[ ! -f "$CWD/hybrid_transcripts_summary.tsv" ]]; then
 
 bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf_v" "$repeat_gtf_v" > $CWD/hybrid_transcripts_summary.tsv
 
