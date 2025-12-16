@@ -259,8 +259,6 @@ done
 
 cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
 
-echo 'Annotations combined'
-
 combined_annotations="$CWD/combined_annotations.gtf"
 
 if [ ! -d "$CWD/Transcriptome_assembly" ]; then
@@ -278,9 +276,9 @@ fi
       if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
 
           bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
-
+          
           cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
-
+      
       fi
 done
 
