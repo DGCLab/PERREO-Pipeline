@@ -25,7 +25,9 @@ ASSEMBLY_SCRIPT="$CWD/scripts_PE/stringtie2.sh"
 ASSEMBLY_SCRIPT_2="$CWD/scripts_PE/stringtie2_2.0.sh" 
 PREPDE_SCRIPT="$CWD/scripts_PE/prepDE.py3" 
 WGCNA_SCRIPT="$CWD/scripts_PE/WGCNA.R"         
-PRED_MODEL="$CWD/scripts_PE/prediction_model.R"     
+PRED_MODEL="$CWD/scripts_PE/prediction_model.R"
+HYBRIDS_SCRIPT="$CWD/scripts_PE/hybrid_transcripts.sh"
+HYBRIDS_R_SCRIPT="$CWD/scripts_PE/hybrid_transcripts_visualization_script.R"
 
 # Parsing arguments
 while [[ $# -gt 0 ]]; do
@@ -285,6 +287,48 @@ done
 
 msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
 
+if awk 'BEGIN{FS="\t"} $1 ~ /^chr/ {exit 0} END{exit 1}' $CWD/$genome_gtf; then
+msg_info "Generating modified genome GTF"
+sed 's/^chr//' $CWD/$genome_gtf > $CWD/genome_gtf_2.gtf
+msg_ok "Modified genome GTF successfully generated"
+
+fi
+
+if awk 'BEGIN{FS="\t"} $1 ~ /^chr/ {exit 0} END{exit 1}' $CWD/$repeat_gtf; then
+msg_info "Generating modified repeat GTF"
+sed 's/^chr//' $CWD/$repeat_gtf > $CWD/repeat_gtf_2.gtf
+msg_ok "Modified repeat GTF successfully generated"
+
+fi
+
+
+repeat_gtf_v=""
+genome_gtf_v=""
+
+if [[ -f "$CWD/genome_gtf_2.gtf" ]]; then
+    genome_gtf_v="$CWD/genome_gtf_2.gtf"
+else
+    genome_gtf_v="$CWD/$genome_gtf"
+fi
+
+if [[ -f "$CWD/repeat_gtf_2.gtf" ]]; then
+    repeat_gtf_v="$CWD/repeat_gtf_2.gtf"
+else
+    repeat_gtf_v="$CWD/$repeat_gtf"
+fi
+
+
+if [[ -f "$CWD/hybrid_transcripts_summary.tsv" ]]; then
+
+bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf_v" "$repeat_gtf_v" > $CWD/hybrid_transcripts_summary.tsv
+
+msg_info "Calculating hybrid transcripts..."
+
+fi
+
+Rscript "$HYBRIDS_R_SCRIPT" "$CWD"
+
+
 
 # ---------- 7) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
@@ -339,10 +383,11 @@ rows=$(( $(wc -l < "$CWD/$sample_list") - 1 ))
 if [ "$rows" -gt 40 ]; then
 msg_info "Starting prediction model analysis..."
 Rscript "$PRED_MODEL" "$CWD" "$sample_list" "$threads"
+
+msg_ok "Prediction model generated"
 fi
 fi
 
-msg_ok "Prediction model generated"
 
 
 msg_ok "PERREO successfully completed"

@@ -3,7 +3,13 @@ set -euo pipefail
 
 #Defining current path
 CWD="$(pwd)"
-#GLOBAL_DIR="$CWD"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/scripts_PE/logging.sh"
+
+# Create .log
+exec > >(tee -a "${SCRIPT_DIR}/pipeline.log") \
+     2> >(tee -a "${SCRIPT_DIR}/pipeline.err" >&2)
 
 # Scripts paths that already exist (ajusta nombres/paths)
 DEA_SCRIPT="$CWD/scripts_long_reads/dea.R"
@@ -15,7 +21,9 @@ ASSEMBLY_SCRIPT="$CWD/scripts_long_reads/stringtie2.sh"
 ASSEMBLY_SCRIPT_2="$CWD/scripts_long_reads/stringtie2_2.0.sh" 
 PREPDE_SCRIPT="$CWD/scripts_long_reads/prepDE.py3" 
 QUANT_SCRIPT="$CWD/scripts_long_reads/quant.R"       
-MERGE_QUANT_SCRIPT="$CWD/scripts_long_reads/merge_quant.R" 
+MERGE_QUANT_SCRIPT="$CWD/scripts_long_reads/merge_quant.R"
+HYBRIDS_SCRIPT="$CWD/scripts_long_reads/hybrid_transcripts.sh"
+HYBRIDS_R_SCRIPT="$CWD/scripts_long_reads/hybrid_transcripts_visualization_script.R"
       
   # Parsing arguments
 while [[ $# -gt 0 ]]; do
@@ -167,7 +175,79 @@ done
    fi
 
 
-# ---------- 5) DIFFERENTIAL EXPRESSION ANALYSIS ----------
+# ---------- 5) TRANSCRIPTOME ASSEMBLY ------------------------
+
+cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
+
+combined_annotations="$CWD/combined_annotations.gtf"
+
+if [ ! -d "$CWD/Transcriptome_assembly" ]; then
+
+mkdir $CWD/Transcriptome_assembly
+
+fi
+ 
+ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
+  | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
+      [[ -z "$sample_id" ]] && continue
+
+      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+
+      if [[ ! -f "$CWD/Transcriptome_assembly/${sample_id}_transcriptome.gtf" ]];then
+          
+          msg_info "[STRINGTIE2] Starting transcriptome assembly..."
+          bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
+          
+          cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
+      
+      fi
+done
+
+msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
+
+if awk 'BEGIN{FS="\t"} $1 ~ /^chr/ {exit 0} END{exit 1}' $CWD/$genome_gtf; then
+msg_info "Generating modified genome GTF"
+sed 's/^chr//' $CWD/$genome_gtf > $CWD/genome_gtf_2.gtf
+msg_ok "Modified genome GTF successfully generated"
+
+fi
+
+if awk 'BEGIN{FS="\t"} $1 ~ /^chr/ {exit 0} END{exit 1}' $CWD/$repeat_gtf; then
+msg_info "Generating modified repeat GTF"
+sed 's/^chr//' $CWD/$repeat_gtf > $CWD/repeat_gtf_2.gtf
+msg_ok "Modified repeat GTF successfully generated"
+
+fi
+
+
+repeat_gtf_v=""
+genome_gtf_v=""
+
+if [[ -f "$CWD/genome_gtf_2.gtf" ]]; then
+    genome_gtf_v="$CWD/genome_gtf_2.gtf"
+else
+    genome_gtf_v="$CWD/$genome_gtf"
+fi
+
+if [[ -f "$CWD/repeat_gtf_2.gtf" ]]; then
+    repeat_gtf_v="$CWD/repeat_gtf_2.gtf"
+else
+    repeat_gtf_v="$CWD/$repeat_gtf"
+fi
+
+
+if [[ -f "$CWD/hybrid_transcripts_summary.tsv" ]]; then
+
+bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf_v" "$repeat_gtf_v" > $CWD/hybrid_transcripts_summary.tsv
+
+msg_info "Calculating hybrid transcripts..."
+
+fi
+
+Rscript "$HYBRIDS_R_SCRIPT" "$CWD"
+
+
+# ---------- 6) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
 
    if [ ! -d "$CWD/SAMPLES/DEA_results" ]; then
@@ -198,45 +278,6 @@ Rscript "$DEA_SCRIPT" "$batch_effect" "$sample_list" "$method" "$CWD" "$REP_GTF_
 else
 Rscript "$DEA_SCRIPT_multicond" "$batch_effect" "$sample_list" "$method" "$CWD" "$REP_GTF_PATH" "$k_num" "$FDR" "$log2FC"
 fi
-
-
-# ---------- 6) TRANSCRIPTOME ASSEMBLY ------------------------
-
-cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
-
-combined_annotations="$CWD/combined_annotations.gtf"
-
-if [ ! -d "$CWD/Transcriptome_assembly" ]; then
-
-mkdir $CWD/Transcriptome_assembly
-
-fi
-
- awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
-  | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
-      [[ -z "$sample_id" ]] && continue
-
-      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
-
-      if [[ ! -f "$SAMPLE_DIR/${sample_id}_transcriptome.gtf" ]];then
-
-          bash "$ASSEMBLY_SCRIPT" "$CWD" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
-          
-          cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
-      fi
-    done
-
-
-if [ ! -d "$CWD/Transcriptome_assembly_novels" ]; then
-
-mkdir $CWD/Transcriptome_assembly_novels
-
-fi
-
-bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$repeat_gtf" "$sample_list"
-
-
-
 
 
 
