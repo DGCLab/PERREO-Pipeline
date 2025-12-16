@@ -327,7 +327,7 @@ bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf_v" "$re
 fi
 
 Rscript "$HYBRIDS_R_SCRIPT" "$CWD"
-
+msg_ok "Done!"
 
 
 # ---------- 7) DIFFERENTIAL EXPRESSION ANALYSIS ----------

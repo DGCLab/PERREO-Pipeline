@@ -238,13 +238,14 @@ fi
 
 if [[ ! -f "$CWD/hybrid_transcripts_summary.tsv" ]]; then
 
+msg_info "Calculating hybrid transcripts..."
 bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf_v" "$repeat_gtf_v" > $CWD/hybrid_transcripts_summary.tsv
 
-msg_info "Calculating hybrid transcripts..."
 
 fi
 
 Rscript "$HYBRIDS_R_SCRIPT" "$CWD"
+msg_ok "Done!"
 
 
 # ---------- 6) DIFFERENTIAL EXPRESSION ANALYSIS ----------
