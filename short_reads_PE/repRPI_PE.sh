@@ -291,9 +291,6 @@ mkdir $CWD/Transcriptome_assembly_novels
 
 fi
 
-msg_info "[STRINGTIE2] Merging all .gtf..."
-bash "$ASSEMBLY_SCRIPT_2" "$threads" "$PREPDE_SCRIPT" "$CWD" "$genome_gtf" "$repeat_gtf" "$sample_list"
-msg_ok "[STRINGTIE2] Merged completed, transcriptome assembly was generated successfully."
 
 # ---------- 7) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
