@@ -4,9 +4,9 @@ CWD <- args[[1]] #project path
 sample_list <- args[[2]] 
 threads <- as.numeric(args[[3]])
 
-dir.create(paste0(CWD,"/prediction_models"))
+dir.create(paste0(CWD,"Results/prediction_models"))
 
-prediction_models_dir <- paste0(CWD,"/prediction_models/")
+prediction_models_dir <- paste0(CWD,"Results/prediction_models/")
 
 
 ## ==============================
@@ -59,7 +59,7 @@ library(MLmetrics)
 library(doParallel)
 
 #Importing normalized matrix
-data <- read.csv(paste0(CWD,"/SAMPLES/DEA_results/expression_matrix.csv"),sep=",",header=T)
+data <- read.csv(paste0(CWD,"/Results/DEA_results/expression_matrix.csv"),sep=",",header=T)
 
 #Importing metadata
 samplesheet <- read.table(paste0(CWD,"/",sample_list), header = T, sep="\t")

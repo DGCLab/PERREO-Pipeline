@@ -42,16 +42,16 @@ while [[ $# -gt 0 ]]; do
       -trimming_quality_threshold) trimming_quality_threshold="$2"; shift 2 ;;
       -min_length_trim) min_length_trim="$2"; shift 2 ;;
       -max_length_trim) min_length_trim="$2"; shift 2 ;;
-      -trimming_type) trimming_type="$2"; shift 2 ;;
+      -trimming) trimming="$2"; shift 2 ;;
       -mismatch_align) mismatch_align="$2"; shift 2 ;;
       -project_name) project_name="$2"; shift 2 ;;
       -remove_duplicates) remove_duplicates="$2"; shift 2 ;;
       -log2FC) log2FC="$2"; shift 2 ;;
       -FDR) FDR="$2"; shift 2 ;;
-      -batch_effect) batch_effect="$2"; shift 2 ;;
+      -batch) batch="$2"; shift 2 ;;
       -method) method="$2"; shift 2 ;;
       -prediction_model) method="$2"; shift 2 ;;
-      *) echo "Opción desconocida: $1"; shift ;;
+      *) echo "Unknown argument: $1"; shift ;;
   esac
 done
 
@@ -64,7 +64,8 @@ mismatch_align=${mismatch_align:-0.05}
 trimming_quality_threshold=${trimming_quality_threshold:-30}
 min_length_trim=${min_length_trim:-16}
 prediction_model=${prediction_model:-yes}
-
+batch=${batch:-no}
+trimming=${trimming:-simple}
 
 # Function for running the analysis with all the samples
 
@@ -79,13 +80,13 @@ run_pipeline_sample() {
   msg_info "Threads: ${GREEN}$threads${RESET}"
   msg_info "R1 adaptor: ${GREEN}$adapt_r1${RESET}"
   msg_info "R2 adaptor: ${GREEN}$adapt_r2${RESET}"
-  msg_info "trimming type: ${GREEN}$trimming_type${RESET}"
+  msg_info "trimming type: ${GREEN}$trimming${RESET}"
   msg_info "trimming_quality_threshold: ${GREEN}$trimming_quality_threshold${RESET}" 
   msg_info "minimum_length_trim: ${GREEN}$min_length_trim${RESET}"
   msg_info "mismatch_align type: ${GREEN}$mismatch_align${RESET}"
-  msg_info "Proyect: ${GREEN}$project_name${RESET}"
+  msg_info "Project: ${GREEN}$project_name${RESET}"
   msg_info "Remove duplicates: ${GREEN}$remove_duplicates${RESET}"
-  msg_info "Batch effect: ${GREEN}$batch_effect${RESET}"
+  msg_info "Batch effect: ${GREEN}$batch${RESET}"
   msg_info "Method: ${GREEN}$method${RESET}"
   msg_info "log2FC: ${GREEN}$log2FC${RESET}"
   msg_info "FDR: ${GREEN}$FDR${RESET}"
@@ -101,8 +102,8 @@ fi
 
 GENOME_DIR=$(realpath genome_index)
 
-cd SAMPLES
-SAMPLES_DIR=$CWD/SAMPLES
+cd samples
+SAMPLES_DIR=$CWD/samples
 
 set -euo pipefail
 
@@ -118,7 +119,7 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
     msg_info "[CUTADAPT] Processing ${GREEN}$sample_id${RESET} with strandedness=${GREEN}$STRAND${RESET} and condition=${GREEN}$CONDITION${RESET}"
 
     # Path per sample
-    SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+    SAMPLE_DIR="$CWD/samples/${sample_id}"
     TRIM_DIR="${SAMPLE_DIR}/trim"
     MAP_DIR="${SAMPLE_DIR}/alignment"
     IN1="${sample_id}_1.fastq"
@@ -143,10 +144,10 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
         # ------------ 1) TRIMMING READS ---------------------------
         case "$STRAND" in
           forward)
-            bash "$TRIM_FW_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming_type" "$threads" "$trimming_quality_threshold" "$min_length_trim"
+            bash "$TRIM_FW_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim"
             ;;
           reverse)
-            bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming_type" "$threads" "$trimming_quality_threshold" "$min_length_trim"
+            bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim"
             ;;
           *)
             msg_warn "[CUTADAPT] $sample_id: unknown strandedness '$STRAND' (expected forward/reverse)" >&2
@@ -167,12 +168,14 @@ done
 
 # ---------- 2) MAPPING AGAINST REFERENCE GENOME ----------
 
+msg_info "[STAR] Starting alignment against reference genome"
+
   awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
      [[ -z "$sample_id" ]] && continue
 
      STRAND=$(msg_info "[STAR] $STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
-     SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+     SAMPLE_DIR="$CWD/samples/${sample_id}"
      TRIM_DIR="${SAMPLE_DIR}/trim"
      MAP_DIR="${SAMPLE_DIR}/alignment"
 
@@ -192,7 +195,7 @@ done
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
      [[ -z "$sample_id" ]] && continue
   
-  SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+  SAMPLE_DIR="$CWD/samples/${sample_id}"
   MAP_DIR="${SAMPLE_DIR}/alignment"
 
   if [[ -f "$MAP_DIR/${sample_id}_marked_duplicates_STAR.bam" ]];then
@@ -210,7 +213,7 @@ done
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
       [[ -z "$sample_id" ]] && continue
 
-      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+      SAMPLE_DIR="$CWD/samples/${sample_id}"
       MAP_DIR="${SAMPLE_DIR}/alignment"
 
    if [ ! -d "${SAMPLE_DIR}/Quantification" ]; then 
@@ -239,19 +242,19 @@ done
 
 # ---------- 5) COUNT MATRIXES MERGE ----------------------
 
-   if [ ! -d "$CWD/SAMPLES/DEA_results" ]; then
-
-      mkdir $CWD/SAMPLES/DEA_results
+   if [ ! -d "$CWD/Results/DEA_results" ]; then
+      mkdir $CWD/Results
+      mkdir $CWD/Results/DEA_results
    fi
 
-   DEA_results="$CWD/SAMPLES/DEA_results"
+   DEA_results="$CWD/Results/DEA_results"
       
    REP_GTF_PATH=$CWD/$repeat_gtf 
 
-   if [ ! -f "$CWD/SAMPLES/count_data.txt" ]; then
+   if [ ! -f "$CWD/Results/count_data.txt" ]; then
      msg_warn '[FEATURECOUNTS] count_data.txt must be generated'
      msg_info '[FEATURECOUNTS] generating...'
-     Rscript "$MERGE_QUANT_SCRIPT" "$CWD" "$SAMPLES_DIR" "$REP_GTF_PATH" "$threads" "$DEA_results" "$sample_list"
+     Rscript "$MERGE_QUANT_SCRIPT" "$CWD" "$SAMPLES_DIR" "$REP_GTF_PATH" "$threads" "$sample_list"
      cd ..
    else
    msg_ok '[FEATURECOUNTS] count_data.txt already exists'
@@ -259,74 +262,39 @@ done
 
 # ---------- 6) TRANSCRIPTOME ASSEMBLY ---------------------
 
-cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
+if [ ! -d "$CWD/Results/transcriptome_assembly" ]; then
+      mkdir $CWD/Results/transcriptome_assembly
+   fi
+   
+cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/transcriptome_assembly/combined_annotations.gtf"
 
-combined_annotations="$CWD/combined_annotations.gtf"
-
-if [ ! -d "$CWD/Transcriptome_assembly" ]; then
-
-mkdir $CWD/Transcriptome_assembly
-
-fi
+combined_annotations="$CWD/transcriptome_assembly/combined_annotations.gtf"
  
  awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
       [[ -z "$sample_id" ]] && continue
 
-      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+      SAMPLE_DIR="$CWD/samples/${sample_id}"
 
-      if [[ ! -f "$CWD/Transcriptome_assembly/${sample_id}_transcriptome.gtf" ]];then
+      if [[ ! -f "$CWD/Results/transcriptome_assembly/${sample_id}_transcriptome.gtf" ]];then
           
           msg_info "[STRINGTIE2] Starting transcriptome assembly..."
           bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
           
-          cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
+          mv $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Results/transcriptome_assembly
       
       fi
 done
 
 msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
 
-if grep -q '^chr' "$CWD/$genome_gtf"; then
-msg_info "Generating modified genome GTF"
-sed 's/^chr//' $CWD/$genome_gtf > $CWD/genome_gtf_2.gtf
-msg_ok "Modified genome GTF successfully generated"
-
-fi
-
-if grep -q '^chr' "$CWD/$genome_gtf"; then
-msg_info "Generating modified repeat GTF"
-sed 's/^chr//' $CWD/$repeat_gtf > $CWD/repeat_gtf_2.gtf
-msg_ok "Modified repeat GTF successfully generated"
-
-fi
-
-
-# Variables para pasar al script
-repeat_gtf_v=""
-genome_gtf_v=""
-
-# # Comprobar qué versiones existen
-# if [[ -f "$CWD/genome_gtf_2.gtf" ]]; then
-#     genome_gtf_v="genome_gtf_2.gtf"
-# else
-#     genome_gtf_v="$genome_gtf"
-# fi
-# 
-# if [[ -f "$CWD/repeat_gtf_2.gtf" ]]; then
-#     repeat_gtf_v="repeat_gtf_2.gtf"
-# else
-#     repeat_gtf_v="$repeat_gtf"
-# fi
-
-
 
 #Then, we call this script to quantify reads that map uniquely to genes, uniquely to repeats and reads that map to both genes and repetitive regions
 
-if [[ ! -f "$CWD/hybrid_transcripts_summary.tsv" ]]; then
+if [[ ! -f "$CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv" ]]; then
 
 msg_info "Calculating hybrid transcripts..."
-bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf" "$repeat_gtf" > $CWD/hybrid_transcripts_summary.tsv
+bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf" "$repeat_gtf" > $CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv
 
 fi
 
@@ -351,10 +319,10 @@ NR==1 {
 
 if [ "$cond" -eq 2 ]; then
 
-Rscript "$DEA_SCRIPT" "$batch_effect" "$sample_list" "$method" "$CWD" "$REP_GTF_PATH" "$k_num" "$FDR" "$log2FC"
+Rscript "$DEA_SCRIPT" "$batch" "$sample_list" "$method" "$CWD" "$REP_GTF_PATH" "$k_num" "$FDR" "$log2FC"
 
 else
-Rscript "$DEA_SCRIPT_multicond" "$batch_effect" "$sample_list" "$method" "$CWD" "$REP_GTF_PATH" "$k_num" "$FDR" "$log2FC"
+Rscript "$DEA_SCRIPT_multicond" "$batch" "$sample_list" "$method" "$CWD" "$REP_GTF_PATH" "$k_num" "$FDR" "$log2FC"
 fi
 
 msg_ok "DEA Analysis completed"
@@ -363,17 +331,17 @@ msg_ok "DEA Analysis completed"
 
 # ---------- 8) WGCNA COEXPRESSION ANALYSIS ---------------
 
-DEA_DIR=$SAMPLES_DIR/DEA_results
+DEA_DIR=$CWD/Results/DEA_results
 
 msg_info "Starting WGCNA coexpression analysis..."
 
-if [ ! -d "$CWD/Coexpression_analysis" ]; then
+if [ ! -d "$CWD/Results/Coexpression_analysis" ]; then
 
 mkdir $CWD/Coexpression_analysis
 
 fi
 
-COEXPRESSION_DIR=$CWD/Coexpression_analysis
+COEXPRESSION_DIR=$CWD/Results/Coexpression_analysis
 
 Rscript "$WGCNA_SCRIPT" "$DEA_DIR" "$CWD" "$sample_list" "$COEXPRESSION_DIR"
 

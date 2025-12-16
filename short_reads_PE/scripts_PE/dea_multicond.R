@@ -76,7 +76,7 @@ repeatmasker_annotation_gtf <- args[[5]]
 k_num <- as.numeric(args[[6]])
 FDR_thr <- as.numeric(args[[7]])
 log2FC_thr <- as.numeric(args[[8]])
-SAMPLES_DIR <- paste0(CWD,"/SAMPLES/")
+SAMPLES_DIR <- paste0(CWD,"/Results/")
 DEA_results_DIR <- paste0(SAMPLES_DIR,"/DEA_results")
 
 
@@ -157,7 +157,7 @@ levels(colData(dds)$condition)
 lv <- levels(colData(dds)$condition)
 pairs <- combn(lv, 2, simplify = FALSE)
 
-outdir <- paste0(SAMPLES_DIR,"Contrasts")
+outdir <- paste0(DEA_results_DIR,"/Contrasts")
 dir.create(outdir, showWarnings = FALSE)
 
 ## Correct Batch Effect
@@ -258,7 +258,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok(paste0("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv"))))
       
       assign(paste0("res","_contrast_", cname), res_df)
     }
@@ -291,7 +291,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok(paste0("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv"))))
       
       assign(paste0("res","_contrast_", cname), res_df)
       
@@ -363,7 +363,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok(paste0("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv"))))
       
       assign(paste0("res","_contrast_", cname), res_df)
       
@@ -396,7 +396,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok(paste0("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv"))))
       
       assign(paste0("res","_contrast_", cname), res_df)
       
@@ -506,7 +506,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok(paste0("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv"))))
       
       assign(paste0("results","_contrast_", cname), res_df)
     }
@@ -567,7 +567,7 @@ if(batch == TRUE){
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
-      msg_ok("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv")))
+      msg_ok(paste0("Saved: ", file.path(outdir, paste0("contrast_", cname, ".csv"))))
       
       assign(paste0("results","_contrast_", cname), res_df)
       
@@ -695,10 +695,10 @@ top_up   <- volcano.df |>  filter(DEG.Status == grp_up)    |>  slice_max(negLog1
 top_down <- volcano.df |> filter(DEG.Status == grp_down)  |>  slice_max(negLog10P, n = 10)
 top_labs <- bind_rows(top_up, top_down)
 
-write.table(top_labs, paste0("toplabels_", nm,".txt"))
+write.table(top_labs, paste0(CWD,"Results/toplabels.txt"))
 write.table(
   top_up$RepeatSequence,
-  file = paste0("primersearchtoplabels_", nm,".txt"),
+  file = paste0(CWD,"Results/primersearchtoplabels.txt"),
   quote = FALSE,
   row.names = FALSE,
   col.names = FALSE
@@ -981,11 +981,11 @@ ggsave(paste0(DEA_results_DIR,"/Classification_All.pdf"),
 ####                                                                       ####
 ####                         Repeat RNAs distribution                      ####
 ####                                                                       ####
-
 ###############################################################################
+suppressPackageStartupMessages({
+  library(ggplot2)
+  library(ggpubr)})
 
-library(ggplot2)
-library(ggpubr)
 
 if (method == "DESeq2"){log_means <- colMeans(assay(vsd), na.rm = TRUE)
 } else{log_means <- log10(colMeans(mat.dge , na.rm = TRUE) + 1)} 

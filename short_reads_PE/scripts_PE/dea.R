@@ -76,7 +76,7 @@ repeatmasker_annotation_gtf <- args[[5]]
 k_num <- as.numeric(args[[6]])
 FDR_thr <- as.numeric(args[[7]])
 log2FC_thr <- as.numeric(args[[8]])
-SAMPLES_DIR <- paste0(CWD,"/SAMPLES/")
+SAMPLES_DIR <- paste0(CWD,"/Results/")
 DEA_results_DIR <- paste0(SAMPLES_DIR,"/DEA_results")
 
 if (batch == "yes"){batch = TRUE}else{batch=FALSE}
@@ -511,10 +511,10 @@ pal <- setNames(
 top_up   <- volcano.df |>  filter(DEG.Status == grp_up)    |>  slice_max(negLog10P, n = 10)
 top_down <- volcano.df |> filter(DEG.Status == grp_down)  |>  slice_max(negLog10P, n = 10)
 top_labs <- bind_rows(top_up, top_down)
-write.table(top_labs, "toplabels.txt")
+write.table(top_labs, paste0(CWD,"Results/toplabels.txt"))
 write.table(
   top_up$RepeatSequence,
-  file = "primersearchtoplabels.txt",
+  file = paste0(CWD,"Results/primersearchtoplabels.txt"),
   quote = FALSE,
   row.names = FALSE,
   col.names = FALSE

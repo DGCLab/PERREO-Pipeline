@@ -4,8 +4,7 @@ GLOBAL_DIR <- args[[1]]
 SAMPLES_DIR <- args[[2]]
 REP_GTF_PATH <- args[[3]]
 threads <- as.integer(args[[4]])
-DEA_results <- args[[5]]
-sample_list <- args[[6]]
+sample_list <- args[[5]]
 
 ## ==============================
 ## Logging coloured (R)
@@ -48,11 +47,13 @@ msg_error <- function(x) {
 }
 
 # Required packages
+suppressPackageStartupMessages({
 library(readr)
 library(dplyr)
 library(tidyr)
 library(purrr)
 library(DESeq2)
+})
 
 # Locate all the quant.txt inside Quantification folder 
 files <- list.files(SAMPLES_DIR, pattern = "_?quant\\.txt$", recursive = TRUE, full.names = TRUE)
@@ -115,7 +116,7 @@ if (todos_iguales) {
   countData <- as.data.frame(global_matrix, check.names = FALSE)
   
   #Save the matrix
-  write.table(countData, "count_data.txt",row.names = T)
+  write.table(countData, paste0(GLOBAL_DIR,"/Results/count_data.txt"),row.names = T)
 
 }else{
   msg_error("[FEATURECOUNTS] The condition is not met. Stopping the execution.")

@@ -4,7 +4,7 @@ CWD <- args[[1]]
 
 suppressPackageStartupMessages({library(ggpubr)})
 
-hybrid_transcripts <- read.table(paste0(CWD,"/hybrid_transcripts_summary.tsv"),sep="\t",header=T)
+hybrid_transcripts <- read.table(paste0(CWD,"/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv"),sep="\t",header=T)
 sample_list <- read.table(paste0(CWD,"/samplesheet.txt"),sep="\t",header=T)
 
 hybrid_transcripts$sample <- gsub("_transcriptome","",hybrid_transcripts$sample)
@@ -43,5 +43,5 @@ p <- ggplot(hybrid_transcripts, aes(x = condition, y = hybrid_frac, fill = condi
     method      = "wilcox.test",
     label       = "p.signif")
 
-ggsave(paste0(CWD,"/hybrid_transcripts.pdf"), plot = p, width = 8, height = 6, dpi = 300)
+ggsave(paste0(CWD,"/Results/transcriptome_assembly/hybrid_transcripts.pdf"), plot = p, width = 8, height = 6, dpi = 300)
 
