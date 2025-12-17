@@ -26,10 +26,10 @@ my_comparisons <- combn(unique(sample_list$condition), 2, simplify = FALSE)
 
 
 p <- ggplot(hybrid_transcripts, aes(x = condition, y = hybrid_frac, fill = condition)) +
-  geom_violin(trim = FALSE, alpha = 0.6) +          # distribución
-  geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.7) +       # caja dentro del violín
-  geom_jitter(width = 0.1, size = 2, alpha = 0.8) + # puntos individuales
-  stat_summary(fun = mean, geom = "point",          # media por condición
+  geom_violin(trim = FALSE, alpha = 0.6) +          
+  geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.7) +       
+  geom_jitter(width = 0.1, size = 2, alpha = 0.8) + 
+  stat_summary(fun = mean, geom = "point",          
                color = "black", size = 3) +
   scale_fill_manual(values = base_colors) +
   theme_bw(base_size = 12) +
