@@ -4,33 +4,37 @@ sample_id="$1"
 trimmed="$2"
 threads="$3"
 MAP_DIR="$4"
-STAR_PATH="$5"
-GENOME_DIR="$6"
-mismatch_align="$7"
+GENOME_DIR="$5"
+mismatch_align="$6"
 
-# Script para procesamiento de multiples archivos SRA con creación de carpetas de resultados
+
+# Setting up colors for messages
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/logging.sh"
+
+# Script to process multiples SRA files creating results folders
  
-    echo "==============================================="
-    echo "Procesando muestra $SAMPLE_COUNT: $sample_id"
-    echo "==============================================="
-    
+    msg_info "==============================================="
+    msg_info "Processing sample $SAMPLE_COUNT: $sample_id"
+    msg_info "==============================================="
    
-    # Verificar que los archivos FASTQ existen
+    # Verify fastq files do exist
     if [ -f "trim/${sample_id}_trimmed_1.fastq" ] ; then
         trimmed="trim/${sample_id}_trimmed.fastq"
 
     fi
     
-    echo "Usando archivos: $trimmed1 y $trimmed2"
+    msg_info "[STAR] Using file: $trimmed"
     
-    # Verificar que el índice del genoma existe
+    # Verify genome index does exist
     if [ ! -d "../../$genome_index" ]; then
-        echo "ERROR: El directorio del índice del genoma no existe: genome_index"
+        msg_error "[STAR] The directory of genome index does not exist: genome_index"
         exit 1
     fi
     
-    # Alineamiento con STAR - los resultados se guardan en la carpeta específica de sample_id dentro de Nanopore
-    echo "Realizando alineamiento con STAR para $sample_id..."
+    # STAR alignment
+    msg_info "[STAR] Performing alignment for $sample_id..."
     "$STAR_PATH" --runThreadN $threads \
       --genomeDir "$GENOME_DIR" \
       --readFilesIn "$trimmed" \
@@ -47,12 +51,11 @@ mismatch_align="$7"
     
     # Verificar si se creó el BAM
     if [ ! -f "$MAP_DIR/${sample_id}_Aligned.sortedByCoord.out.bam" ]; then
-        echo "ERROR: El alineamiento con STAR no generó el archivo BAM esperado"
+        msg_error "[STAR] Alignment did not generate the expected BAM"
         cd "$CWD"
-        #continue
     fi
 
     samtools flagstat $MAP_DIR/${sample_id}_Aligned.sortedByCoord.out.bam
+    msg_ok "[STAR] $SAMPLE_COUNT: $sample_id alignment completed"
 
 
-echo "Alineamiento de todas las muestras completado"
