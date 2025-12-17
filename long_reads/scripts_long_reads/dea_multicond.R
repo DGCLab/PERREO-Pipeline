@@ -988,3 +988,19 @@ ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), width = 8, height = 6, dpi = 300)
 ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), width = 8, height = 6, dpi = 300)
 
+
+
+## PDF Report
+
+pdf_files <- list.files(DEA_results_DIR, pattern = "\\.pdf$", full.names = TRUE)
+
+output_pdf <- file.path(DEA_results_DIR, "report.pdf")
+
+if (length(pdf_files) > 0) {
+  
+  pdf_combine(input = pdf_files, output = output_pdf)
+  msg_ok(paste0("PDF report has been generated successfully in ", DEA_results_DIR))
+  
+} else {
+  msg_warn("No PDF files to create the report.")
+}

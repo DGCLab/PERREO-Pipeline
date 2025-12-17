@@ -262,9 +262,9 @@ if [ ! -d "$CWD/Results/transcriptome_assembly" ]; then
       mkdir $CWD/Results/transcriptome_assembly
    fi
    
-cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/transcriptome_assembly/combined_annotations.gtf"
+cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
 
-combined_annotations="$CWD/transcriptome_assembly/combined_annotations.gtf"
+combined_annotations="$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
  
  awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
