@@ -333,7 +333,7 @@ msg_info "Starting WGCNA coexpression analysis..."
 
 if [ ! -d "$CWD/Results/Coexpression_analysis" ]; then
 
-mkdir $CWD/Coexpression_analysis
+mkdir -p $CWD/Results/Coexpression_analysis
 
 fi
 

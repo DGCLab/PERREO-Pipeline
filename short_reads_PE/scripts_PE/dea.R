@@ -95,6 +95,7 @@ library(rtracklayer)
 library(EDASeq)
 library(edgeR)
 library(RUVSeq)
+library(pdftools)
 })  
 
 ## Loading the metadata:
@@ -511,10 +512,10 @@ pal <- setNames(
 top_up   <- volcano.df |>  filter(DEG.Status == grp_up)    |>  slice_max(negLog10P, n = 10)
 top_down <- volcano.df |> filter(DEG.Status == grp_down)  |>  slice_max(negLog10P, n = 10)
 top_labs <- bind_rows(top_up, top_down)
-write.table(top_labs, paste0(CWD,"Results/toplabels.txt"))
+write.table(top_labs, paste0(CWD,"/Results/toplabels.txt"))
 write.table(
   top_up$RepeatSequence,
-  file = paste0(CWD,"Results/primersearchtoplabels.txt"),
+  file = paste0(CWD,"/Results/primersearchtoplabels.txt"),
   quote = FALSE,
   row.names = FALSE,
   col.names = FALSE

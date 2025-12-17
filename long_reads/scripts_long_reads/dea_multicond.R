@@ -57,6 +57,7 @@ library(rtracklayer)
 library(edgeR)
 library(limma)
 library(EDASeq)
+library(pdftools)
 })
   
 # Loading the metadata:

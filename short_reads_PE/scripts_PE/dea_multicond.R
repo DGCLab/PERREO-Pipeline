@@ -97,6 +97,7 @@ library(edgeR)
 library(limma)
 library(EDASeq)
 library(RUVSeq)
+library(pdftools)
 })
   
 # Loading the metadata:
