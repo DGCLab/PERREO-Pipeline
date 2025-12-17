@@ -5,7 +5,7 @@ set -euo pipefail
 CWD="$(pwd)"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/scripts_PE/logging.sh"
+source "${SCRIPT_DIR}/scripts_SE/logging.sh"
 
 # Scripts paths that already exist (ajusta nombres/paths)
 TRIM_SCRIPT="$CWD/scripts_SE/script_trimming_se.sh"   
