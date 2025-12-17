@@ -133,7 +133,7 @@ Then, there are some arguments that have to be taken into account although it is
 | Arguments          | Default |
 |-----------------|--------------|
 | Threads     | 8      |
-| Trimming type     |  trimming_simple (not needed for PERREO LR)     | 
+| Trimming      |  simple (not needed for PERREO LR)     | 
 | Mismatch align     | 0.05     | 
 | Trimming quality threshold     | 30     | 
 | Minimum reads length (for trimming)     | 16     | 
@@ -141,7 +141,9 @@ Then, there are some arguments that have to be taken into account although it is
 | K_num     | 2     | 
 | log2FC     | 1     | 
 | FDR     | 0.05     | 
-| Prediction model     | yes     | 
+| Prediction model     | yes     |
+| batch     | no     | 
+
 
 
 For SR-LR mode, the parameters trimming_type, trimming_quality_threshold, min_length_trim and max_length_trim are not considered as trimming for long-reads should be performed during the basecalling before obtaining the fastq files.
@@ -162,7 +164,7 @@ For SR-PE:<br>
                               be also performed to obtain high quality reads.
 -adapt_r2                     Adapter 2 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
                               be also performed to obtain high quality reads.
--trimming_type                trimming_simple/trimming_extra. The second must be selected if it is know that the kit used adds extra
+-trimming                     simple/extra. The second must be selected if it is know that the kit used adds extra
                               GC nucleotides (default: trimming_simple).
 -trimming_quality_threshold   Minimum quality permitted for reads to be kept after trimming (default: 30).
 -min_length_trim              Minimum reads length to not discard them after trimming (default: 16).
@@ -170,7 +172,7 @@ For SR-PE:<br>
 -mismatch_align               Percentage of mismatches permitted for reads to be kept during alignment (default: 0.05).
 -project_name
 -remove_duplicates            yes/no. Generally it is not recommended to discard duplicates unless the proportion is really high.
--batch_effect                 yes/no. If yes, and batch column is included in the sample sheet, the batch effect will be reduced
+-batch                        yes/no. If yes, and batch column is included in the sample sheet, the batch effect will be reduced
                               based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
 -method                       edgeR/DESeq2. 
 -k_num                        K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended
