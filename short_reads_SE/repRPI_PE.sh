@@ -8,20 +8,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/scripts_PE/logging.sh"
 
 # Scripts paths that already exist (ajusta nombres/paths)
-TRIM_FW_SCRIPT="$CWD/scripts_PE/script_trimming_forward.sh"   
-TRIM_RV_SCRIPT="$CWD/scripts_PE/script_trimming_reverse.sh"
-TRIM_EXTRA="$CWD/scripts_PE/trimGC.py"
-MAP_SCRIPT="$CWD/scripts_PE/script_T2T_star_map.sh"
-MARKDUP_SCRIPT="$CWD/scripts_PE/script_markduplicates.sh"           
-QUANT_SCRIPT="$CWD/scripts_PE/quant.R"
-MERGE_QUANT_SCRIPT="$CWD/scripts_PE/merge_quant.R"
-DEA_SCRIPT="$CWD/scripts_PE/dea.R"
-DEA_SCRIPT_multicond="$CWD/scripts_PE/dea_multicond.R"
-ASSEMBLY_SCRIPT="$CWD/scripts_PE/stringtie2.sh"   
-WGCNA_SCRIPT="$CWD/scripts_PE/WGCNA.R"         
-PRED_MODEL="$CWD/scripts_PE/prediction_model.R"
-HYBRIDS_SCRIPT="$CWD/scripts_PE/hybrid_transcripts.sh"
-HYBRIDS_R_SCRIPT="$CWD/scripts_PE/hybrid_transcripts_visualization_script.R"
+TRIM_SCRIPT="$CWD/scripts_SE/script_trimming_se.sh"   
+TRIM_EXTRA="$CWD/scripts_SE/trimGC.py"
+MAP_SCRIPT="$CWD/scripts_SE/script_T2T_star_map_se.sh"
+MARKDUP_SCRIPT="$CWD/scripts_SE/script_markduplicates_se.sh"           
+QUANT_SCRIPT="$CWD/scripts_SE/quant.R"
+MERGE_QUANT_SCRIPT="$CWD/scripts_SE/merge_quant.R"
+DEA_SCRIPT="$CWD/scripts_SE/dea.R"
+DEA_SCRIPT_multicond="$CWD/scripts_SE/dea_multicond.R"
+ASSEMBLY_SCRIPT="$CWD/scripts_SE/stringtie2.sh"   
+WGCNA_SCRIPT="$CWD/scripts_SE/WGCNA.R"         
+PRED_MODEL="$CWD/scripts_SE/prediction_model.R"
+HYBRIDS_SCRIPT="$CWD/scripts_SE/hybrid_transcripts.sh"
+HYBRIDS_R_SCRIPT="$CWD/scripts_SE/hybrid_transcripts_visualization_script.R"
 
 # Parsing arguments
 while [[ $# -gt 0 ]]; do
@@ -31,8 +30,7 @@ while [[ $# -gt 0 ]]; do
       -genome_gtf) genome_gtf="$2"; shift 2 ;;
       -repeat_gtf) repeat_gtf="$2"; shift 2 ;;
       -threads) threads="$2"; shift 2 ;;
-      -adapt_r1) adapt_r1="$2"; shift 2 ;;
-      -adapt_r2) adapt_r2="$2"; shift 2 ;;
+      -adapter) adapter="$2"; shift 2 ;;
       -trimming_quality_threshold) trimming_quality_threshold="$2"; shift 2 ;;
       -min_length_trim) min_length_trim="$2"; shift 2 ;;
       -max_length_trim) min_length_trim="$2"; shift 2 ;;
@@ -72,8 +70,7 @@ run_pipeline_sample() {
   msg_info "GTF: ${GREEN}$genome_gtf${RESET}"
   msg_info "Repeats: ${GREEN}$repeat_gtf${RESET}"
   msg_info "Threads: ${GREEN}$threads${RESET}"
-  msg_info "R1 adaptor: ${GREEN}$adapt_r1${RESET}"
-  msg_info "R2 adaptor: ${GREEN}$adapt_r2${RESET}"
+  msg_info "Adaptor: ${GREEN}$adaptor${RESET}"
   msg_info "trimming type: ${GREEN}$trimming${RESET}"
   msg_info "trimming_quality_threshold: ${GREEN}$trimming_quality_threshold${RESET}" 
   msg_info "minimum_length_trim: ${GREEN}$min_length_trim${RESET}"
@@ -116,8 +113,7 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
     SAMPLE_DIR="$CWD/samples/${sample_id}"
     TRIM_DIR="${SAMPLE_DIR}/trim"
     MAP_DIR="${SAMPLE_DIR}/alignment"
-    IN1="${sample_id}_1.fastq"
-    IN2="${sample_id}_2.fastq"
+    IN="${sample_id}.fastq"
 
     # Basic structure
     mkdir -p "$SAMPLE_DIR"
@@ -126,30 +122,20 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
     cd "$SAMPLE_DIR" || { msg_error "[CUTADAPT] Unable to enter in $SAMPLE_DIR"; exit 1; }
 
     # Checking the raw inputs
-    if [[ ! -f "$IN1" || ! -f "$IN2" ]]; then
+    if [ ! -f "$IN" ]; then
         msg_error "[CUTADAPT] Raw files not found for $sample_id (IN1=$IN1, IN2=$IN2)"
         continue
     fi
 
     # Performing trimming only if trimmed fastq files do not exist
-    if [[ ! -f "$TRIM_DIR/${sample_id}_trimmed_1.fastq" || ! -f "$TRIM_DIR/${sample_id}_trimmed_2.fastq" ]]; then
+    if [ ! -f "$TRIM_DIR/${sample_id}_trimmed.fastq" ]; then
         mkdir -p "$TRIM_DIR" "$MAP_DIR"
 
         # ------------ 1) TRIMMING READS ---------------------------
-        case "$STRAND" in
-          forward)
-            bash "$TRIM_FW_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim"
-            ;;
-          reverse)
-            bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim"
-            ;;
-          *)
-            msg_warn "[CUTADAPT] $sample_id: unknown strandedness '$STRAND' (expected forward/reverse)" >&2
-            continue
-            ;;
-        esac
+        
+       bash "$TRIM_SCRIPT" "$sample_id" "$IN" "$TRIM_DIR" "$adapter" "$threads"
     else
-        msg_ok "[CUTADAPT] Trimmed FASTQs already exist for $sample_id — skipping trimming."
+        echo "✓ Trimmed FASTQs already exist for $sample_id — skipping trimming."
     fi
 
 done
@@ -164,19 +150,20 @@ done
 
 msg_info "[STAR] Starting alignment against reference genome"
 
-  awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
+   awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
      [[ -z "$sample_id" ]] && continue
 
-     STRAND=$(msg_info "[STAR] $STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
-     SAMPLE_DIR="$CWD/samples/${sample_id}"
+     STRAND=$(echo "$STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
+     SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
      TRIM_DIR="${SAMPLE_DIR}/trim"
      MAP_DIR="${SAMPLE_DIR}/alignment"
 
   if [[ -f "$MAP_DIR/${sample_id}_Aligned.sortedByCoord.out.bam" ]];then
+
         msg_info '[STAR] Skipping mapping...'
   else
-        bash "$MAP_SCRIPT" "$sample_id" "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" "$threads" "$MAP_DIR" "$GENOME_DIR" "$mismatch_align"
+        bash "$MAP_SCRIPT" "$sample_id" "${TRIM_DIR}/${sample_id}_trimmed.fastq" "$threads" "$MAP_DIR" "$STAR_PATH" "$GENOME_DIR" "$mismatch_align"
   fi
   done
 
@@ -227,7 +214,7 @@ msg_info "[STAR] Starting alignment against reference genome"
    #Running Rsubread for quantification
       Rscript "$QUANT_SCRIPT" "$MAP_DIR" "$sample_id" "$REP_GTF_PATH" "$threads" "$STRAND" "$SAMPLE_DIR" "$QUANT_DIR"
    else
-   msg_warn "[FEATURECOUNTS] ${sample_id}_quant.txt alredy exists, skipping."
+   msg_warn "[FEATURECOUNTS] ${sample_id}_quant.txt already exists, skipping."
    fi
 
   done
