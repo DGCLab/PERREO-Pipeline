@@ -1,6 +1,6 @@
 # PERREO-Pipeline<br> 
 
-![logo_github](https://github.com/user-attachments/assets/51c9fac2-e7d7-46e1-b7b0-29a121dd9ea4)
+<img width="921" height="471" alt="logo_github" src="https://github.com/user-attachments/assets/f029a40a-dfc7-447c-b032-fe07a61f8a48" />
 
 
 # Software requirements:<br> 
