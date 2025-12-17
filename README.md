@@ -61,6 +61,8 @@ The samplesheet structure should be like this regardless of the mode run:<br>
 | SRR14506660     | reverse      | ESO       |
 | SRR14506859     | reverse      | HC        |
 
+If the user does not know the library strandedness, he/she can include a random type (forward/reverse) and decide after alignment applying specific software to infer the strandedness, like infer_experiment.py or check_for_strandedness. However, in this case, the user cannot perform extra trimming as trimGC.py script requires the strandedness to trim the reads. <br>
+
 In case data belong to more than two experimental conditions and batch effect cause is known, another column called "batch" must be included in the samplesheet indicating the origin batch. <br>
 <br>
 For example: If samples come from different hospitals, this column should be included and the hospital of origin has to be indicated for each sample.<br>
