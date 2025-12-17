@@ -10,8 +10,8 @@ source "${SCRIPT_DIR}/scripts_SE/logging.sh"
 # Scripts paths that already exist (ajusta nombres/paths)
 TRIM_SCRIPT="$CWD/scripts_SE/script_trimming_se.sh"   
 TRIM_EXTRA="$CWD/scripts_SE/trimGC.py"
-MAP_SCRIPT="$CWD/scripts_SE/script_T2T_star_map_se.sh"
-MARKDUP_SCRIPT="$CWD/scripts_SE/script_markduplicates_se.sh"           
+MAP_SCRIPT="$CWD/scripts_SE/script_map_se.sh"
+MARKDUP_SCRIPT="$CWD/scripts_SE/script_markduplicates.sh"           
 QUANT_SCRIPT="$CWD/scripts_SE/quant.R"
 MERGE_QUANT_SCRIPT="$CWD/scripts_SE/merge_quant.R"
 DEA_SCRIPT="$CWD/scripts_SE/dea.R"
@@ -123,7 +123,7 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
 
     # Checking the raw inputs
     if [ ! -f "$IN" ]; then
-        msg_error "[CUTADAPT] Raw files not found for $sample_id (IN1=$IN1, IN2=$IN2)"
+        msg_error "[CUTADAPT] Raw files not found for $sample_id (IN=$IN)"
         continue
     fi
 
@@ -133,7 +133,7 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
 
         # ------------ 1) TRIMMING READS ---------------------------
         
-       bash "$TRIM_SCRIPT" "$sample_id" "$IN" "$TRIM_DIR" "$adapter" "$threads"
+       bash "$TRIM_SCRIPT" "$sample_id" "$IN" "$TRIM_DIR" "$adapter" "$trimming" "$threads" "$trimming_quality" "$min_length"
     else
         echo "✓ Trimmed FASTQs already exist for $sample_id — skipping trimming."
     fi
@@ -163,7 +163,7 @@ msg_info "[STAR] Starting alignment against reference genome"
 
         msg_info '[STAR] Skipping mapping...'
   else
-        bash "$MAP_SCRIPT" "$sample_id" "${TRIM_DIR}/${sample_id}_trimmed.fastq" "$threads" "$MAP_DIR" "$STAR_PATH" "$GENOME_DIR" "$mismatch_align"
+        bash "$MAP_SCRIPT" "$sample_id" "${TRIM_DIR}/${sample_id}_trimmed.fastq" "$threads" "$MAP_DIR" "$GENOME_DIR" "$mismatch_align"
   fi
   done
 
