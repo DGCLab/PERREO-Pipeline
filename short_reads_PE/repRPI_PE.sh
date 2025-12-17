@@ -7,10 +7,6 @@ CWD="$(pwd)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/scripts_PE/logging.sh"
 
-# Create .log
-exec > >(tee -a "${SCRIPT_DIR}/pipeline.log") \
-     2> >(tee -a "${SCRIPT_DIR}/pipeline.err" >&2)
-
 # Scripts paths that already exist (ajusta nombres/paths)
 TRIM_FW_SCRIPT="$CWD/scripts_PE/script_trimming_forward.sh"   
 TRIM_RV_SCRIPT="$CWD/scripts_PE/script_trimming_reverse.sh"
