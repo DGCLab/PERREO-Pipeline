@@ -308,11 +308,15 @@ WGCNA R package generates coexpression networks from the given expression matrix
 2) Correlation heatmap between modules and experimental conditions.
 3) Correlation heatmap between modules and samples.
 4) Repeat RNAs and the module they belong to in txt format.
-5) Modules dendrogram.  
+5) Modules dendrogram.<br>
+
+
+## Transcriptome assembly
+Stringtie builds a transcriptome assembly for each sample. Then, the pipeline performs a preliminar anylsis where the annotations file of each sample is mapped to a GTF containing exonic regions and another GTF containing repetitive elements in order to obtain hybrid transcripts composed of fragments derived from exons and repeats.<br>
 
 
 ## PDF report
-The generated report contains the plots previously mentioned in the Differential Expression and Coexpression analysis sections.
+The generated report contains the plots previously mentioned in the Differential Expression section.
 <img width="6000" height="4500" alt="VolcanoPlot" src="https://github.com/user-attachments/assets/fbcd3692-6819-4f7e-a95f-46432376ff58" />
 <img width="2400" height="1800" alt="repetitive_counts_violin_box" src="https://github.com/user-attachments/assets/c7bde717-9a58-43da-89f2-2b35d2c12b94" />
 <img width="2400" height="1800" alt="pca" src="https://github.com/user-attachments/assets/a16a83d9-48bf-4048-91bc-e6553f1f734f" />
