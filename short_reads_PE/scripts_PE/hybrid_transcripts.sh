@@ -9,21 +9,20 @@ repeat_gtf="$4"
 for gtf in "$GTF_DIR"/*.gtf; do
   sample="$(basename "$gtf" .gtf)"
 
-  # Exones del ensamblado
+  # Assembly exons
   awk 'BEGIN{FS=OFS="\t"} $3=="exon"{print}' "$gtf" > tmp.exons.gtf
 
-  # IDs de transcritos con exones que solapan EXONES génicos
+  # Transcript IDs that overlap genic exons 
   bedtools intersect -u -a tmp.exons.gtf -b <(awk 'BEGIN{FS=OFS="\t"} $3=="exon"{print}' "$CWD/$genome_gtf") \
     | sed -n 's/.*transcript_id "\([^"]*\)".*/\1/p' \
     | sort -u > tmp.tx_gene.ids || true
 
-  # IDs de transcritos con exones que solapan repeticiones
-  # (si tu repeat_gtf es todo exon, esto equivale a no filtrar)
+  # Transcript IDs that overlap repetitive elements
   bedtools intersect -u -a tmp.exons.gtf -b <(awk 'BEGIN{FS=OFS="\t"} !/^#/{print}' "$CWD/$repeat_gtf") \
     | sed -n 's/.*transcript_id "\([^"]*\)".*/\1/p' \
     | sort -u > tmp.tx_repeat.ids || true
 
-  # Todos los transcript_id
+  # All transcript IDs
   awk 'BEGIN{FS=OFS="\t"} $3=="transcript"{print}' "$gtf" \
     | sed -n 's/.*transcript_id "\([^"]*\)".*/\1/p' \
     | sort -u > tmp.tx_all.ids
