@@ -6,23 +6,26 @@ CWD="$2"
 genome_gtf="$3"
 repeat_gtf="$4"
 
+echo -e "sample\ttotal_tx\tgene_only\trepeat_only\thybrid\thybrid_frac"
+
 for gtf in "$GTF_DIR"/*.gtf; do
   sample="$(basename "$gtf" .gtf)"
 
-  # Assembly exons
+  # Exones del ensamblado
   awk 'BEGIN{FS=OFS="\t"} $3=="exon"{print}' "$gtf" > tmp.exons.gtf
 
-  # Transcript IDs that overlap genic exons 
+  # IDs de transcritos con exones que solapan EXONES génicos
   bedtools intersect -u -a tmp.exons.gtf -b <(awk 'BEGIN{FS=OFS="\t"} $3=="exon"{print}' "$CWD/$genome_gtf") \
     | sed -n 's/.*transcript_id "\([^"]*\)".*/\1/p' \
     | sort -u > tmp.tx_gene.ids || true
 
-  # Transcript IDs that overlap repetitive elements
+  # IDs de transcritos con exones que solapan repeticiones
+  # (si tu repeat_gtf es todo exon, esto equivale a no filtrar)
   bedtools intersect -u -a tmp.exons.gtf -b <(awk 'BEGIN{FS=OFS="\t"} !/^#/{print}' "$CWD/$repeat_gtf") \
     | sed -n 's/.*transcript_id "\([^"]*\)".*/\1/p' \
     | sort -u > tmp.tx_repeat.ids || true
 
-  # All transcript IDs
+  # Todos los transcript_id
   awk 'BEGIN{FS=OFS="\t"} $3=="transcript"{print}' "$gtf" \
     | sed -n 's/.*transcript_id "\([^"]*\)".*/\1/p' \
     | sort -u > tmp.tx_all.ids
@@ -35,4 +38,5 @@ for gtf in "$GTF_DIR"/*.gtf; do
 
   frac=$(awk -v h="$hybrid" -v t="$total" 'BEGIN{if(t>0) printf "%.4f", h/t; else print 0}')
 
+  echo -e "$sample\t$total\t$gene_only\t$repeat_only\t$hybrid\t$frac"
 done
