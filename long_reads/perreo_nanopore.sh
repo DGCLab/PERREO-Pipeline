@@ -13,13 +13,10 @@ exec > >(tee -a "${SCRIPT_DIR}/pipeline.log") \
 
 # Scripts paths that already exist (ajusta nombres/paths)
 DEA_SCRIPT="$CWD/scripts_long_reads/dea.R"
-#BAMBU_SCRIPT="$CWD/scripts_long_reads/script_bambu.R"
 DEA_SCRIPT_multicond="$CWD/scripts_long_reads/dea_multicond.R"      
 PRED_MODEL="$CWD/scripts_long_reads/prediction_model.R"     
 WGCNA_SCRIPT="$CWD/scripts_long_reads/WGCNA.R"     
 ASSEMBLY_SCRIPT="$CWD/scripts_long_reads/stringtie2.sh"   
-ASSEMBLY_SCRIPT_2="$CWD/scripts_long_reads/stringtie2_2.0.sh" 
-PREPDE_SCRIPT="$CWD/scripts_long_reads/prepDE.py3" 
 QUANT_SCRIPT="$CWD/scripts_long_reads/quant.R"       
 MERGE_QUANT_SCRIPT="$CWD/scripts_long_reads/merge_quant.R"
 HYBRIDS_SCRIPT="$CWD/scripts_long_reads/hybrid_transcripts.sh"
