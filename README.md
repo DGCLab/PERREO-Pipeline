@@ -140,6 +140,8 @@ Then, there are some arguments that have to be taken into account although it is
 | Trimming quality threshold     | 30     | 
 | Minimum reads length (for trimming)     | 16     | 
 | Maximum reads length (for trimming)     |      | 
+| Initial nucleotides trimming R1     |   0   | 
+| Initial nucleotides trimming R2     |   0   | 
 | K_num     | 2     | 
 | log2FC     | 1     | 
 | FDR     | 0.05     | 
@@ -152,7 +154,8 @@ For SR-LR mode, the parameters trimming_type, trimming_quality_threshold, min_le
 
 
 # PERREO SR-PE and SR-SE
-The required arguments for both paired-end-derived data are the following:<br> 
+SR-SE and SR-PE analyses are very similar as the only differences are located in the trimming and alignment steps. The rest of the analysis is common  between these two modes.<br> 
+The arguments for SR-PE and SR-SE analysis are practically the same. However, there exists specific differences and we will show them separately by PERREO mode. <br> 
 
 For SR-PE:<br> 
 ```text
@@ -171,6 +174,9 @@ For SR-PE:<br>
 -trimming_quality_threshold   Minimum quality permitted for reads to be kept after trimming (default: 30).
 -min_length_trim              Minimum reads length to not discard them after trimming (default: 16).
 -max_length_trim              Maximum reads length permitted for reads to be kept after trimming (default: ).
+-polya                        If polyA tails have to be removed (default: not applied).
+-initial_trim_read1           Number of initial nucleotides that must be trimmed in R1 files after specific adapter trimming (default: 0).
+-initial_trim_read2           Number of initial nucleotides that must be trimmed in R2 files after specific adapter trimming (default: 0).
 -mismatch_align               Percentage of mismatches permitted for reads to be kept during alignment (default: 0.05).
 -project_name
 -remove_duplicates            yes/no. Generally it is not recommended to discard duplicates unless the proportion is really high.
@@ -195,6 +201,7 @@ For SR-SE:<br>
 In this step there are two main options: simple trimming with cutadapt and a more complex trimming performed firstly with cutadapt and then with trimGC.py script in order to remove additional GC nucleotides added by specific sequencing kits. <br>
 <br>
 If adapters had been removed previously and the trimming step should only be taken into account to remove low quality reads, user must not include -adapt_r1 and -adapt_r2 arguments while running the pipeline.<br>
+In case the user also want to remove polyA tails, he/she must include that -polya argument as following: -polya polya.
 
 
 ## Alignment
