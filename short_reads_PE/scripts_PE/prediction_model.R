@@ -1,339 +1,415 @@
 args <- commandArgs(trailingOnly=TRUE)
 
-CWD <- args[[1]] #project path
+CWD <- args[[1]] 
 sample_list <- args[[2]] 
 threads <- as.numeric(args[[3]])
-
-dir.create(paste0(CWD,"Results/prediction_models"))
-
-prediction_models_dir <- paste0(CWD,"Results/prediction_models/")
+positive_class <- args[[4]]
 
 
-## ==============================
-## Logging coloured (R)
-## ==============================
+if (!dir.exists(paste0(CWD,"/prediction_models"))){
+  dir.create(paste0(CWD,"/prediction_models"))}
 
-use_color <- interactive() || Sys.getenv("TERM") != ""
-
-if (use_color) {
-  COL_INFO  <- "\033[34m"
-  COL_OK    <- "\033[32m"
-  COL_WARN  <- "\033[33m"
-  COL_ERR   <- "\033[31m"
-  COL_BOLD  <- "\033[1m"
-  COL_RESET <- "\033[0m"
-  
-  SYM_OK   <- "✔"
-  SYM_WARN <- "⚠"
-  SYM_ERR  <- "✖"
-} else {
-  COL_INFO <- COL_OK <- COL_WARN <- COL_ERR <- COL_BOLD <- COL_RESET <- ""
-  SYM_OK   <- "[OK]"
-  SYM_WARN <- "[WARN]"
-  SYM_ERR  <- "[ERROR]"
-}
-
-msg_info <- function(x) {
-  cat(COL_INFO, COL_BOLD, x, COL_RESET, "\n", sep = "")
-}
-
-msg_ok <- function(x) {
-  cat(COL_OK, COL_BOLD, SYM_OK, " ",  x, COL_RESET, "\n", sep = "")
-}
-
-msg_warn <- function(x) {
-  cat(COL_WARN, COL_BOLD, SYM_WARN, " ",  x, COL_RESET, "\n", sep = "")
-}
-
-msg_error <- function(x) {
-  cat(COL_ERR, COL_BOLD, SYM_ERR, " ",  x, COL_RESET, "\n", sep = "")
-}
+prediction_models_dir <- paste0(CWD,"/prediction_models/")
 
 
-library(mlbench)
-library(caret)
-library(readxl)
-library(caretEnsemble)
-library(randomForest)
-library(MLmetrics)
-library(doParallel)
+suppressPackageStartupMessages({
+  library(caret)
+  library(pROC)
+  library(dplyr)
+  library(readr)
+  library(tibble)
+  library(doParallel)
+})
+
+dir.create(prediction_models_dir, showWarnings = FALSE, recursive = TRUE)
+set.seed(123)
 
 #Importing normalized matrix
 data <- read.csv(paste0(CWD,"/Results/DEA_results/expression_matrix.csv"),sep=",",header=T)
 
+rownames(data) <- data$X
+
+data <- data[,-1]
+
 #Importing metadata
 samplesheet <- read.table(paste0(CWD,"/",sample_list), header = T, sep="\t")
 
-rownames <- data$V1
+# -------------------------
+# 1) Filtrar muestras por sample_list
+# -------------------------
+samples_keep <- if ("sample" %in% colnames(samplesheet)) samplesheet$sample else samplesheet[[1]]
+samples_keep <- samples_keep[!is.na(samples_keep) & samples_keep != ""]
 
-data <- data[,-1]
-rownames(data) <- rownames
+samplesheet <- samplesheet %>%
+  mutate(sample = as.character(sample),
+         condition = as.factor(condition),
+         strandedness = as.character(strandedness)) %>%
+  filter(sample %in% samples_keep)
 
-#Assigning condition vector
-if (!identical(colnames(data),samplesheet$sample)){
-  msg_error("Sample-ids order in expression matriz and metadata does not match")
-  stop("The condition is not met.", call. = FALSE)
+stopifnot(nrow(samplesheet) >= 4)
+
+# caret prefiere niveles válidos
+levels(samplesheet$condition) <- make.names(levels(samplesheet$condition))
+
+# -------------------------
+# 2) Construir X (samples x features) y y desde `data`
+# -------------------------
+samples <- samplesheet$sample
+stopifnot(all(samples %in% colnames(data)))
+
+X <- t(as.matrix(data[, samples, drop = FALSE]))
+mode(X) <- "numeric"
+X <- as.data.frame(X)
+rownames(X) <- samples
+
+y <- samplesheet$condition
+names(y) <- samples
+
+# eliminar features near-zero variance
+nzv <- caret::nearZeroVar(X)
+if (length(nzv) > 0) X <- X[, -nzv, drop = FALSE]
+
+# -------------------------
+# 3) Auto sampling
+# -------------------------
+pick_sampling_auto <- function(y) {
+  tab <- sort(table(y), decreasing = TRUE)
+  major_n <- as.numeric(tab[1])
+  minor_n <- as.numeric(tab[length(tab)])
+  ratio <- minor_n / major_n
+
+  if (ratio >= 0.70) return("none")
+  if (minor_n < 20) return("down")
+
+  if (requireNamespace("DMwR", quietly = TRUE) || requireNamespace("DMwR2", quietly = TRUE)) return("smote")
+  if (requireNamespace("ROSE", quietly = TRUE)) return("rose")
+  return("down")
+}
+sampling_method <- pick_sampling_auto(y)
+sampling_method <- if (sampling_method == "none") NULL else sampling_method
+
+message("[INFO] sampling: ", ifelse(is.null(sampling_method), "none", sampling_method),
+        " | dist: ", paste(names(table(y)), table(y), sep="=", collapse="; "))
+
+# -------------------------
+# 4) Split train/test
+# -------------------------
+idx <- caret::createDataPartition(y, p = 0.8, list = FALSE)
+x_train <- X[idx, , drop = FALSE]
+y_train <- y[idx]
+
+x_test <- X[-idx, , drop = FALSE]
+y_test <- y[-idx]
+
+is_binary <- nlevels(y_train) == 2
+
+if (is_binary) {
+  pc <- make.names(positive_class)
+  if (!pc %in% levels(y_train)) {
+    stop("positive_class no coincide con niveles de condition: ", paste(levels(y_train), collapse=", "))
+  }
+  y_train <- factor(y_train, levels = c(pc, setdiff(levels(y_train), pc)))
+  y_test  <- factor(y_test,  levels = levels(y_train))
+} else {
+  message("[INFO] Multiclass: se exporta ROC one-vs-rest por clase (positive_class no aplica).")
 }
 
-data <- t(data)
-condition <- samplesheet$condition
-data <- cbind(data,condition)
-data <- as.data.frame(data)
+# -------------------------
+# 5) Paralelo
+# -------------------------
+threads <- max(1, threads)
+cl <- parallel::makePSOCKcluster(threads)
+doParallel::registerDoParallel(cl)
+on.exit({ try(parallel::stopCluster(cl), silent = TRUE) }, add = TRUE)
 
-
-num_cores <- threads - 1
-cl <- makePSOCKcluster(num_cores)
-
-registerDoParallel(cl)
-
-if (length(unique(condition))>2){
-
-control <- trainControl(
-  method = "repeatedcv",
-  number = 5,
-  repeats=5,
-  classProbs = TRUE,
-  savePredictions = "final",
-  summaryFunction = multiClassSummary,
-allowParallel=TRUE)
-}else{
-control <- trainControl(
-  method = "repeatedcv",
-  number = 5,
-  repeats=5,
-  classProbs = TRUE,
-  savePredictions = "final",
-  summaryFunction = twoClassSummary,
-allowParallel=TRUE)
+# -------------------------
+# 6) trainControl
+# -------------------------
+if (is_binary) {
+  ctrl <- trainControl(
+    method = "repeatedcv", number = 5, repeats = 3,
+    classProbs = TRUE,
+    summaryFunction = twoClassSummary,
+    savePredictions = "final",
+    sampling = sampling_method,
+    allowParallel = TRUE
+  )
+  metric <- "ROC"
+} else {
+  ctrl <- trainControl(
+    method = "repeatedcv", number = 5, repeats = 3,
+    classProbs = TRUE,
+    summaryFunction = multiClassSummary,
+    savePredictions = "final",
+    sampling = sampling_method,
+    allowParallel = TRUE
+  )
+  metric <- "Accuracy"
 }
 
-
-if (length(unique(condition))>2){
-
-msg_info("[1/2] Running RandomForest...")
-
-set.seed(123)
-
-
-rf_model <- train(condition ~ ., data=data, method="rf",metric="Accuracy",trControl=control)
-
-
-msg_info("[2/2] Running GLMnet...")
-
-set.seed(123)
-glmnet_model <- train(condition ~ ., data=data, method="glmnet",metric="Accuracy",trControl=control)
-}else{
-  
-msg_info("[1/2] Running RandomForest...")
-
-set.seed(123)
-
-
-rf_model <- train(condition ~ ., data=data, method="rf",metric="ROC",trControl=control)
-
-
-msg_info("[2/2] Running GLMnet...")
-
-set.seed(123)
-glmnet_model <- train(condition ~ ., data=data, method="glmnet",metric="ROC",trControl=control)
-}
-
-
-#Comparing results of the 4 models
-
-results <- resamples(list(RF=rf_model,
-                          GLMnet=glmnet_model))
-
-stopCluster(cl)
-registerDoSEQ()
-
-#Generating plots 
-
-summary(results)
-p1<-bwplot(results)
-p2<-dotplot(results)
-p3<-densityplot(results)
-
-
-#Saving plots 
-pdf(paste0(prediction_models_dir,"/bwplot.pdf"), width = 10, height = 8)
-print(p1)
-dev.off()
-pdf(paste0(prediction_models_dir,"/dotplot.pdf"), width = 10, height = 8)
-print(p2)
-dev.off()
-pdf(paste0(prediction_models_dir,"/density.pdf"), width = 10, height = 8)
-print(p3)
-dev.off()
-
-
-#Extracting metrics in table format
-
-results_table <- results$values
-
-#Calculating means for model 
-
-means <- data.frame(
-  Model = gsub("~ROC|~Sens|~Spec", "", names(results_table)[-1]),
-  Metric = gsub(".*~", "", names(results_table)[-1]),
-  Mean = colMeans(results_table[,-1])
+# -------------------------
+# 7) Entrenar modelos
+# -------------------------
+glmnet_grid <- expand.grid(
+  alpha = seq(0, 1, length.out = 6),
+  lambda = 10^seq(-4, 1, length.out = 30)
 )
 
-write.csv(means,paste0(prediction_models_dir,"/models_metrics.csv"), row.names = FALSE)
+glmnet_fit <- train(
+  x = x_train, y = y_train,
+  method = "glmnet",
+  metric = metric,
+  trControl = ctrl,
+  tuneGrid = glmnet_grid,
+  preProcess = c("center", "scale")
+)
 
-#Cleaner format
+rf_grid <- expand.grid(mtry = unique(pmax(1, round(c(sqrt(ncol(x_train)), ncol(x_train)/3, ncol(x_train)/2)))))
 
-library(tidyr)
-results_wide <- means %>%
-  pivot_wider(names_from = Metric, values_from = Mean)
+rf_fit <- train(
+  x = x_train, y = y_train,
+  method = "rf",
+  metric = metric,
+  trControl = ctrl,
+  tuneGrid = rf_grid
+)
 
-write.csv(results_wide,paste0(prediction_models_dir,"/summary_metrics.csv"), row.names = FALSE)
+saveRDS(glmnet_fit, file.path(prediction_models_dir, "model_glmnet.rds"))
+saveRDS(rf_fit,     file.path(prediction_models_dir, "model_rf.rds"))
 
-#ROC curves
+write.csv(glmnet_fit$results, file.path(prediction_models_dir, "cv_results_glmnet.csv"), row.names = FALSE)
+write.csv(rf_fit$results,     file.path(prediction_models_dir, "cv_results_rf.csv"), row.names = FALSE)
 
-library(pROC)
-
-#RANDOM FOREST
-
-pred_rf <- rf_model$pred
-pred$obs <- droplevels(pred_rf$obs)
-clases_rf <- levels(pred_rf$obs)
-
-if (length(clases_rf) == 2) {
-  
-  ## --------- BINARY CASE ---------
-  positiva <- clases_rf[2]  # By default, the second class is the POSITIVE
-  
-  roc_rf <- roc(
-    response  = pred_rf$obs,
-    predictor = pred_rf[[positiva]],  
-    levels    = clases_rf           
-  )
-  
-  plot(roc_rf, main = "ROC curve - Random Forest")
-  auc(roc_rf)
-  
-  pdf(paste0(prediction_models_dir,"/ROC-rf.pdf"), width = 10, height = 8)
-  plot(roc_rf, main = "ROC curve - Random Forest")
-  dev.off()
-  
-  
-} else {
-  
-  ## --------- MULTICLASS CASE ---------
-   # 1) Model global AUC
-  prob_mat_rf <- as.matrix(pred_rf[, clases_rf])
-  roc_multi_rf <- multiclass.roc(
-    response  = pred_rf$obs,
-    predictor = prob_mat_rf
-  )
-  print(roc_multi_rf$auc)   
-  
-  # 2) One vs all curves
-  roc_list_rf <- lapply(clases_rf, function(cl) {
-    resp_bin_rf <- factor(ifelse(pred_rf$obs == cl, cl, "other"),
-                       levels = c("other", cl))  # cl es la positiva
-    roc(
-      response  = resp_bin_rf,
-      predictor = pred[[cl]],
-      levels    = c("other", cl)
+# -------------------------
+# 8) Export predicciones + ROC + métricas
+# -------------------------
+ovr_roc_curves <- function(truth, prob_df) {
+  classes <- levels(truth)
+  out <- list()
+  for (cls in classes) {
+    bin_truth <- factor(ifelse(truth == cls, cls, paste0("not_", cls)),
+                        levels = c(cls, paste0("not_", cls)))
+    roc_obj <- pROC::roc(bin_truth, prob_df[[cls]],
+                         levels = rev(levels(bin_truth)), direction = "<", quiet = TRUE)
+    out[[cls]] <- tibble(
+      class = cls,
+      fpr = 1 - roc_obj$specificities,
+      tpr = roc_obj$sensitivities,
+      threshold = roc_obj$thresholds,
+      auc = as.numeric(pROC::auc(roc_obj))
     )
-  })
-  names(roc_list_rf) <- clases_rf
-  
-  # 3) Saving PDFs with all the curves
-  pdf("ROC_RandomForest_multiclass.pdf")
-  plot(
-    roc_list[[1]],
-    main = paste0("Multiclass ROC - Random Forest (AUC global = ",
-                  round(as.numeric(roc_multi_rf$auc), 3), ")"),
-    col  = 1
-  )
-  if (length(clases_rf) > 1) {
-    for (i in 2:length(clases_rf)) {
-      plot(roc_list_rf[[i]], add = TRUE, col = i)
-    }
   }
-  legend(
-    "bottomright",
-    legend = paste0(clases_rf, " (AUC=", round(sapply(roc_list_rf, auc), 3), ")"),
-    col = seq_along(clases_rf),
-    lty = 1,
-    cex = 0.8
-  )
-  dev.off()  
-  
-  
+  bind_rows(out)
 }
 
+eval_and_export <- function(fit, model_name) {
+  prob_df <- predict(fit, newdata = x_test, type = "prob") %>% as.data.frame()
+  pred    <- predict(fit, newdata = x_test, type = "raw")
 
-#GLMNET
+  pred_out <- samplesheet %>%
+    filter(sample %in% rownames(x_test)) %>%
+    mutate(truth = as.character(y_test),
+           pred  = as.character(pred)) %>%
+    bind_cols(as_tibble(prob_df))
 
-pred_glm <- glmnet_model$pred
-pred_glm$obs <- droplevels(pred_glm$obs)
-clases_glm <- levels(pred_glm$obs)
+  write.csv(pred_out, file.path(prediction_models_dir, paste0("test_predictions_", model_name, ".csv")),
+            row.names = FALSE)
 
+  cm <- confusionMatrix(pred, y_test)
 
-if (length(clases) == 2) {
-  ## --------- BINARY CASE ---------
-  positiva <- clases_glm[2]  
-  
-  roc_glmnet <- roc(
-    response  = pred_glm$obs,
-    predictor = pred_glm[[positiva]],  
-    levels    = clases_glm             
+  base <- tibble(
+    model = model_name,
+    accuracy = unname(cm$overall["Accuracy"]),
+    kappa = unname(cm$overall["Kappa"])
   )
-  
-  plot(roc_glmnet, main = "ROC curve - GLMnet")
-  auc(roc_glmnet)
-  
-  pdf(paste0(prediction_models_dir,"/ROC-glmnet.df"), width = 10, height = 8)
-  plot(roc_glmnet, main = "ROC curve - GLMnet")
-  dev.off()
-  
-} else {
-  ## --------- MULTICLASS CASE ---------
-  
-   # 1) Model global AUC
-  prob_mat_glm <- as.matrix(pred_glm[, clases_glm])
-  roc_multi_glm <- multiclass.roc(
-    response  = pred_glm$obs,
-    predictor = prob_mat_glm
-  )
-  print(roc_multi_glm$auc)   
-  
-  # 2) One vs all curves
-  roc_list_glm <- lapply(clases, function(cl) {
-    resp_bin_glm <- factor(ifelse(pred_glm$obs == cl, cl, "other"),
-                       levels = c("other", cl))
-    roc(
-      response  = resp_bin_glm,
-      predictor = pred_glm[[cl]],
-      levels    = c("other", cl)
+
+  if (is_binary) {
+    pos <- levels(y_test)[1]
+    roc_obj <- pROC::roc(y_test, prob_df[[pos]], levels = rev(levels(y_test)),
+                         direction = "<", quiet = TRUE)
+    auc_val <- as.numeric(pROC::auc(roc_obj))
+    coords_best <- pROC::coords(roc_obj, x="best", best.method="youden",
+                                ret=c("threshold","sensitivity","specificity"), transpose=FALSE)
+
+    roc_df <- tibble(
+      model = model_name, class = pos,
+      fpr = 1 - roc_obj$specificities,
+      tpr = roc_obj$sensitivities,
+      threshold = roc_obj$thresholds,
+      auc = auc_val
     )
-  })
-  names(roc_list_glm) <- clases
-  
-  # 3) Saving PDFs for all the curves
-  pdf("ROC_GLMnet_multiclass.pdf")
-  plot(
-    roc_list_glm[[1]],
-    main = paste0("Multiclass ROC - GLMnet (AUC global = ",
-                  round(as.numeric(roc_multi_glm$auc), 3), ")"),
-    col  = 1
-  )
-  if (length(clases_glm) > 1) {
-    for (i in 2:length(clases_glm)) {
-      plot(roc_list_glm[[i]], add = TRUE, col = i)
-    }
+    write.csv(roc_df, file.path(prediction_models_dir, paste0("roc_curve_", model_name, ".csv")),
+              row.names = FALSE)
+
+    p <- unname(cm$byClass["Pos Pred Value"])
+    r <- unname(cm$byClass["Sensitivity"])
+    f1 <- if ((p + r) > 0) 2*p*r/(p+r) else NA_real_
+
+    bind_cols(base, tibble(
+      auc = auc_val,
+      sensitivity = unname(cm$byClass["Sensitivity"]),
+      specificity = unname(cm$byClass["Specificity"]),
+      precision = p,
+      f1 = f1
+    ))
+  } else {
+    roc_ovr <- ovr_roc_curves(y_test, prob_df) %>% mutate(model = model_name)
+    write.csv(roc_ovr, file.path(prediction_models_dir, paste0("roc_ovr_", model_name, ".csv")),
+              row.names = FALSE)
+
+    mc_auc <- tryCatch({
+      mroc <- pROC::multiclass.roc(response = y_test, predictor = as.matrix(prob_df), quiet = TRUE)
+      as.numeric(mroc$auc)
+    }, error = function(e) NA_real_)
+
+    bind_cols(base, tibble(multiclass_auc = mc_auc))
   }
-  legend(
-    "bottomright",
-    legend = paste0(clases_glm, " (AUC=", round(sapply(roc_list_glm, auc), 3), ")"),
-    col = seq_along(clases_glm),
-    lty = 1,
-    cex = 0.8
-  )
-  dev.off() 
 }
+
+m1 <- eval_and_export(glmnet_fit, "glmnet")
+m2 <- eval_and_export(rf_fit, "rf")
+
+metrics_all <- bind_rows(m1, m2)
+write.csv(metrics_all, file.path(prediction_models_dir, "metrics_summary.csv"), row.names = FALSE)
+
+print(metrics_all)
+cat("[OK] outputs en: ", normalizePath(prediction_models_dir), "\n", sep = "")
+
+# ============================================================
+# ROC PDFs (ADD-ON): pegar al final del script
+# Requiere: is_binary, y_test, x_test, prediction_models_dir,
+#           glmnet_fit, rf_fit
+# ============================================================
+
+suppressPackageStartupMessages({
+  library(pROC)
+})
+
+if (!dir.exists(prediction_models_dir)) {
+  dir.create(prediction_models_dir, recursive = TRUE, showWarnings = FALSE)
+}
+
+.safe_roc <- function(truth_factor, probs_vec) {
+  # Evita errores si hay NAs o si una clase no aparece en test
+  ok <- is.finite(probs_vec) & !is.na(truth_factor)
+  truth_factor <- droplevels(truth_factor[ok])
+  probs_vec <- probs_vec[ok]
+  if (nlevels(truth_factor) < 2) return(NULL)
+  pROC::roc(truth_factor, probs_vec, levels = rev(levels(truth_factor)),
+            direction = "<", quiet = TRUE)
+}
+
+if (exists("glmnet_fit") && exists("rf_fit") && exists("x_test") && exists("y_test") && exists("is_binary")) {
+
+  if (isTRUE(is_binary)) {
+    # Binario: comparación en un solo PDF
+    pos <- levels(y_test)[1]
+
+    prob_glmnet <- tryCatch(predict(glmnet_fit, newdata = x_test, type = "prob")[[pos]],
+                            error = function(e) NULL)
+    prob_rf <- tryCatch(predict(rf_fit, newdata = x_test, type = "prob")[[pos]],
+                        error = function(e) NULL)
+
+    roc_glmnet <- if (!is.null(prob_glmnet)) .safe_roc(y_test, prob_glmnet) else NULL
+    roc_rf     <- if (!is.null(prob_rf))     .safe_roc(y_test, prob_rf)     else NULL
+
+    out_pdf <- file.path(prediction_models_dir, "ROC_test.pdf")
+    pdf(out_pdf, width = 6, height = 6)
+
+    if (!is.null(roc_glmnet)) {
+      auc_glmnet <- as.numeric(pROC::auc(roc_glmnet))
+      plot(roc_glmnet, main = "ROC (test)", legacy.axes = TRUE, col="blue")
+    } else {
+      plot.new()
+      title("ROC (test)")
+      text(0.5, 0.5, "No se pudo calcular ROC para GLMNET")
+    }
+
+    if (!is.null(roc_rf)) {
+      auc_rf <- as.numeric(pROC::auc(roc_rf))
+      plot(roc_rf, add = TRUE, col="red")
+    } else {
+      auc_rf <- NA_real_
+    }
+
+    if (!is.null(roc_glmnet) || !is.null(roc_rf)) {
+      legend("bottomright",
+             legend = c(
+               if (!is.null(roc_glmnet)) paste0("GLMNET AUC=", round(auc_glmnet, 3)) else "GLMNET AUC=NA",
+               if (!is.null(roc_rf))     paste0("RF AUC=", round(auc_rf, 3))         else "RF AUC=NA"
+             ),
+             lwd = 2, bty = "n")
+    }
+    dev.off()
+
+    message("[OK] ROC PDF guardado: ", out_pdf)
+
+  } else {
+    # Multiclass: one-vs-rest, un PDF por modelo
+    .plot_ovr_pdf <- function(fit, model_name) {
+      prob_df <- tryCatch(predict(fit, newdata = x_test, type = "prob") %>% as.data.frame(),
+                          error = function(e) NULL)
+      if (is.null(prob_df)) return(invisible(FALSE))
+
+      classes <- levels(y_test)
+      out_pdf <- file.path(prediction_models_dir, paste0("ROC_ovr_test_", model_name, ".pdf"))
+      pdf(out_pdf, width = 7, height = 7)
+
+      first <- TRUE
+      for (cls in classes) {
+        if (!cls %in% colnames(prob_df)) next
+
+        bin_truth <- factor(ifelse(y_test == cls, cls, paste0("not_", cls)),
+                            levels = c(cls, paste0("not_", cls)))
+
+        roc_obj <- .safe_roc(bin_truth, prob_df[[cls]])
+        if (is.null(roc_obj)) next
+
+        if (first) {
+          plot(roc_obj, main = paste0("ROC one-vs-rest (test) - ", model_name), legacy.axes = TRUE)
+          first <- FALSE
+        } else {
+          plot(roc_obj, add = TRUE)
+        }
+      }
+
+      if (first) {
+        plot.new()
+        title(paste0("ROC one-vs-rest (test) - ", model_name))
+        text(0.5, 0.5, "No se pudieron calcular curvas ROC (clases insuficientes o datos)")
+      } else {
+        legend("bottomright", legend = classes, lwd = 2, bty = "n", cex = 0.8)
+      }
+
+      dev.off()
+      message("[OK] ROC OVR PDF guardado: ", out_pdf)
+      invisible(TRUE)
+    }
+
+    .plot_ovr_pdf(glmnet_fit, "glmnet")
+    .plot_ovr_pdf(rf_fit, "rf")
+  }
+
+} else {
+  message("[WARN] No se generaron PDFs ROC: faltan objetos requeridos (glmnet_fit/rf_fit/x_test/y_test/is_binary).")
+}
+
+# ---- Export top variables (RF + GLMNET) ----
+top_n <- 50  # cambia a 10 si quieres
+
+get_top <- function(fit, n = 50) {
+  imp <- caret::varImp(fit)$importance
+  score <- if ("Overall" %in% colnames(imp)) imp$Overall else rowMeans(imp[, sapply(imp, is.numeric), drop = FALSE], na.rm = TRUE)
+  out <- data.frame(feature = rownames(imp), importance = as.numeric(score))
+  out <- out[order(out$importance, decreasing = TRUE), ]
+  head(out, n)
+}
+
+write.csv(get_top(rf_fit, top_n),
+          file.path(prediction_models_dir, paste0("top", top_n, "_features_rf.csv")),
+          row.names = FALSE)
+
+write.csv(get_top(glmnet_fit, top_n),
+          file.path(prediction_models_dir, paste0("top", top_n, "_features_glmnet.csv")),
+          row.names = FALSE)
 
