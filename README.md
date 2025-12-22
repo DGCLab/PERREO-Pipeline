@@ -192,7 +192,7 @@ For SR-PE:<br>
 ```
 For SR-SE:<br> 
 
-```bash
+```text
 -sample_list                  Sample sheet with sample, strandedness, condition and batch (if necessary).
 -reference_genome             Genome file in fasta.
 -genome_gtf                   Genome annotations in GTF format.
