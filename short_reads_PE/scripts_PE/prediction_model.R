@@ -5,6 +5,8 @@ sample_list <- args[[2]]
 threads <- as.numeric(args[[3]])
 positive_class <- args[[4]]
 
+base_colors <- c("#804A45", "#455F80","#F5A553", "#BAC6D4", "#2E8B57", "#323840", "#FFF1C2")
+
 
 if (!dir.exists(paste0(CWD,"/prediction_models"))){
   dir.create(paste0(CWD,"/prediction_models"))}
@@ -353,7 +355,7 @@ if (exists("glmnet_fit") && exists("rf_fit") && exists("x_test") && exists("y_te
 
       classes <- levels(y_test)
       out_pdf <- file.path(prediction_models_dir, paste0("ROC_ovr_test_", model_name, ".pdf"))
-      pdf(out_pdf, width = 7, height = 7)
+      pdf(out_pdf, width = 7, height = 7, col=base_colors)
 
       first <- TRUE
       for (cls in classes) {
@@ -412,4 +414,5 @@ write.csv(get_top(rf_fit, top_n),
 write.csv(get_top(glmnet_fit, top_n),
           file.path(prediction_models_dir, paste0("top", top_n, "_features_glmnet.csv")),
           row.names = FALSE)
+
 
