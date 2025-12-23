@@ -48,6 +48,7 @@ while [[ $# -gt 0 ]]; do
       -method) method="$2"; shift 2 ;;
       -prediction_model) prediction_model="$2"; shift 2 ;;
       -positive_class) positive_class="$2"; shift 2 ;;
+      -polya) polya="$2"; shift 2 ;;
       *) echo "Unknown argument: $1"; shift ;;
   esac
 done
@@ -65,6 +66,7 @@ initial_trim_read2=${initial_trim_read2:-0}
 prediction_model=${prediction_model:-yes}
 batch=${batch:-no}
 trimming=${trimming:-simple}
+polya=""
 
 # Function for running the analysis with all the samples
 
@@ -146,10 +148,10 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
         # ------------ 1) TRIMMING READS ---------------------------
         case "$STRAND" in
           forward)
-            bash "$TRIM_FW_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2"
+            bash "$TRIM_FW_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya"
             ;;
           reverse)
-            bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2"
+            bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya"
             ;;
           *)
             msg_warn "[CUTADAPT] $sample_id: unknown strandedness '$STRAND' (expected forward/reverse)" >&2
