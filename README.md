@@ -188,7 +188,8 @@ For SR-PE:<br>
 -log2FC                       Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                          Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
 -prediction_model             yes/no (default: yes). When activated, it only will design prediction models in case the number of samples
-                              is higher than 40. 
+                              is higher than 40.
+-positive_class               The experimental condition the user wants to be the positive class in the prediction model.
 ```
 For SR-SE:<br> 
 
@@ -219,7 +220,9 @@ For SR-SE:<br>
 -log2FC                       Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                          Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
 -prediction_model             yes/no (default: yes). When activated, it only will design prediction models in case the number of samples
-                              is higher than 40. 
+                              is higher than 40.
+-positive_class               The experimental condition the user wants to be the positive class in the prediction model.
+
 ```
 
 
