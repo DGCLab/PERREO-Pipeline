@@ -14,10 +14,10 @@ strandedness="$5"
 
 # Checking samples folders
 if [ $# -eq 0 ]; then
-    echo "ERROR: No has especificado carpetas."
-    echo "Uso: bash run_stringtie.sh carpeta1 carpeta2 ..."
+    msg_error "[STRINGTIE2] You didn’t specify any directories."
     exit 1
 fi
+
 
 # Running above the samples folders selected
     # Checking the folder exists
