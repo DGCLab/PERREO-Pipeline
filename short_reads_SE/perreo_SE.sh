@@ -42,7 +42,9 @@ while [[ $# -gt 0 ]]; do
       -FDR) FDR="$2"; shift 2 ;;
       -batch) batch="$2"; shift 2 ;;
       -method) method="$2"; shift 2 ;;
-      -prediction_model) method="$2"; shift 2 ;;
+      -prediction_model) prediction_model="$2"; shift 2 ;;
+      -positive_class) positive_class="$2"; shift 2 ;;
+      -polya) polya="$2"; shift 2 ;;
       *) echo "Unknown argument: $1"; shift ;;
   esac
 done
@@ -58,6 +60,7 @@ min_length_trim=${min_length_trim:-16}
 prediction_model=${prediction_model:-yes}
 batch=${batch:-no}
 trimming=${trimming:-simple}
+polya=""
 
 # Function for running the analysis with all the samples
 
@@ -69,18 +72,20 @@ run_pipeline_sample() {
   msg_info "Reference: ${GREEN}$reference_genome${RESET}"
   msg_info "GTF: ${GREEN}$genome_gtf${RESET}"
   msg_info "Repeats: ${GREEN}$repeat_gtf${RESET}"
-  msg_info "Threads: ${GREEN}$threads${RESET}"
-  msg_info "Adaptor: ${GREEN}$adaptor${RESET}"
-  msg_info "trimming type: ${GREEN}$trimming${RESET}"
-  msg_info "trimming_quality_threshold: ${GREEN}$trimming_quality_threshold${RESET}" 
-  msg_info "minimum_length_trim: ${GREEN}$min_length_trim${RESET}"
-  msg_info "mismatch_align type: ${GREEN}$mismatch_align${RESET}"
+  msg_info "Threads: ${GREEN}${threads:-8}${RESET}"
+  msg_info "Adapter: ${GREEN}${adapter:-none}${RESET}"
+  msg_info "trimming type: ${GREEN}${trimming:-simple}${RESET}"
+  msg_info "trimming_quality_threshold: ${GREEN}${trimming_quality_threshold:-30}${RESET}" 
+  msg_info "minimum_length_trim: ${GREEN}${min_length_trim:-16}${RESET}"
+  msg_info "initial_trim_read: ${GREEN}${initial_trim_read:-0}${RESET}"
+  msg_info "mismatch_align type: ${GREEN}${mismatch_align:-0.05}${RESET}"
   msg_info "Project: ${GREEN}$project_name${RESET}"
   msg_info "Remove duplicates: ${GREEN}$remove_duplicates${RESET}"
-  msg_info "Batch effect: ${GREEN}$batch${RESET}"
+  msg_info "Batch effect: ${GREEN}${batch:-no}${RESET}"
   msg_info "Method: ${GREEN}$method${RESET}"
-  msg_info "log2FC: ${GREEN}$log2FC${RESET}"
-  msg_info "FDR: ${GREEN}$FDR${RESET}"
+  msg_info "log2FC: ${GREEN}${log2FC:-1}${RESET}"
+  msg_info "FDR: ${GREEN}${FDR:-0.05}${RESET}"
+  msg_info "Positive class: ${GREEN}$positive_class${RESET}"
 
 ###
 
@@ -133,7 +138,7 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
 
         # ------------ 1) TRIMMING READS ---------------------------
         
-       bash "$TRIM_SCRIPT" "$sample_id" "$IN" "$TRIM_DIR" "$adapter" "$trimming" "$threads" "$trimming_quality" "$min_length"
+       bash "$TRIM_SCRIPT" "$sample_id" "$IN" "$TRIM_DIR" "$adapter" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$polya"
     else
         echo "✓ Trimmed FASTQs already exist for $sample_id — skipping trimming."
     fi
@@ -270,7 +275,7 @@ done
 msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
 
 
-#Then, we call this script to quantify reads that map uniquely to genes, uniquely to repeats and reads that map to both genes and repetitive regions
+Then, we call this script to quantify reads that map uniquely to genes, uniquely to repeats and reads that map to both genes and repetitive regions
 
 if [[ ! -f "$CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv" ]]; then
 
@@ -286,7 +291,7 @@ msg_ok "Done!"
 # ---------- 7) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
 cond=$(awk '
-BEGIN { FS = "\t" }  # Usa tabulador; cambia a FS="," si es CSV
+BEGIN { FS = "\t" }  
 NR==1 {
   for (i=1; i<=NF; i++) {
     if ($i == "condition") col=i
@@ -335,7 +340,7 @@ if [ "$prediction_model" = "yes" ]; then
 rows=$(( $(wc -l < "$CWD/$sample_list") - 1 ))
 if [ "$rows" -gt 40 ]; then
 msg_info "Starting prediction model analysis..."
-Rscript "$PRED_MODEL" "$CWD" "$sample_list" "$threads"
+Rscript "$PRED_MODEL" "$CWD" "$sample_list" "$threads" "$positive_class"
 
 msg_ok "Prediction model generated"
 fi
