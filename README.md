@@ -39,7 +39,7 @@ The suitable folders structure for the correct performance of the software shoul
 
 ```bash
 PROJECT_FOLDER/
-├─ SAMPLES
+├─ samples
 │ ├─ sample1 
 │ └─ sample2
 ├─ reference genome
