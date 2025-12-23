@@ -29,7 +29,7 @@ msg_info $min_length
 
 #Corro cutadapt
     # It is necessary to activate the conda environment where cutadapt software is installed
-if [ -f "trim/${sample_id}_trimmed.fastq ]; then
+if [ -f "trim/${sample_id}_trimmed.fastq" ]; then
     echo "✅ Files already exist in trim/, creation omitted."
 else
     cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
