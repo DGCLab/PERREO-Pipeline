@@ -35,6 +35,7 @@ while [[ $# -gt 0 ]]; do
       -batch_effect) batch_effect="$2"; shift 2 ;;
       -method) method="$2"; shift 2 ;;
       -prediction_model) method="$2"; shift 2 ;;
+      -positive_class) positive_class="$2"; shift 2 ;;
       *) echo "Opción desconocida: $1"; shift ;;
   esac
 done
@@ -49,16 +50,18 @@ prediction_model=${prediction_model:-yes}
 # Function for running the analysis with all the samples
 
 run_pipeline_sample() {
-  echo " ----- Pipeline paramters summary -----"
-  echo "samplesheet: $sample_list"
-  echo "Reference: $reference_genome"
-  echo "Repeats: $repeat_gtf"
-  echo "Threads: $threads"
-  echo "Proyect: $project_name"
-  echo "Batch effect: $batch_effect"
-  echo "Method: $method"
-  echo "log2FC: $log2FC"
-  echo "FDR: $FDR"
+
+  msg_info " ----- Pipeline paramters summary -----"
+  msg_info "samplesheet: ${GREEN}$sample_list${RESET}"
+  msg_info "Reference: ${GREEN}$reference_genome${RESET}"
+  msg_info "Repeats: ${GREEN}$repeat_gtf${RESET}"
+  msg_info "Threads: ${GREEN}${threads-8}${RESET}"
+  msg_info "Project: ${GREEN}$project_name${RESET}"
+  msg_info "Batch effect: ${GREEN}${batch:-no}${RESET}"
+  msg_info "Method: ${GREEN}$method${RESET}"
+  msg_info "log2FC: ${GREEN}${log2FC:-1}${RESET}"
+  msg_info "FDR: ${GREEN}${FDR:-0.05}${RESET}"
+  msg_info "Positive class: ${GREEN}$positive_class${RESET}"
 
 if [ -f "genome_index.mmi" ]; then
   echo "✅ Genome index already exists in genome_index, creation omitted."
@@ -153,95 +156,60 @@ done
 # -------- 4) QUANTIFICATION MERGE ---------------------------
 #Finally, we call the last script to merge all the count matrixes
 
-   if [ ! -d "$CWD/SAMPLES/DEA_results" ]; then
+   if [ ! -d "$CWD/Results/DEA_results" ]; then
 
-      mkdir $CWD/SAMPLES/DEA_results
+      mkdir $CWD/Results/DEA_results
    fi
 
-   DEA_results="$CWD/SAMPLES/DEA_results"
+   DEA_results="$CWD/Results/DEA_results"
       
    REP_GTF_PATH=$CWD/$repeat_gtf 
 
-   if [ ! -f "$CWD/SAMPLES/count_data.txt" ]; then
-     echo 'count_data.txt must be generated'
-
+   if [ ! -f "$CWD/Results/count_data.txt" ]; then
+     msg_warn '[FEATURECOUNTS] count_data.txt must be generated'
+     msg_info '[FEATURECOUNTS] generating...'
      Rscript "$MERGE_QUANT_SCRIPT" "$CWD" "$SAMPLES_DIR" "$REP_GTF_PATH" "$threads" "$DEA_results" "$sample_list"
      cd ..
    else
-   echo 'count_data.txt already exists'
+   msg_ok '[FEATURECOUNTS] count_data.txt already exists'
    fi
 
 
 # ---------- 5) TRANSCRIPTOME ASSEMBLY ------------------------
 
-cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/combined_annotations.gtf"
+if [ ! -d "$CWD/Results/transcriptome_assembly" ]; then
+      mkdir $CWD/Results/transcriptome_assembly
+   fi
+   
+cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
 
-combined_annotations="$CWD/combined_annotations.gtf"
-
-if [ ! -d "$CWD/Transcriptome_assembly" ]; then
-
-mkdir $CWD/Transcriptome_assembly
-
-fi
+combined_annotations="$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
  
  awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
       [[ -z "$sample_id" ]] && continue
 
-      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+      SAMPLE_DIR="$CWD/samples/${sample_id}"
 
-      if [[ ! -f "$CWD/Transcriptome_assembly/${sample_id}_transcriptome.gtf" ]];then
+      if [[ ! -f "$CWD/Results/transcriptome_assembly/${sample_id}_transcriptome.gtf" ]];then
           
           msg_info "[STRINGTIE2] Starting transcriptome assembly..."
-          bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
+          bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND" "$CWD"
           
-          cp $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Transcriptome_assembly
+          mv $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Results/transcriptome_assembly
       
       fi
 done
 
 msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
 
-if grep -q '^chr' "$CWD/$genome_gtf"; then
-msg_info "Generating modified genome GTF"
-sed 's/^chr//' $CWD/$genome_gtf > $CWD/genome_gtf_2.gtf
-msg_ok "Modified genome GTF successfully generated"
-
-fi
-
-if grep -q '^chr' "$CWD/$genome_gtf"; then
-msg_info "Generating modified repeat GTF"
-sed 's/^chr//' $CWD/$repeat_gtf > $CWD/repeat_gtf_2.gtf
-msg_ok "Modified repeat GTF successfully generated"
-
-fi
-
-
-# Variables para pasar al script
-repeat_gtf_v=""
-genome_gtf_v=""
-
-# # Comprobar qué versiones existen
-# if [[ -f "$CWD/genome_gtf_2.gtf" ]]; then
-#     genome_gtf_v="genome_gtf_2.gtf"
-# else
-#     genome_gtf_v="$genome_gtf"
-# fi
-# 
-# if [[ -f "$CWD/repeat_gtf_2.gtf" ]]; then
-#     repeat_gtf_v="repeat_gtf_2.gtf"
-# else
-#     repeat_gtf_v="$repeat_gtf"
-# fi
-
-
 
 #Then, we call this script to quantify reads that map uniquely to genes, uniquely to repeats and reads that map to both genes and repetitive regions
 
-if [[ ! -f "$CWD/hybrid_transcripts_summary.tsv" ]]; then
+if [[ ! -f "$CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv" ]]; then
 
 msg_info "Calculating hybrid transcripts..."
-bash "$HYBRIDS_SCRIPT" "$CWD/Transcriptome_assembly" "$CWD" "$genome_gtf" "$repeat_gtf" > $CWD/hybrid_transcripts_summary.tsv
+bash "$HYBRIDS_SCRIPT" "$CWD/Results/transcriptome_assembly" "$CWD" "$genome_gtf" "$repeat_gtf" > $CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv
 
 fi
 
@@ -252,12 +220,12 @@ msg_ok "Done!"
 # ---------- 6) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
 
-   if [ ! -d "$CWD/SAMPLES/DEA_results" ]; then
+   if [ ! -d "$CWD/Results/DEA_results" ]; then
 
-      mkdir $CWD/SAMPLES/DEA_results
+      mkdir $CWD/Results/DEA_results
    fi
 
-   DEA_results="$CWD/SAMPLES/DEA_results"
+   DEA_results="$CWD/Results/DEA_results"
 
 cond=$(awk '
 BEGIN { FS = "\t" }  # Usa tabulador; cambia a FS="," si es CSV
@@ -285,15 +253,18 @@ fi
 
 # ----------- 7) WGCNA ----------------------------------------
 
-DEA_DIR=$SAMPLES_DIR/DEA_results
+DEA_DIR=$CWD/Results/DEA_results
 
-   if [ ! -d "$CWD/Coexpression_analysis" ]; then
-     mkdir $CWD/Coexpression_analysis
+msg_info "Starting WGCNA coexpression analysis..."
+
+   if [ ! -d "$CWD/Results/Coexpression_analysis" ]; then
+     mkdir $CWD/Results/Coexpression_analysis
    fi
 
-COEXPRESSION_DIR=$CWD/Coexpression_analysis
+COEXPRESSION_DIR=$CWD/Results/Coexpression_analysis
 
 Rscript "$WGCNA_SCRIPT" "$DEA_DIR" "$CWD" "$sample_list" "$COEXPRESSION_DIR"
+msg_ok "WGCNA coexpression analysis completed"
 
 
 
@@ -304,8 +275,13 @@ if [ "$prediction_model" = "yes" ]; then
 rows=$(( $(wc -l < "$CWD/$sample_list") - 1 ))
 if [ "$rows" -gt 40 ]; then
 Rscript "$PRED_MODEL" "$CWD" "$sample_list" "$threads"
+
+msg_ok "Prediction model generated"
+
 fi
 fi
+
+msg_ok "PERREO successfully completed"
 
 }
 
