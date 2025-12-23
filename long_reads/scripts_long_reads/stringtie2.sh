@@ -12,13 +12,6 @@ sample="$3"
 threads="$4"
 strandedness="$5"
 
-echo "---------------------------------------------"
-echo "   Running StringTie2 Long-Reads Assembly"
-echo "---------------------------------------------"
-echo "Annotation: $combined_annotation"
-echo "Threads: $threads"
-echo ""
-
 # Checking samples folders
 if [ $# -eq 0 ]; then
     echo "ERROR: No has especificado carpetas."
