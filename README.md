@@ -81,7 +81,7 @@ Here we provide a link to the T2T fasta file and GTF annotations to use in this 
 
 Another important point to take into account is that both annotations files must indicate chromosomes in the same way. For example, if genome annotations use the structure "chrX" to indicate chromosome X, and repeat annotationes refers to it using "X", the user has to change one of them because downstream analysis requires only one possible structure at certain point.<br>
 
-In the case you need to download other fasta files and specific GTF annotations of T2T, you can also use the UCSC table browser platform: https://genome.ucsc.edu/cgi-bin/hgTables.<br>
+In case the user needs to download other fasta files and specific GTF annotations of T2T, the UCSC table browser platform can also be used: https://genome.ucsc.edu/cgi-bin/hgTables.<br>
 <br>
 # Required preanalysis<br>
 
