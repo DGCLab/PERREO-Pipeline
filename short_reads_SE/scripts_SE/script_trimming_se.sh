@@ -8,6 +8,7 @@ trimming_type="$5"
 threads="$6"
 trimming_quality="$7"
 min_length="$8"
+polya="$9"
 
 # Setting up colors for messages
 
@@ -28,11 +29,11 @@ msg_info $min_length
 #Corro cutadapt
     # It is necessary to activate the conda environment where cutadapt software is installed
 if [ -f "trim/${sample_id}_trimmed.fastq ]; then
-    echo "✅ Archivos ya existen en trim/, se omite la creación."
+    echo "✅ Files already exist in trim/, creation omitted."
 else
     cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
         -a "$adapter" --trim-n -m "$min_length" \
-        -o "${TRIM_DIR}/${sample_id}_trimmed.fastq" \
+        -o "${TRIM_DIR}/${sample_id}_trimmed.fastq" "--$polya" \
         "$IN"  > cutadapt.log 2>&1
        
   fi
