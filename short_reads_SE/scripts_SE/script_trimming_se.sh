@@ -8,7 +8,8 @@ trimming_type="$5"
 threads="$6"
 trimming_quality="$7"
 min_length="$8"
-polya="$9"
+initial_trim_read="$9"
+polya="${10}"
 
 # Setting up colors for messages
 
@@ -32,7 +33,7 @@ if [ -f "trim/${sample_id}_trimmed.fastq ]; then
     echo "✅ Files already exist in trim/, creation omitted."
 else
     cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
-        -a "$adapter" --trim-n -m "$min_length" \
+        -a "$adapter" --trim-n -m "$min_length" -u "$initial_trim_read" \
         -o "${TRIM_DIR}/${sample_id}_trimmed.fastq" "--$polya" \
         "$IN"  > cutadapt.log 2>&1
        
