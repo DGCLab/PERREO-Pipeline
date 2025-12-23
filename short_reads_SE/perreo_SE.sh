@@ -35,6 +35,7 @@ while [[ $# -gt 0 ]]; do
       -min_length_trim) min_length_trim="$2"; shift 2 ;;
       -max_length_trim) min_length_trim="$2"; shift 2 ;;
       -trimming) trimming="$2"; shift 2 ;;
+      -initial_trim_read) initial_trim_read="$2"; shift 2 ;;
       -mismatch_align) mismatch_align="$2"; shift 2 ;;
       -project_name) project_name="$2"; shift 2 ;;
       -remove_duplicates) remove_duplicates="$2"; shift 2 ;;
@@ -56,6 +57,7 @@ FDR=${FDR:-0.05}
 log2FC=${log2FC:-1.0}
 mismatch_align=${mismatch_align:-0.05}
 trimming_quality_threshold=${trimming_quality_threshold:-30}
+initial_trim_read=${initial_trim_read:-0}
 min_length_trim=${min_length_trim:-16}
 prediction_model=${prediction_model:-yes}
 batch=${batch:-no}
@@ -138,7 +140,7 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
 
         # ------------ 1) TRIMMING READS ---------------------------
         
-       bash "$TRIM_SCRIPT" "$sample_id" "$IN" "$TRIM_DIR" "$adapter" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$polya"
+       bash "$TRIM_SCRIPT" "$sample_id" "$IN" "$TRIM_DIR" "$adapter" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read" "$polya"
     else
         echo "✓ Trimmed FASTQs already exist for $sample_id — skipping trimming."
     fi
