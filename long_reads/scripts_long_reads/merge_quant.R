@@ -84,7 +84,7 @@ if (todos_iguales) {
   countData <- as.data.frame(global_matrix, check.names = FALSE)
   
   #(opcional) guarda la matriz y el objeto
-  write.table(countData, "count_data.txt",row.names = T)
+  write.table(countData, paste0(GLOBAL_DIR,"/Results/count_data.txt"),row.names = T)
 
 }else{
   stop("❌ La condición no se cumple. Deteniendo la ejecución.")
