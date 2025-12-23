@@ -266,44 +266,44 @@ msg_info "[STAR] Starting alignment against reference genome"
 
 # ---------- 6) TRANSCRIPTOME ASSEMBLY ---------------------
 
-#if [ ! -d "$CWD/Results/transcriptome_assembly" ]; then
-   #   mkdir $CWD/Results/transcriptome_assembly
-  # fi
+if [ ! -d "$CWD/Results/transcriptome_assembly" ]; then
+      mkdir $CWD/Results/transcriptome_assembly
+   fi
    
-#cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
+cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
 
-#combined_annotations="$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
+combined_annotations="$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
  
- #awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
-  #| while IFS=$'\t' read -r sample_id STRAND CONDITION; do
-   #   [[ -z "$sample_id" ]] && continue
+ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "$CWD/$sample_list" \
+  | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
+      [[ -z "$sample_id" ]] && continue
 
-    #  SAMPLE_DIR="$CWD/samples/${sample_id}"
+      SAMPLE_DIR="$CWD/samples/${sample_id}"
 
-     # if [[ ! -f "$CWD/Results/transcriptome_assembly/${sample_id}_transcriptome.gtf" ]];then
+      if [[ ! -f "$CWD/Results/transcriptome_assembly/${sample_id}_transcriptome.gtf" ]];then
           
-      #    msg_info "[STRINGTIE2] Starting transcriptome assembly..."
-       #   bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND" "$CWD"
+          msg_info "[STRINGTIE2] Starting transcriptome assembly..."
+          bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND" "$CWD"
           
-        #  mv $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Results/transcriptome_assembly
+          mv $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Results/transcriptome_assembly
       
-      #fi
-#done
+      fi
+done
 
-#msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
+msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
 
 
 #Then, we call this script to quantify reads that map uniquely to genes, uniquely to repeats and reads that map to both genes and repetitive regions
 
-#if [[ ! -f "$CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv" ]]; then
+if [[ ! -f "$CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv" ]]; then
 
-#msg_info "Calculating hybrid transcripts..."
-#bash "$HYBRIDS_SCRIPT" "$CWD/Results/transcriptome_assembly" "$CWD" "$genome_gtf" "$repeat_gtf" > $CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv
+msg_info "Calculating hybrid transcripts..."
+bash "$HYBRIDS_SCRIPT" "$CWD/Results/transcriptome_assembly" "$CWD" "$genome_gtf" "$repeat_gtf" > $CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv
 
-#fi
+fi
 
-#Rscript "$HYBRIDS_R_SCRIPT" "$CWD"
-#msg_ok "Done!"
+Rscript "$HYBRIDS_R_SCRIPT" "$CWD"
+msg_ok "Done!"
 
 
 # ---------- 7) DIFFERENTIAL EXPRESSION ANALYSIS ----------
