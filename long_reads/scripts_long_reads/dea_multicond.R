@@ -34,7 +34,7 @@ repeatmasker_annotation_gtf <- args[[5]]
 k_num <- as.numeric(args[[6]])
 FDR_thr <- as.numeric(args[[7]])
 log2FC_thr <- as.numeric(args[[8]])
-SAMPLES_DIR <- paste0(CWD,"/SAMPLES")
+SAMPLES_DIR <- paste0(CWD,"/Results/")
 DEA_results_DIR <- paste0(SAMPLES_DIR,"/DEA_results")
 
 # Cargar el objeto featurecounts guardado
@@ -1004,4 +1004,5 @@ if (length(pdf_files) > 0) {
   
 } else {
   msg_warn("No PDF files to create the report.")
+
 }
