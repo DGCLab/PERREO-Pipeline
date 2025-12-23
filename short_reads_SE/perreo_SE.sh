@@ -277,7 +277,7 @@ done
 msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
 
 
-Then, we call this script to quantify reads that map uniquely to genes, uniquely to repeats and reads that map to both genes and repetitive regions
+#Then, we call this script to quantify reads that map uniquely to genes, uniquely to repeats and reads that map to both genes and repetitive regions
 
 if [[ ! -f "$CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv" ]]; then
 
