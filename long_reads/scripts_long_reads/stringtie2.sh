@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Setting up colors for messages
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/logging.sh"
 
 # ANOTACIÓN (modifica si quieres otra)
 CWD="$1"
@@ -32,7 +36,7 @@ fi
         echo "  ERROR: NO .bam found inside $sample"
     fi
 
-    echo "  BAM found: $BAM"
+    msg_ok "[STRINGTIE2] BAM found: $BAM"
 
     # Basename of the folder
     BASENAME=$(basename "$sample")
@@ -40,9 +44,9 @@ fi
     # Output name
     OUTPUT_GTF="$sample/${BASENAME}_transcriptome.gtf"
 
-    echo "  Running StringTie..."
+    msg_info "[STRINGTIE2] Running StringTie..."
      if [ "$strandedness" = "forward" ]; then
-    echo "Using forward parameter"
+    msg_info "[STRINGTIE2] Using forward parameter"
     stringtie "$BAM" \
         -L \
         -p "$threads" \
@@ -53,7 +57,7 @@ fi
     fi
 
     if [ "$strandedness" = "reverse" ]; then
-    echo "Using reverse parameter"
+    msg_info "[STRINGTIE2] Using reverse parameter"
     stringtie "$BAM" \
         -L \
         -p "$threads" \
@@ -63,9 +67,8 @@ fi
 	-l perreo
     fi
 
-    echo "  ✔ Transcriptome generated: $OUTPUT_GTF"
-    echo ""
-
-echo "---------------------------------------------"
-echo "   FINISHED"
-echo "---------------------------------------------"
+       msg_ok "[STRINGTIE2] Transcriptome generated: $OUTPUT_GTF"
+	   
+msg_info "---------------------------------------------"
+msg_info "   FINISHED"
+msg_info "---------------------------------------------"
