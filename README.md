@@ -140,8 +140,9 @@ Then, there are some arguments that have to be taken into account although it is
 | Trimming quality threshold     | 30     | 
 | Minimum reads length (for trimming)     | 16     | 
 | Maximum reads length (for trimming)     |      | 
-| Initial nucleotides trimming R1     |   0   | 
-| Initial nucleotides trimming R2     |   0   | 
+| Initial nucleotides trimming R1 (paired-end)     |   0   | 
+| Initial nucleotides trimming R2 (paired-end)    |   0   | 
+| Initial nucleotides trimming (single-end)     |   0   | 
 | K_num     | 2     | 
 | log2FC     | 1     | 
 | FDR     | 0.05     | 
