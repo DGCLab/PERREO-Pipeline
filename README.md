@@ -265,7 +265,7 @@ FeatureCounts performs features quantification allowing multimapping reads count
 
 The following code line is run for data obtained from single-end and paired-end short reads sequencing techonologies:<br>
 
-For single-end:<br>
+Single-end:<br>
 
 ```R
 quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,
@@ -273,7 +273,7 @@ quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_dupli
          fraction=TRUE,strandSpecific = strandness_fc)
 ```
 
-For paired-end:<br>
+Paired-end:<br>
 
 ```R
 quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,
