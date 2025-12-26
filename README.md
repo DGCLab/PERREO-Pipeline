@@ -249,9 +249,10 @@ Single-end cutadapt trimming:
 Paired-end cutadapt trimming:
 ```bash
    cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
-        -a "$adapt_r1" -A "$adapt_r2" --trim-n -m "$min_length" -u "$initial_trim_read1"  -U "$initial_trim_read2" "--$polya" \
-        -o "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" \
-        -p "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" \
+        -a "$adapt_r1" -A "$adapt_r2" \ 
+        --trim-n -m "$min_length" -u "$initial_trim_read1"  -U "$initial_trim_read2" "--$polya" \
+        -o "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" \ 
+        -p "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" \ 
         "$IN1" "$IN2" > cutadapt.log 2>&1
 ```
 
@@ -261,7 +262,7 @@ STAR aligner parameters are indicated by default allowing the multimapping and r
 ```bash
 STAR --runThreadN $threads \
       --genomeDir "$GENOME_DIR" \
-      --readFilesIn "$trimmed1" "$trimmed2" \
+      --readFilesIn "$trimmed1" "$trimmed2" \ #for single-end data only "$trimmed"
       --outFileNamePrefix "$MAP_DIR/${sample_id}_" \
       --outSAMtype BAM SortedByCoordinate \
       --outFilterMultimapNmax 500 \
