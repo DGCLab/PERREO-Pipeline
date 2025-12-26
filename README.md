@@ -252,8 +252,8 @@ STAR --runThreadN $threads \
       --outSAMattributes NH HI AS nM NM MD
 ```
 
-## Duplications analysis
-Duplications removal is not recommended generally in RNA-seq data analysis. However, there are situations where the percentage of duplications is too high and remove them is a real option.
+## Duplicated analysis
+Duplicateds removal is not recommended generally in RNA-seq data analysis. However, there are situations where the percentage of duplications is too high and remove them is a real option.
 
 
 # PERREO LR <br> 
@@ -274,7 +274,9 @@ The required arguments for this mode are the following:<br>
 -log2FC                Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                   Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
 -prediction_model      yes/no (default: yes). When activated, it only will design prediction models in case the number of samples
-                       is higher than 40. 
+                       is higher than 40.
+-positive_class        The experimental condition the user wants to be the positive class in the prediction model.
+
 ```
 
 In this case, trimming parameters are not required as adapters and barcodes removal is carried out during the basecalling step and quality control is carried out using NanoPlot.<br>
@@ -292,7 +294,15 @@ Quantification, differential expression analysis, coexpression analysis, transcr
 ## Quantification
 FeatureCounts performs features quantification allowing multimapping reads counts and fraction. It uses the strandedness indicated in the sample sheet.<br>
 
-The following code line is run for data obtained from short reads sequencing techonology:
+The following code line is run for data obtained from single-end and paired-end short reads sequencing techonologies:<br>
+
+For single-end:<br>
+
+```R
+quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T, isPairedEnd = FALSE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,strandSpecific = strandness_fc)
+```
+
+For paired-end:<br>
 
 ```R
 quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,
