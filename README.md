@@ -367,13 +367,8 @@ stringtie "$BAM" \
         --fr \ #rf is strandness=reverse
 ```
 
-Then, stringtie2 is applied to merge the transcriptome assemblies in an unique table, and then, stringtie2 is again used to quantify only those transcripts that were stored in the merged file. <br>
-```bash
-    stringtie "$bam" \
-      -G "$MERGED_GTF" \
-      -e -B -p "$threads" \
-      -o "$out_gtf"
-```
+Then, "hybrid_transcripts.sh" script is used to identify transcripts that overlap with exonic regions and repetitive regions at the same time. <br>
+
 
 ## Coexpression analysis
 WGCNA R package generates coexpression networks from the given expression matrix. Power is automatically assigned when R value is 0.9 and the script is designed to select the three modules with the highest correlation value with respect any of the experimental conditions. The script exports:
