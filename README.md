@@ -355,20 +355,6 @@ Statistical analysis is performed by DESeq2 or edgeR functions using default thr
 7) Heatmap of DEFs in each contrast.<br>
 8) Volcano plot for each contrast.<br>
 
-## Transcriptome assembly
-Stringtie2 generates a GTF file for transcriptome assembly of each sample in the study using a combined GTF of genomic and repeat annotations as reference. Strandedness has to be taken into account to perform the assembly. <br>
-
-```bash
-stringtie "$BAM" \
-        -L \
-        -p "$threads" \
-        -G "$combined_annotation" \
-        -o "$OUTPUT_GTF" \
-        --fr \ #rf is strandness=reverse
-```
-
-Then, "hybrid_transcripts.sh" script is used to identify transcripts that overlap with exonic regions and repetitive regions at the same time. <br>
-
 
 ## Coexpression analysis
 WGCNA R package generates coexpression networks from the given expression matrix. Power is automatically assigned when R value is 0.9 and the script is designed to select the three modules with the highest correlation value with respect any of the experimental conditions. The script exports:
@@ -380,7 +366,19 @@ WGCNA R package generates coexpression networks from the given expression matrix
 
 
 ## Transcriptome assembly
-Stringtie builds a transcriptome assembly for each sample. Then, the pipeline performs a preliminar anylsis where the annotations file of each sample is mapped to a GTF containing exonic regions and another GTF containing repetitive elements in order to obtain hybrid transcripts composed of fragments derived from exons and repeats.<br>
+
+Stringtie2 generates a GTF file for transcriptome assembly of each sample in the study using a combined GTF of genomic and repeat annotations as reference. Strandedness has to be taken into account to perform the assembly. <br>
+
+```bash
+stringtie "$BAM" \
+        -L \
+        -p "$threads" \
+        -G "$combined_annotation" \
+        -o "$OUTPUT_GTF" \
+        --fr \ #rf is strandness=reverse
+```
+
+Then, the pipeline performs a preliminar anylsis where the annotations file of each sample is mapped to a GTF containing exonic regions and another GTF containing repetitive elements in order to obtain hybrid transcripts composed of fragments derived from exons and repeats.<br>
 
 
 ## PDF report
