@@ -153,7 +153,10 @@ Then, there are some arguments that have to be taken into account although it is
 
 For SR-LR mode, the parameters trimming_type, trimming_quality_threshold, min_length_trim and max_length_trim are not considered as trimming for long-reads should be performed during the basecalling before obtaining the fastq files.<br>
 
-In the following description we firstly describe the trimming and alignment process, which is specific for each PERREO mode. Then, we describe in detail how the downstream analysis is performed, which is common between the three modes, excepting the quantification step where specific featureCounts arguments must be included in each case.
+
+
+
+In the this documentation, we firstly describe the trimming and alignment process, which is specific for each PERREO mode. Then, we describe in detail how the downstream analysis is performed, which is common between the three modes, excepting the quantification step where specific featureCounts arguments must be included in each case.
 
 
 # PERREO SR-PE and SR-SE
@@ -257,6 +260,27 @@ STAR --runThreadN $threads \
 ## Duplicated analysis
 Duplicateds removal is not recommended generally in RNA-seq data analysis. However, there are situations where the percentage of duplications is too high and remove them is a real option.
 
+## Quantification
+FeatureCounts performs features quantification allowing multimapping reads counts and fraction. It uses the strandedness indicated in the sample sheet.<br>
+
+The following code line is run for data obtained from single-end and paired-end short reads sequencing techonologies:<br>
+
+For single-end:<br>
+
+```R
+quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,
+         isGTFAnnotationFile = T, isPairedEnd = FALSE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE,
+         fraction=TRUE,strandSpecific = strandness_fc)
+```
+
+For paired-end:<br>
+
+```R
+quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,
+         isGTFAnnotationFile = T, isPairedEnd = TRUE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE,
+         fraction=TRUE,strandSpecific = strandness_fc)
+```
+
 
 # PERREO LR <br> 
 The required arguments for this mode are the following:<br>
@@ -290,27 +314,7 @@ Long reads are aligned against the reference genome using minimap2 with -ax spli
 minimap2 -t 14 -ax splice -uf -k14 -p 0.8 -N 100 "$CWD/genome_index.mmi"  "$SAMPLE_DIR/${sample_id}.fastq" > "$SAMPLE_DIR/${sample_id}.sam"
 ```
 
-# Downstream analysis
-Quantification, differential expression analysis, coexpression analysis, transcriptome assembly and prediction models design steps are common between the three PERREO modes.
-
 ## Quantification
-FeatureCounts performs features quantification allowing multimapping reads counts and fraction. It uses the strandedness indicated in the sample sheet.<br>
-
-The following code line is run for data obtained from single-end and paired-end short reads sequencing techonologies:<br>
-
-For single-end:<br>
-
-```R
-quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T, isPairedEnd = FALSE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,strandSpecific = strandness_fc)
-```
-
-For paired-end:<br>
-
-```R
-quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,
-         isGTFAnnotationFile = T, isPairedEnd = TRUE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE,
-         fraction=TRUE,strandSpecific = strandness_fc)
-```
 
 For data derived from long-reads technology the code line is practically the same. Only the long-reads argument has to be activated:
 ```R
@@ -319,6 +323,9 @@ quant <- featureCounts(files = print(paste0(sample_dir,"/",sample_id,".bam")), a
          strandSpecific = strandness_fc)
 
 ```
+
+# Downstream analysis
+Differential expression analysis, coexpression analysis, transcriptome assembly and prediction models design steps are common between the three PERREO modes.
 
 ## Differential Expression Analysis
 Statistical analysis is performed by DESeq2 or edgeR functions using default thresholds: abs(log2FC) > 1 and FDR < 0.05. DESeq2 is a very robust mnethod and is more conservative, while edgeR is specially sensitive for low-expressed genes due to its flexible dispersion estimation. If batch effect = yes, RUVg will be run in case the sample sheet does not contain a batch column indicating the specific cause of this variability in the data. On the other hand, if this column is indicated in the sample sheet, that variable will be directly included in the formula. Different plots and files are exported from this step:<br>
