@@ -238,6 +238,22 @@ In this step there are two main options: simple trimming with cutadapt and a mor
 If adapters had been removed previously and the trimming step should only be taken into account to remove low quality reads, user must not include -adapt_r1 and -adapt_r2 arguments while running the pipeline.<br>
 In case the user also want to remove polyA tails, he/she must include that -polya argument as following: -polya polya.
 
+Single-end cutadapt trimming:
+```bash
+ cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
+        -a "$adapter" --trim-n -m "$min_length" -u "$initial_trim_read" \
+        -o "${TRIM_DIR}/${sample_id}_trimmed.fastq" "--$polya" \
+        "$IN"  > cutadapt.log 2>&1
+```
+
+Paired-end cutadapt trimming:
+```bash
+   cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
+        -a "$adapt_r1" -A "$adapt_r2" --trim-n -m "$min_length" -u "$initial_trim_read1"  -U "$initial_trim_read2" "--$polya" \
+        -o "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" \
+        -p "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" \
+        "$IN1" "$IN2" > cutadapt.log 2>&1
+```
 
 ## Alignment
 STAR aligner parameters are indicated by default allowing the multimapping and removing reads with more than a 5% of mismatches. This parameter can be changed depending on the user experimental design and conditions.<br>
