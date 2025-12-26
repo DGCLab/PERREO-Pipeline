@@ -151,7 +151,9 @@ Then, there are some arguments that have to be taken into account although it is
 
 
 
-For SR-LR mode, the parameters trimming_type, trimming_quality_threshold, min_length_trim and max_length_trim are not considered as trimming for long-reads should be performed during the basecalling before obtaining the fastq files.
+For SR-LR mode, the parameters trimming_type, trimming_quality_threshold, min_length_trim and max_length_trim are not considered as trimming for long-reads should be performed during the basecalling before obtaining the fastq files.<br>
+
+In the following description we firstly describe the trimming and alignment process, which is specific for each PERREO mode. Then, we describe in detail how the downstream analysis is performed, which is common between the three modes, excepting the quantification step where specific featureCounts arguments must be included in each case.
 
 
 # PERREO SR-PE and SR-SE
