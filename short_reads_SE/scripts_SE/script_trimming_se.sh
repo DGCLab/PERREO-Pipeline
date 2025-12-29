@@ -36,8 +36,6 @@ else
         -a "$adapter" --trim-n -m "$min_length" -u "$initial_trim_read" \
         -o "${TRIM_DIR}/${sample_id}_trimmed.fastq" "--$polya" \
         "$IN"  > cutadapt.log 2>&1
-       
-  fi
 fi
 
 fastqc ${TRIM_DIR}/${sample_id}_trimmed.fastq
