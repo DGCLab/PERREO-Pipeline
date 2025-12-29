@@ -71,8 +71,8 @@ else
 fi
 
 
-cd SAMPLES
-SAMPLES_DIR=$CWD/SAMPLES
+cd samples
+SAMPLES_DIR=$CWD/samples
 
 
 # ---------- 0) DEFINING VARIABLES ------------------------
@@ -110,7 +110,7 @@ done
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
       [[ -z "$sample_id" ]] && continue
 
-    SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+    SAMPLE_DIR="$CWD/samples/${sample_id}"
 
   if [[ -f "$SAMPLE_DIR/${sample_id}.bam" ]];then
         echo 'Skipping mapping...'
@@ -134,7 +134,7 @@ done
   | while IFS=$'\t' read -r sample_id STRAND CONDITION; do
       [[ -z "$sample_id" ]] && continue
 
-      SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+      SAMPLE_DIR="$CWD/samples/${sample_id}"
 
       STRAND=$(echo "$STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
 
