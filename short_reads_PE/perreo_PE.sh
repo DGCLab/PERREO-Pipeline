@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
       -method) method="$2"; shift 2 ;;
       -prediction_model) prediction_model="$2"; shift 2 ;;
       -positive_class) positive_class="$2"; shift 2 ;;
-      -polya) polya="$2"; shift 2 ;;
+      -polya) polya="--polya"; shift 2 ;;
       *) echo "Unknown argument: $1"; shift ;;
   esac
 done
