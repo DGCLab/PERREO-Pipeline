@@ -162,7 +162,7 @@ msg_info "[STAR] Starting alignment against reference genome"
      [[ -z "$sample_id" ]] && continue
 
      STRAND=$(echo "$STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
-     SAMPLE_DIR="$CWD/SAMPLES/${sample_id}"
+     SAMPLE_DIR="$CWD/samples/${sample_id}"
      TRIM_DIR="${SAMPLE_DIR}/trim"
      MAP_DIR="${SAMPLE_DIR}/alignment"
 
