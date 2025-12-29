@@ -11,28 +11,6 @@ conda env create -f perreo.yml
 
 ```
 
-# Repeat annotation
-
-Firstly, it is necessary to build a database from a reference genome and to run RepeatModeler using the following code lines:<br> 
-
-```bash
-BuildDatabase -name homo_sapiens reference_genome.fa
-
-RepeatModeler -database ../repeat_annotations/homo_sapiens \
-                   -threads ${SLURM_CPUS_PER_TASK:-24} \
-                   -LTRStruct
-```
-
-Then, it is recommended to curate the RepeatModeler outputs, and we propose MCHelper as software to curate the annotations automatically.  To run the software properly it is important to download and prepare all the needed libraries as described in this link: https://github.com/GonzalezLab/MCHelper?tab=readme-ov-file#linuxwindows.<br> 
-
-```bash
-python MCHelper.py -l consensi.fa.classified -o MCHelper_out -g nanopore_genome.fa --input_type fasta -b db/mammalia_odb10
-
-```
-
-Finally...........<br> 
-
-
 # Data preparation<br> 
 
 The suitable folders structure for the correct performance of the software should be the following:<br> 
