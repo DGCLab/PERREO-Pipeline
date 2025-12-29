@@ -33,8 +33,8 @@ if [ -f "trim/${sample_id}_trimmed.fastq" ]; then
     echo "✅ Files already exist in trim/, creation omitted."
 else
     cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
-        -a "$adapter" --trim-n -m "$min_length" -u "$initial_trim_read" \
-        -o "${TRIM_DIR}/${sample_id}_trimmed.fastq" "--$polya" \
+        -a "$adapter" --trim-n -m "$min_length" -u "$initial_trim_read" ${polya:+$polya} \
+        -o "${TRIM_DIR}/${sample_id}_trimmed.fastq" \
         "$IN"  > cutadapt.log 2>&1
 fi
 
