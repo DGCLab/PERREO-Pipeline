@@ -273,7 +273,7 @@ combined_annotations="$CWD/Results/transcriptome_assembly/combined_annotations.g
       if [[ ! -f "$CWD/Results/transcriptome_assembly/${sample_id}_transcriptome.gtf" ]];then
           
           msg_info "[STRINGTIE2] Starting transcriptome assembly..."
-          bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND"
+          bash "$ASSEMBLY_SCRIPT" "$combined_annotations" "$sample_id" "$threads" "$STRAND" "$CWD"
           
           mv $SAMPLE_DIR/${sample_id}_transcriptome.gtf $CWD/Results/transcriptome_assembly
       
