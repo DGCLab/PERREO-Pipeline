@@ -219,7 +219,7 @@ In case the user also want to remove polyA tails, he/she must include that -poly
 
 Single-end cutadapt trimming:
 ```bash
- cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
+ cutadapt -j "$threads" -q "$trimming_quality","$trimming_quality" \
         -a "$adapter" --trim-n -m "$min_length" -u "$initial_trim_read" \
         -o "${TRIM_DIR}/${sample_id}_trimmed.fastq" "--$polya" \
         "$IN"  > cutadapt.log 2>&1
