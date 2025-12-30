@@ -9,6 +9,7 @@ combined_annotation="$1"
 sample="$2"
 threads="$3"
 strandedness="$4"
+CWD="$5"
 
 # Checking samples folders
 if [ $# -eq 0 ]; then
@@ -32,8 +33,8 @@ fi
     BASENAME=$(basename "$sample")
 
     # Output name
-    OUTPUT_GTF="$sample/${BASENAME}_transcriptome.gtf"
-
+    OUTPUT_GTF="$CWD/samples/$sample/${BASENAME}_transcriptome.gtf"
+	
     msg_info "[STRINGTIE2] Running StringTie..."
 
     if [ "$strandedness" = "forward" ]; then
