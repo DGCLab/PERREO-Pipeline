@@ -56,7 +56,7 @@ Regarding the reference genome, the user can decide which reference genome and w
 <br>
 For human experiments, although reference and annotations can be freely chosen, we recommend to use T2T genome and its corresponding annotation as it is the most complete human reference, where repetitive regions are better described.<br>
 <br>
-Here we provide a link to the T2T fasta file and GTF annotations to use in this workflow:https://github.com/marbl/CHM13.<br>
+Here we provide a link to the T2T fasta file and GTF annotations to use in this workflow: https://github.com/marbl/CHM13.<br>
 <br>
 Another important point to take into account is that both annotations files must indicate chromosomes in the same way. For example, if genome annotations use the structure "chrX" to indicate chromosome X, and repeat annotationes refers to it using "X", the user has to change one of them because downstream analysis requires only one possible structure at certain point.<br>
 <br>
