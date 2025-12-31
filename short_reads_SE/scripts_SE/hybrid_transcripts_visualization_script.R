@@ -1,11 +1,12 @@
 args <- commandArgs(trailingOnly=TRUE)
 
 CWD <- args[[1]]
+sample_list <- args[[2]]
 
 suppressPackageStartupMessages({library(ggpubr)})
 
 hybrid_transcripts <- read.table(paste0(CWD,"/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv"),sep="\t",header=T)
-sample_list <- read.table(paste0(CWD,"/samplesheet.txt"),sep="\t",header=T)
+sample_list <- read.table(paste0(CWD,"/",sample_list),sep="\t",header=T)
 
 hybrid_transcripts$sample <- gsub("_transcriptome","",hybrid_transcripts$sample)
 
