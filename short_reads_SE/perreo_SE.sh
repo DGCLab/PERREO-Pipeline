@@ -237,7 +237,6 @@ msg_info "[STAR] Starting alignment against reference genome"
 # ---------- 5) COUNT MATRIXES MERGE ----------------------
 
    if [ ! -d "$CWD/Results/DEA_results" ]; then
-      mkdir $CWD/Results
       mkdir $CWD/Results/DEA_results
    fi
 
