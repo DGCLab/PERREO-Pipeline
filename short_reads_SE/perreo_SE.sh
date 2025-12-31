@@ -292,7 +292,7 @@ bash "$HYBRIDS_SCRIPT" "$CWD/Results/transcriptome_assembly" "$CWD" "$genome_gtf
 
 fi
 
-Rscript "$HYBRIDS_R_SCRIPT" "$CWD"
+Rscript "$HYBRIDS_R_SCRIPT" "$CWD" "$sample_list"
 msg_ok "Done!"
 
 
