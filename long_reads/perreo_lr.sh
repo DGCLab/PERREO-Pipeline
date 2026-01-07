@@ -46,6 +46,12 @@ k_num=${k_num:-2}
 FDR=${FDR:-0.05}
 log2FC=${log2FC:-1.0}
 prediction_model=${prediction_model:-yes}
+positive_class=""
+
+if [[ "$prediction_model" == "yes" && -z "$positive_class" ]]; then
+  echo "ERROR: --positive_class is mandatory when --prediction_model yes" >&2
+  exit 2
+fi
 
 # Function for running the analysis with all the samples
 
