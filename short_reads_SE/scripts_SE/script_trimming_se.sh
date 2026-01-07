@@ -45,6 +45,7 @@ else
         -o "${TRIM_DIR}/${sample_id}_trimmed.fastq" \
         "$IN"  > cutadapt.log 2>&1
 fi
+fi
 
 fastqc ${TRIM_DIR}/${sample_id}_trimmed.fastq
 
