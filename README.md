@@ -80,7 +80,8 @@ find . -type f \( -iname "*.fastq" -o -iname "*.fq" -o -iname "*.fastq.gz" -o -i
 # Workflow summary<br>
 
 The flow diagram describes the different steps taken into account in this pipeline.<br>
-![workflow_perreo](https://github.com/user-attachments/assets/a737c6e9-a09d-457a-86ca-304b3e702e7f)
+![PERREO](https://github.com/user-attachments/assets/3385d410-6be1-4de8-97a1-d07a007d40af)
+
 <br>
 
 # PERREO modes<br>
