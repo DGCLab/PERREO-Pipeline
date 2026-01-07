@@ -50,11 +50,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "$prediction_model" == "yes" && -z "$positive_class" ]]; then
-  echo "ERROR: --positive_class is mandatory when --prediction_model yes" >&2
-  exit 2
-fi
-
 
 # --- Assigning values by default ---
 threads=${threads:-8}
@@ -69,6 +64,15 @@ prediction_model=${prediction_model:-yes}
 batch=${batch:-no}
 trimming=${trimming:-simple}
 polya=""
+positive_class=""
+adapt_r1=""
+adapt_r2=""
+
+if [[ "$prediction_model" == "yes" && -z "$positive_class" ]]; then
+  echo "ERROR: --positive_class is mandatory when --prediction_model yes" >&2
+  exit 2
+fi
+
 
 # Function for running the analysis with all the samples
 
