@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
       -method) method="$2"; shift 2 ;;
       -prediction_model) prediction_model="$2"; shift 2 ;;
       -positive_class) positive_class="$2"; shift 2 ;;
-      -polya) polya="--polya"; shift 2 ;;
+      -polya) polya="--poly-a"; shift 2 ;;
       *) echo "Unknown argument: $1"; shift ;;
   esac
 done
@@ -67,10 +67,10 @@ initial_trim_read2=${initial_trim_read2:-0}
 prediction_model=${prediction_model:-no}
 batch=${batch:-no}
 trimming=${trimming:-simple}
-polya=""
-positive_class=""
-adapt_r1=""
-adapt_r2=""
+polya="${polya:-}"
+positive_class="${positive_class:-}"
+adapt_r1="${adapt_r1:-}"
+adapt_r2="${adapt_r2:-}"
 
 if [[ "$prediction_model" == "yes" && -z "$positive_class" ]]; then
   echo "ERROR: --positive_class is mandatory when --prediction_model yes" >&2
