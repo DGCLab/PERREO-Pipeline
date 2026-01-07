@@ -45,7 +45,7 @@ threads=${threads:-8}
 k_num=${k_num:-2}
 FDR=${FDR:-0.05}
 log2FC=${log2FC:-1.0}
-prediction_model=${prediction_model:-yes}
+prediction_model=${prediction_model:-no}
 positive_class=""
 
 if [[ "$prediction_model" == "yes" && -z "$positive_class" ]]; then
