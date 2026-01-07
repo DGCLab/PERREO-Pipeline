@@ -45,28 +45,27 @@ while [[ $# -gt 0 ]]; do
       -method) method="$2"; shift 2 ;;
       -prediction_model) prediction_model="$2"; shift 2 ;;
       -positive_class) positive_class="$2"; shift 2 ;;
-      -polya) polya="--polya"; shift 2 ;;
+      -polya) polya="--poly-a"; shift 2 ;;
       *) echo "Unknown argument: $1"; shift ;;
   esac
 done
 
 
 # --- Assigning values by default ---
-threads=${threads:-8}
-k_num=${k_num:-2}
-FDR=${FDR:-0.05}
-log2FC=${log2FC:-1.0}
-mismatch_align=${mismatch_align:-0.05}
-trimming_quality_threshold=${trimming_quality_threshold:-30}
-initial_trim_read=${initial_trim_read:-0}
-min_length_trim=${min_length_trim:-16}
-prediction_model=${prediction_model:-no}
-batch=${batch:-no}
-trimming=${trimming:-simple}
-polya=""
-positive_class=""
-adapt_r1=""
-adapt_r2=""
+threads="${threads:-8}"
+k_num="${k_num:-2}"
+FDR="${FDR:-0.05}"
+log2FC="${log2FC:-1.0}"
+mismatch_align="${mismatch_align:-0.05}"
+trimming_quality_threshold="${trimming_quality_threshold:-30}"
+initial_trim_read="${initial_trim_read:-0}"
+min_length_trim="${min_length_trim:-16}"
+prediction_model="${prediction_model:-no}"
+batch="${batch:-no}"
+trimming="${trimming:-simple}"
+polya="${polya:-}"
+positive_class="${positive_class:-}"
+adapter="${adapter:-}"
 
 if [[ "$prediction_model" == "yes" && -z "$positive_class" ]]; then
   echo "ERROR: --positive_class is mandatory when --prediction_model yes" >&2
