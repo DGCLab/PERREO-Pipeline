@@ -41,12 +41,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 # --- Asignar valores por defecto ---
-threads=${threads:-8}
-k_num=${k_num:-2}
-FDR=${FDR:-0.05}
-log2FC=${log2FC:-1.0}
-prediction_model=${prediction_model:-no}
-positive_class=""
+threads="${threads:-8}"
+k_num="${k_num:-2}"
+FDR="${FDR:-0.05}"
+log2FC="${log2FC:-1.0}"
+prediction_model="${prediction_model:-no}"
+positive_class="${positive_class:-}"
 
 if [[ "$prediction_model" == "yes" && -z "$positive_class" ]]; then
   echo "ERROR: --positive_class is mandatory when --prediction_model yes" >&2
