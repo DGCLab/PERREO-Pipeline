@@ -40,7 +40,7 @@ if [[ -f "trim/${sample_id}_trimmed_1.fastq.gz" && -f "trim/${sample_id}_trimmed
     msg_ok "[CUTADAPT] Files already exist in trim folder, creation omitted."
 else
   if [[ -z "$adapt_r1" && -z "$adapt_r2" ]]; then
-    msg_info '[CUTADAPT] Performing trimming without removing adapters(already removed)'
+    msg_info '[CUTADAPT] Performing trimming without removing adapters (already removed)'
     cutadapt -j "$threads" --pair-filter any -q "$trimming_quality","$trimming_quality" \
         --trim-n -m "$min_length" -u "$initial_trim_read1"  -U "$initial_trim_read2" ${polya:+$polya}  \
         -o "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" \
