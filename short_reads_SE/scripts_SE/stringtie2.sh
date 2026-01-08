@@ -21,7 +21,7 @@ fi
     # Checking the folder exists
 
     # Buscar el BAM dentro de la carpeta
-    BAM=$(find "$sample/alignment" -maxdepth 1 -name "*marked_duplicates_STAR.bam" | head -n 1)
+    BAM=$(find "$CWD/samples/$sample/alignment" -maxdepth 1 -name "*marked_duplicates_STAR.bam" | head -n 1)
 
     if [ -z "$BAM" ]; then
         msg_error "[STRINGTIE2] No .bam found inside $sample"
