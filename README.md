@@ -127,7 +127,7 @@ Then, there are some arguments that have to be taken into account although it is
 | K_num     | 2     | 
 | log2FC     | 1     | 
 | FDR     | 0.05     | 
-| Prediction model     | yes     |
+| Prediction model     | no     |
 | batch     | no     | 
 
 
@@ -174,7 +174,7 @@ For SR-PE:<br>
                               to also increase the k number (default: 2).
 -log2FC                       Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                          Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
--prediction_model             yes/no (default: yes). When activated, it only will design prediction models in case the number of samples
+-prediction_model             yes/no (default: no). When activated, it only will design prediction models in case the number of samples
                               is higher than 40.
 -positive_class               The experimental condition the user wants to be the positive class in the prediction model.
 ```
@@ -206,7 +206,7 @@ For SR-SE:<br>
                               to also increase the k number (default: 2).
 -log2FC                       Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                          Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
--prediction_model             yes/no (default: yes). When activated, it only will design prediction models in case the number of samples
+-prediction_model             yes/no (default: no). When activated, it only will design prediction models in case the number of samples
                               is higher than 40.
 -positive_class               The experimental condition the user wants to be the positive class in the prediction model.
 
@@ -297,7 +297,7 @@ The required arguments for this mode are the following:<br>
                        to also increase the k number (default: 2).
 -log2FC                Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                   Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
--prediction_model      yes/no (default: yes). When activated, it only will design prediction models in case the number of samples
+-prediction_model      yes/no (default: no). When activated, it only will design prediction models in case the number of samples
                        is higher than 40.
 -positive_class        The experimental condition the user wants to be the positive class in the prediction model.
 
@@ -306,7 +306,7 @@ The required arguments for this mode are the following:<br>
 In this case, trimming parameters are not required as adapters and barcodes removal is carried out during the basecalling step and quality control is carried out using NanoPlot.<br>
 
 ## Alignment
-Long reads are aligned against the reference genome using minimap2 with -ax splice -uf and -k14 parameters. Multimapping is also allowed indicating -N 100 parameter. 
+Long reads are aligned against the reference genome using minimap2 with -ax splice -uf and -k14 parameters. Multimapping is also allowed indicating -N 100 parameter. It is important to set -ax splice, in order to perform splice-aware alignment, and -uf argument to try to align reads assuming it follows the forward orientation relative to the transcribed strand.
 
 ```bash
 minimap2 -t 14 -ax splice -uf -k14 -p 0.8 -N 100 "$CWD/genome_index.mmi"  "$SAMPLE_DIR/${sample_id}.fastq" > "$SAMPLE_DIR/${sample_id}.sam"
