@@ -37,7 +37,7 @@ data <- data[,-1]
 samplesheet <- read.table(paste0(CWD,"/",sample_list), header = T, sep="\t")
 
 # -------------------------
-# 1) Filtering samples for sample_list
+# 1) Filtering samples from sample_list
 # -------------------------
 samples_keep <- if ("sample" %in% colnames(samplesheet)) samplesheet$sample else samplesheet[[1]]
 samples_keep <- samples_keep[!is.na(samples_keep) & samples_keep != ""]
@@ -426,5 +426,6 @@ write.csv(get_top(rf_fit, top_n),
 write.csv(get_top(glmnet_fit, top_n),
           file.path(prediction_models_dir, paste0("top", top_n, "_features_glmnet.csv")),
           row.names = FALSE)
+
 
 
