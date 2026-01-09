@@ -255,7 +255,7 @@ STAR --runThreadN $threads \
       --outSAMattributes NH HI AS nM NM MD
 ```
 
-## Duplicated analysis
+## Duplicates analysis
 Duplicateds removal is not recommended generally in RNA-seq data analysis. However, there are situations where the percentage of duplications is too high and remove them is a real option.
 
 ## Quantification
