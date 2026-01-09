@@ -37,7 +37,7 @@ data <- data[,-1]
 samplesheet <- read.table(paste0(CWD,"/",sample_list), header = T, sep="\t")
 
 # -------------------------
-# 1) Filtrar muestras por sample_list
+# 1) Filtering samples for sample_list
 # -------------------------
 samples_keep <- if ("sample" %in% colnames(samplesheet)) samplesheet$sample else samplesheet[[1]]
 samples_keep <- samples_keep[!is.na(samples_keep) & samples_keep != ""]
@@ -50,11 +50,10 @@ samplesheet <- samplesheet %>%
 
 stopifnot(nrow(samplesheet) >= 4)
 
-# caret prefiere niveles válidos
 levels(samplesheet$condition) <- make.names(levels(samplesheet$condition))
 
 # -------------------------
-# 2) Construir X (samples x features) y y desde `data`
+# 2) Building X (samples x features)
 # -------------------------
 samples <- samplesheet$sample
 stopifnot(all(samples %in% colnames(data)))
@@ -67,7 +66,7 @@ rownames(X) <- samples
 y <- samplesheet$condition
 names(y) <- samples
 
-# eliminar features near-zero variance
+# removing features near-zero variance
 nzv <- caret::nearZeroVar(X)
 if (length(nzv) > 0) X <- X[, -nzv, drop = FALSE]
 
@@ -117,7 +116,7 @@ if (is_binary) {
 }
 
 # -------------------------
-# 5) Paralelo
+# 5) Parallel
 # -------------------------
 threads <- max(1, threads)
 cl <- parallel::makePSOCKcluster(threads)
@@ -150,7 +149,7 @@ if (is_binary) {
 }
 
 # -------------------------
-# 7) Entrenar modelos
+# 7) Training models
 # -------------------------
 glmnet_grid <- expand.grid(
   alpha = seq(0, 1, length.out = 6),
@@ -183,7 +182,7 @@ write.csv(glmnet_fit$results, file.path(prediction_models_dir, "cv_results_glmne
 write.csv(rf_fit$results,     file.path(prediction_models_dir, "cv_results_rf.csv"), row.names = FALSE)
 
 # -------------------------
-# 8) Export predicciones + ROC + métricas
+# 8) Export predictions + ROC + metrics
 # -------------------------
 ovr_roc_curves <- function(truth, prob_df) {
   classes <- levels(truth)
@@ -277,12 +276,6 @@ write.csv(metrics_all, file.path(prediction_models_dir, "metrics_summary.csv"), 
 print(metrics_all)
 cat("[OK] outputs en: ", normalizePath(prediction_models_dir), "\n", sep = "")
 
-# ============================================================
-# ROC PDFs (ADD-ON): pegar al final del script
-# Requiere: is_binary, y_test, x_test, prediction_models_dir,
-#           glmnet_fit, rf_fit
-# ============================================================
-
 suppressPackageStartupMessages({
   library(pROC)
 })
@@ -304,7 +297,7 @@ if (!dir.exists(prediction_models_dir)) {
 if (exists("glmnet_fit") && exists("rf_fit") && exists("x_test") && exists("y_test") && exists("is_binary")) {
 
   if (isTRUE(is_binary)) {
-    # Binario: comparación en un solo PDF
+    #Binary
     pos <- levels(y_test)[1]
 
     prob_glmnet <- tryCatch(predict(glmnet_fit, newdata = x_test, type = "prob")[[pos]],
@@ -347,7 +340,7 @@ if (exists("glmnet_fit") && exists("rf_fit") && exists("x_test") && exists("y_te
     message("[OK] ROC PDF guardado: ", out_pdf)
 
   } else {
-    # Multiclass: one-vs-rest, un PDF por modelo
+    # Multiclass: one-vs-rest
     .plot_ovr_pdf <- function(fit, model_name) {
       prob_df <- tryCatch(predict(fit, newdata = x_test, type = "prob") %>% as.data.frame(),
                           error = function(e) NULL)
@@ -359,7 +352,7 @@ if (exists("glmnet_fit") && exists("rf_fit") && exists("x_test") && exists("y_te
 
 
       first <- TRUE
-i <- 1  # índice de color
+i <- 1  
 
 for (cls in classes) {
   if (!cls %in% colnames(prob_df)) next
@@ -416,7 +409,7 @@ for (cls in classes) {
 }
 
 # ---- Export top variables (RF + GLMNET) ----
-top_n <- 50  # cambia a 10 si quieres
+top_n <- 50  
 
 get_top <- function(fit, n = 50) {
   imp <- caret::varImp(fit)$importance
@@ -433,4 +426,5 @@ write.csv(get_top(rf_fit, top_n),
 write.csv(get_top(glmnet_fit, top_n),
           file.path(prediction_models_dir, paste0("top", top_n, "_features_glmnet.csv")),
           row.names = FALSE)
+
 
