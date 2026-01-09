@@ -107,12 +107,12 @@ is_binary <- nlevels(y_train) == 2
 if (is_binary) {
   pc <- make.names(positive_class)
   if (!pc %in% levels(y_train)) {
-    stop("positive_class no coincide con niveles de condition: ", paste(levels(y_train), collapse=", "))
+    stop("positive_class does not match with condition levels: ", paste(levels(y_train), collapse=", "))
   }
   y_train <- factor(y_train, levels = c(pc, setdiff(levels(y_train), pc)))
   y_test  <- factor(y_test,  levels = levels(y_train))
 } else {
-  message("[INFO] Multiclass: se exporta ROC one-vs-rest por clase (positive_class no aplica).")
+  message("[INFO] Multiclass: ROC one-vs-rest is exported per class.")
 }
 
 # -------------------------
@@ -274,7 +274,7 @@ metrics_all <- bind_rows(m1, m2)
 write.csv(metrics_all, file.path(prediction_models_dir, "metrics_summary.csv"), row.names = FALSE)
 
 print(metrics_all)
-cat("[OK] outputs en: ", normalizePath(prediction_models_dir), "\n", sep = "")
+cat("[OK] outputs in: ", normalizePath(prediction_models_dir), "\n", sep = "")
 
 suppressPackageStartupMessages({
   library(pROC)
@@ -317,7 +317,7 @@ if (exists("glmnet_fit") && exists("rf_fit") && exists("x_test") && exists("y_te
     } else {
       plot.new()
       title("ROC (test)")
-      text(0.5, 0.5, "No se pudo calcular ROC para GLMNET")
+      text(0.5, 0.5, "ROC could not be calculated for GLMNET")
     }
 
     if (!is.null(roc_rf)) {
@@ -337,7 +337,7 @@ if (exists("glmnet_fit") && exists("rf_fit") && exists("x_test") && exists("y_te
     }
     dev.off()
 
-    message("[OK] ROC PDF guardado: ", out_pdf)
+    message("[OK] ROC PDF saved: ", out_pdf)
 
   } else {
     # Multiclass: one-vs-rest
@@ -386,7 +386,7 @@ for (cls in classes) {
       if (first) {
         plot.new()
         title(paste0("ROC one-vs-rest (test) - ", model_name))
-        text(0.5, 0.5, "No se pudieron calcular curvas ROC (clases insuficientes o datos)")
+        text(0.5, 0.5, "ROC could not be calculated")
       } else {
     legend("bottomright",
        legend = classes,
@@ -405,7 +405,7 @@ for (cls in classes) {
   }
 
 } else {
-  message("[WARN] No se generaron PDFs ROC: faltan objetos requeridos (glmnet_fit/rf_fit/x_test/y_test/is_binary).")
+  message("[WARN] ROC PDFs were not generated: required objects were not found (glmnet_fit/rf_fit/x_test/y_test/is_binary).")
 }
 
 # ---- Export top variables (RF + GLMNET) ----
@@ -426,6 +426,7 @@ write.csv(get_top(rf_fit, top_n),
 write.csv(get_top(glmnet_fit, top_n),
           file.path(prediction_models_dir, paste0("top", top_n, "_features_glmnet.csv")),
           row.names = FALSE)
+
 
 
 
