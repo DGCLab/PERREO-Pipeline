@@ -701,6 +701,7 @@ for (nm in res_names) {
   ## ---------------- HEATMAP ----------------
   
   repeat_differentials <- subset(volcano.df, DEG.Status != "Not significant")
+  repeat_differentials <- repeat_differentials[!is.na(repeat_differentials$DEG.Status),]
   repeat_differentials <- repeat_differentials$RepeatSequence
   repeat_differentials <- gsub("#.*$","", repeat_differentials)
   
@@ -1006,3 +1007,4 @@ if (length(pdf_files) > 0) {
   msg_warn("No PDF files to create the report.")
 
 }
+
