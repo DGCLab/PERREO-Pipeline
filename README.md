@@ -84,7 +84,7 @@ To run PERREO from a graphical interface the user has to download the script "ap
 export PATH="/home/user/project_directory:$PATH"
 Rscript app.R
 ```
-Once the app.R script is run, the interface will be open in the internet explorer and there the user will be able to select all the parameters and upload the required files in a user-friendly manner. When the workflow is executed, the program will print different messages related to the execution in the terminal, where the user will be able to check the process.
+Once the app.R script is run, the interface will be open in the internet explorer and the user will be able to select all the parameters and upload the required files in a user-friendly manner. When the workflow is executed, the program will print different messages related to the execution in the terminal, where the user will be able to check the process.
 
 
 
