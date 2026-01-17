@@ -77,6 +77,17 @@ find . -type f \( -iname "*.fastq" -o -iname "*.fq" -o -iname "*.fastq.gz" -o -i
 | xargs -0 -n 1 -P 4 fastqc -t 2 -o QC/fastqc_raw
 ```
 
+# Running PERREO on user-friendly interface<br>
+To run PERREO from a graphical interface the user has to download the script "app.R" and store it in the general directory where the pipeline is going to be run. Then, the user has to run the following code:
+
+```bash
+export PATH="/home/user/project_directory:$PATH"
+Rscript app.R
+```
+Once the app.R script is run, the interface will be open in the internet explorer and there the user will be able to select all the parameters and upload the required files in a user-friendly manner. When the workflow is executed, the program will print different messages related to the execution in the terminal, where the user will be able to check the process.
+
+
+
 # Workflow summary<br>
 
 The flow diagram describes the different steps taken into account in this pipeline.<br>
