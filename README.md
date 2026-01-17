@@ -153,9 +153,9 @@ For SR-PE:<br>
                               of repetitive elements identified in the analysis.
 -threads                      Number of threads used for the process (default: 8)
 -adapt_r1                     Adapter 1 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
-                              be also performed to obtain high quality reads.
+                              be also performed to obtain high quality reads by indicating "-adapt_r1 """.
 -adapt_r2                     Adapter 2 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
-                              be also performed to obtain high quality reads.
+                              be also performed to obtain high quality reads by indicating "-adapt_r2 """.
 -trimming                     simple/extra. The second must be selected if it is know that the kit used adds extra
                               GC nucleotides (default: trimming_simple).
 -trimming_quality_threshold   Minimum quality permitted for reads to be kept after trimming (default: 30).
@@ -188,7 +188,7 @@ For SR-SE:<br>
                               of repetitive elements identified in the analysis.
 -threads                      Number of threads used for the process (default: 8)
 -adapter                      Adapter sequence. If reads are already trimmed, the user can ignore this argument and trimming will
-                              be also performed to obtain high quality reads.
+                              be also performed to obtain high quality reads by indicating "-adapter """.
 -trimming                     simple/extra. The second must be selected if it is know that the kit used adds extra
                               GC nucleotides (default: trimming_simple).
 -trimming_quality_threshold   Minimum quality permitted for reads to be kept after trimming (default: 30).
@@ -216,7 +216,7 @@ For SR-SE:<br>
 ## Trimming
 In this step there are two main options: simple trimming with cutadapt and a more complex trimming performed firstly with cutadapt and then with trimGC.py script in order to remove additional GC nucleotides added by specific sequencing kits. <br>
 <br>
-If adapters had been removed previously and the trimming step should only be taken into account to remove low quality reads, user must not include -adapt_r1 and -adapt_r2 arguments while running the pipeline.<br>
+If adapters had been removed previously and the trimming step should only be taken into account to remove low quality reads, user must include -adapt_r1, -adapt_r2 and -adapter arguments as indicated in the previous boxes while running the pipeline.<br>
 In case the user also want to remove polyA tails, he/she must include that -polya argument as following: -polya polya.
 
 Single-end cutadapt trimming:
