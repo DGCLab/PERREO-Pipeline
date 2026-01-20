@@ -12,6 +12,10 @@ print(threads)
 print(strandness)
 print(sample_dir)
 
+if (strandedness=="unstranded"){
+    strandness_fc = 0
+}
+
 if(strandness=="forward"){
   strandness_fc = 1
 }
