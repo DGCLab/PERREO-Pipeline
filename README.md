@@ -228,7 +228,8 @@ For SR-SE:<br>
 In this step there are two main options: simple trimming with cutadapt and a more complex trimming performed firstly with cutadapt and then with trimGC.py script in order to remove additional GC nucleotides added by specific sequencing kits. <br>
 <br>
 If adapters had been removed previously and the trimming step should only be taken into account to remove low quality reads, user must include -adapt_r1, -adapt_r2 and -adapter arguments as indicated in the previous boxes while running the pipeline.<br>
-In case the user also want to remove polyA tails, he/she must include that -polya argument as following: -polya polya.
+In case the user also want to remove polyA tails, he/she must include that -polya argument as following: -polya polya.<br>
+If the library used was unstranded, even if the user selects extra trimming, the pipeline will perform simple trimming, as trimGC.py script only can be executed on data derived from forward and reverse libraries. In this way, simple trimming is automatically performed on unstranded library-based data.
 
 Single-end cutadapt trimming:
 ```bash
