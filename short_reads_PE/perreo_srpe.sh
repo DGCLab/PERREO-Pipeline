@@ -10,6 +10,7 @@ source "${SCRIPT_DIR}/scripts_PE/logging.sh"
 # Scripts paths that already exist (ajusta nombres/paths)
 TRIM_FW_SCRIPT="$CWD/scripts_PE/script_trimming_forward.sh"   
 TRIM_RV_SCRIPT="$CWD/scripts_PE/script_trimming_reverse.sh"
+TRIM_UNSTR_SCRIPT="$CWD/scripts_PE/script_trimming_unstranded.sh"
 TRIM_EXTRA="$CWD/scripts_PE/trimGC.py"
 MAP_SCRIPT="$CWD/scripts_PE/script_map_pe.sh"
 MARKDUP_SCRIPT="$CWD/scripts_PE/script_markduplicates.sh"           
@@ -162,6 +163,9 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
             ;;
           reverse)
             bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya"
+            ;;
+            unstranded)
+            bash "$TRIM_UNSTR_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya"
             ;;
           *)
             msg_warn "[CUTADAPT] $sample_id: unknown strandedness '$STRAND' (expected forward/reverse)" >&2
