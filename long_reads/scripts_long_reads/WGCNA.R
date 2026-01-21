@@ -25,12 +25,6 @@ expression = t(expression_matrix)
 powers = c(c(1:10), seq(from = 12, to=20, by=2))
 sft = pickSoftThreshold(expression, powerVector = powers, verbose = 5)
 
-#Plotting the results
-#sizeGrWindow(9, 5)
-par(mfrow = c(1,2))
-cex1 = 0.9
-
-
 targetR2 <- 0.9
 softPower <- sft$fitIndices$Power[which(sft$fitIndices$SFT.R.sq > targetR2)[1]]
 if (is.na(softPower)) {
@@ -265,6 +259,7 @@ for (col in topModuleColors) {
     nodeAttr = mergedColors[inModule]
   )
 }
+
 
 
 
