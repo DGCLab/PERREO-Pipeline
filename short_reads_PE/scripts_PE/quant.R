@@ -66,4 +66,5 @@ if (!file.exists(paste0(sample_dir,"_quant.txt"))){
      quant <- featureCounts(files = print(paste0(MAP_DIR,"/",sample_id,"_marked_duplicates_STAR.bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T, isPairedEnd = TRUE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,strandSpecific = strandness_fc, nthreads=threads)
      msg_ok(paste0("[FEATURECOUNTS] ", sample_id,"quantification completed"))
      write.table(quant$counts,print(paste0(quant_dir,"/",sample_id,"_quant.txt")),sep="\t")
+     write.table(quant$stat, print(paste0(quant_dir,"/",sample_id,"_quant_stats.txt")),sep="\t")
 }
