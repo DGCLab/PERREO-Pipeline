@@ -26,7 +26,7 @@ source "${SCRIPT_DIR}/logging.sh"
     
       # Marking duplicates 
       msg_info "[MARKDUPLICATES] Marking duplicates for $sample_id..."
-       picard MarkDuplicates \
+       picard -Xmx"${ram}" MarkDuplicates \
          I="$MAP_DIR/${sample_id}_with_readgroup_STAR.bam" \
          O="$MAP_DIR/${sample_id}_marked_duplicates_STAR.bam" \
          M="$MAP_DIR/${sample_id}_marked_dup_metrics_STAR.txt" \
