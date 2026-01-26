@@ -4,6 +4,7 @@ sample_id="$1"
 threads="$2"
 MAP_DIR="$3"
 remove_duplicates="$4"
+ram="$5"
 
 # Setting up colors for messages
 
