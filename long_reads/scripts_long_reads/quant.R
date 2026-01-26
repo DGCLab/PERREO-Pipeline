@@ -33,4 +33,5 @@ if (!file.exists(paste0(sample_dir,"_quant.txt"))){
      quant <- featureCounts(files = print(paste0(sample_dir,"/",sample_id,".bam")), annot.ext = repeat_gtf,isGTFAnnotationFile = T, isLongRead=T, isPairedEnd = FALSE, GTF.attrType = "gene_id",countMultiMappingReads = TRUE,primaryOnly = FALSE, fraction=TRUE,strandSpecific = strandness_fc, nthreads=threads)
      #colnames(quant)[i] <- sample_id
      write.table(quant$counts,print(paste0(sample_dir,"/",sample_id,"_quant.txt")),sep="\t")
+     write.table(quant$stat, print(paste0(quant_dir,"/",sample_id,"_quant_stats.txt")),sep="\t")
 }
