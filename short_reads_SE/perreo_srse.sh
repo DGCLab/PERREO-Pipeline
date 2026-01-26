@@ -30,6 +30,7 @@ while [[ $# -gt 0 ]]; do
       -genome_gtf) genome_gtf="$2"; shift 2 ;;
       -repeat_gtf) repeat_gtf="$2"; shift 2 ;;
       -threads) threads="$2"; shift 2 ;;
+      -ram) threads="$2"; shift 2 ;;
       -adapter) adapter="$2"; shift 2 ;;
       -trimming_quality_threshold) trimming_quality_threshold="$2"; shift 2 ;;
       -min_length_trim) min_length_trim="$2"; shift 2 ;;
@@ -53,6 +54,7 @@ done
 
 # --- Assigning values by default ---
 threads="${threads:-8}"
+ram="${ram:-32}"
 k_num="${k_num:-2}"
 FDR="${FDR:-0.05}"
 log2FC="${log2FC:-1.0}"
@@ -199,7 +201,7 @@ msg_info "[STAR] Starting alignment against reference genome"
         msg_info '[MARKDUPLICATES] Skipping Markduplicates...'
   else
         REMOVE_DUPLICATES=false
-        bash "$MARKDUP_SCRIPT" "$sample_id" "$threads" "$MAP_DIR" "$remove_duplicates"
+        bash "$MARKDUP_SCRIPT" "$sample_id" "$threads" "$MAP_DIR" "$remove_duplicates" "$ram"
   fi
   done
 
