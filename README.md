@@ -277,7 +277,9 @@ Duplicateds removal is not recommended generally in RNA-seq data analysis. Howev
 
 ## Quantification
 FeatureCounts performs features quantification allowing multimapping reads counts and fraction. It uses the strandedness indicated in the sample sheet.<br>
-A quantification statistics file is exported for each sample, where the number of assigned and unassigned reads can be analysed.
+<br>
+A quantification statistics file is exported for each sample, where the number of assigned and unassigned reads can be analysed.<br>
+<br>
 
 The following code line is run for data obtained from single-end and paired-end short reads sequencing techonologies:<br>
 
