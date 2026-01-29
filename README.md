@@ -1,6 +1,8 @@
 
+
 # PERREO<br> 
-[POLARIS.pdf](https://github.com/user-attachments/files/24930217/POLARIS.pdf)
+
+![POLARIS](https://github.com/user-attachments/assets/d6039149-4e3a-4b83-928c-1db52dbce415)
 
 <img width="600" height="350" alt="logo_github" src="https://github.com/user-attachments/assets/f029a40a-dfc7-447c-b032-fe07a61f8a48" />
 
