@@ -30,7 +30,7 @@ while [[ $# -gt 0 ]]; do
       -sample_list) sample_list="$2"; shift 2 ;;
       -reference_genome) reference_genome="$2"; shift 2 ;;
       -genome_gtf) genome_gtf="$2"; shift 2 ;;
-      -repeat_gtf) repeat_gtf="$2"; shift 2 ;;
+      -lnc_gtf) lnc_gtf="$2"; shift 2 ;;
       -threads) threads="$2"; shift 2 ;;
       -ram) threads="$2"; shift 2 ;;
       -adapt_r1) adapt_r1="$2"; shift 2 ;;
@@ -90,7 +90,7 @@ run_pipeline_sample() {
   msg_info "samplesheet: ${GREEN}$sample_list${RESET}"
   msg_info "Reference: ${GREEN}$reference_genome${RESET}"
   msg_info "GTF: ${GREEN}$genome_gtf${RESET}"
-  msg_info "Repeats: ${GREEN}$repeat_gtf${RESET}"
+  msg_info "Repeats: ${GREEN}$lnc_gtf${RESET}"
   msg_info "Threads: ${GREEN}${threads-8}${RESET}"
   msg_info "R1 adaptor: ${GREEN}${adapt_r1:-none}${RESET}"
   msg_info "R2 adaptor: ${GREEN}${adapt_r2:-none}${RESET}"
@@ -246,7 +246,7 @@ msg_info "[STAR] Starting alignment against reference genome"
 
       STRAND=$(echo "$STRAND" | tr '[:upper:]' '[:lower:]' | xargs)
 
-      REP_GTF_PATH=$CWD/$repeat_gtf 
+      REP_GTF_PATH=$CWD/$lnc_gtf 
 
    if [ ! -f "$QUANT_DIR/${sample_id}_quant.txt" ]; then
 
@@ -272,7 +272,7 @@ msg_info "[STAR] Starting alignment against reference genome"
 
    DEA_results="$CWD/Results/DEA_results"
       
-   REP_GTF_PATH=$CWD/$repeat_gtf 
+   REP_GTF_PATH=$CWD/$lnc_gtf 
 
    if [ ! -f "$CWD/Results/count_data.txt" ]; then
      msg_warn '[FEATURECOUNTS] count_data.txt must be generated'
@@ -289,7 +289,7 @@ if [ ! -d "$CWD/Results/transcriptome_assembly" ]; then
       mkdir $CWD/Results/transcriptome_assembly
    fi
    
-cat "$CWD/$genome_gtf" "$CWD/$repeat_gtf" > "$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
+cat "$CWD/$genome_gtf" "$CWD/$lnc_gtf" > "$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
 
 combined_annotations="$CWD/Results/transcriptome_assembly/combined_annotations.gtf"
  
@@ -317,7 +317,7 @@ msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated su
 if [[ ! -f "$CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv" ]]; then
 
 msg_info "Calculating hybrid transcripts..."
-bash "$HYBRIDS_SCRIPT" "$CWD/Results/transcriptome_assembly" "$CWD" "$genome_gtf" "$repeat_gtf" > $CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv
+bash "$HYBRIDS_SCRIPT" "$CWD/Results/transcriptome_assembly" "$CWD" "$genome_gtf" "$lnc_gtf" > $CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv
 
 fi
 
