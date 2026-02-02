@@ -163,8 +163,8 @@ For SR-PE:<br>
 -genome_gtf                   Genome annotations in GTF format.
 -repeat_gtf                   Repeat annotations in GTF format. It must contain a "repeat_class" column in order to study the type
                               of repetitive elements identified in the analysis.
--threads                      Number of threads used for the process (default: 8)
--ram                          RAM memory used for MarkDuplicates in GB (default: 32)
+-threads                      Number of threads used for the process (default: 8).
+-ram                          RAM memory used for MarkDuplicates in GB (default: 32).
 -adapt_r1                     Adapter 1 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
                               be also performed to obtain high quality reads by indicating "-adapt_r1 """.
 -adapt_r2                     Adapter 2 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
@@ -200,7 +200,7 @@ For SR-SE:<br>
 -repeat_gtf                   Repeat annotations in GTF format. It must contain a "repeat_class" column in order to study the type
                               of repetitive elements identified in the analysis.
 -threads                      Number of threads used for the process (default: 8).
--ram                          RAM memory used for MarkDuplicates in GB (default: 32)
+-ram                          RAM memory used for MarkDuplicates in GB (default: 32).
 -adapter                      Adapter sequence. If reads are already trimmed, the user can ignore this argument and trimming will
                               be also performed to obtain high quality reads by indicating "-adapter """.
 -trimming                     simple/extra. The second must be selected if it is know that the kit used adds extra
