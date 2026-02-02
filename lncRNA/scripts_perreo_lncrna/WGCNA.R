@@ -1,0 +1,292 @@
+args <- commandArgs(trailingOnly=TRUE)
+
+DEA_DIR <- args[[1]]
+cwd <- args[[2]]
+sample_list <- args[[3]]
+coexpression_dir <- args[[4]]
+
+## ==============================
+## Logging coloured (R)
+## ==============================
+
+use_color <- interactive() || Sys.getenv("TERM") != ""
+
+if (use_color) {
+  COL_INFO  <- "\033[34m"
+  COL_OK    <- "\033[32m"
+  COL_WARN  <- "\033[33m"
+  COL_ERR   <- "\033[31m"
+  COL_BOLD  <- "\033[1m"
+  COL_RESET <- "\033[0m"
+  
+  SYM_OK   <- "✔"
+  SYM_WARN <- "⚠"
+  SYM_ERR  <- "✖"
+} else {
+  COL_INFO <- COL_OK <- COL_WARN <- COL_ERR <- COL_BOLD <- COL_RESET <- ""
+  SYM_OK   <- "[OK]"
+  SYM_WARN <- "[WARN]"
+  SYM_ERR  <- "[ERROR]"
+}
+
+msg_info <- function(x) {
+  cat(COL_INFO, COL_BOLD, x, COL_RESET, "\n", sep = "")
+}
+
+msg_ok <- function(x) {
+  cat(COL_OK, COL_BOLD, SYM_OK, " ",  x, COL_RESET, "\n", sep = "")
+}
+
+msg_warn <- function(x) {
+  cat(COL_WARN, COL_BOLD, SYM_WARN, " ",  x, COL_RESET, "\n", sep = "")
+}
+
+msg_error <- function(x) {
+  cat(COL_ERR, COL_BOLD, SYM_ERR, " ",  x, COL_RESET, "\n", sep = "")
+}
+
+
+suppressPackageStartupMessages({
+library(WGCNA)
+library(tidyverse)     
+library(magrittr) 
+library(scales)
+library(stringr)
+})
+
+samplesheet <- read.table(paste0(cwd,"/",sample_list),sep="\t",header = T)
+
+expression_matrix <- read.csv2(paste0(DEA_DIR,"/expression_matrix.csv"),sep=",",header=T)
+expression_matrix <- as.data.frame(expression_matrix)
+expression_matrix <-expression_matrix[!duplicated(expression_matrix$X),]
+rownames(expression_matrix) <- expression_matrix$X
+expression_matrix <- expression_matrix[,-1]
+expression_matrix <- as.matrix(expression_matrix)
+
+expression = t(expression_matrix)
+
+powers = c(c(1:10), seq(from = 12, to=20, by=2))
+sft = pickSoftThreshold(expression, powerVector = powers, verbose = 5)
+
+targetR2 <- 0.9
+softPower <- sft$fitIndices$Power[which(sft$fitIndices$SFT.R.sq > targetR2)[1]]
+if (is.na(softPower)) {
+  softPower <- max(sft$fitIndices$Power)
+  msg_warn(paste0("No power reaches R² ≥ ", targetR2, ". Using the maximum: ", softPower))
+} else {
+  msg_ok(paste0("SoftPower automatically selected: ", softPower))
+}
+
+adjacency = adjacency(expression, power = softPower, type = "unsigned") #Calculating the adjacency matrix
+
+
+temp_cor <- cor       
+cor <- WGCNA::cor 
+
+storage.mode(expression) <- "numeric"
+
+netwk <- blockwiseModules(expression,               
+                          power = softPower,                
+                          networkType = "signed",
+                          deepSplit = 2,
+                          pamRespectsDendro = F,
+                          minModuleSize = 30,
+                          maxBlockSize = 4000,
+                          reassignThreshold = 0,
+                          mergeCutHeight = 0.25,
+                          saveTOMs = T,
+                          saveTOMFileBase = "ER",
+                          numericLabels = T,
+                          verbose = 3)
+
+# For plotting it is necessary to convert to colors
+pdf(paste0(coexpression_dir,"/modules_dendrogram.pdf"), width = 8, height = 8)
+
+if (all(labels2colors(netwk$colors)=="grey")){
+  msg_error('Gene coexpression analysis is not performed as there are no coexpression modules after applying "blockwiseModules" function')
+  stop("The condition is not met.", call. = FALSE)
+}
+
+mergedColors = labels2colors(netwk$colors)
+plotDendroAndColors(
+  netwk$dendrograms[[1]],
+  mergedColors[netwk$blockGenes[[1]]],
+  "Module colors",
+  dendroLabels = FALSE,
+  hang = 0.03,
+  addGuide = TRUE,
+  guideHang = 0.05 )
+
+dev.off()
+
+module_df <- data.frame(
+  gene_id = names(netwk$colors),
+  colors = labels2colors(netwk$colors)
+)
+
+write_delim(module_df,
+            file = paste0(coexpression_dir,"/gene_modules.txt"),
+            delim = "\t")
+
+
+MEs0 <- moduleEigengenes(expression,mergedColors)$eigengenes
+
+MEs0 <- orderMEs(MEs0)
+module_order = names(MEs0) %>% gsub("ME","", .)
+
+MEs0$sample = row.names(MEs0)
+
+mME = MEs0 %>%
+  pivot_longer(-sample) %>%
+  mutate(
+    name = gsub("ME", "", name),
+    name = factor(name, levels = module_order)
+  )
+
+mME <- mME %>%
+  mutate(sample = factor(sample))
+
+samplesheet_simple <- samplesheet %>%
+  distinct(sample, condition)
+
+cond_levels <- samplesheet_simple %>%
+  pull(condition) %>%
+  unique()
+
+cond_palette <- hue_pal()(length(cond_levels))
+
+cond_cols <- setNames(cond_palette, cond_levels)
+
+cond_por_sample <- samplesheet_simple$condition[
+  match(levels(mME$sample), samplesheet_simple$sample)
+]
+
+axis_cols <- cond_cols[cond_por_sample]
+
+
+pdf(paste0(coexpression_dir,"/modules_samples_heatmap.pdf"), width = 8, height = 8)
+
+mME %>%
+  ggplot(aes(x = sample, y = name, fill = value)) +
+  geom_tile() +
+  theme_bw() +
+  scale_fill_gradient2(
+    low = "blue",
+    high = "red",
+    mid = "white",
+    midpoint = 0,
+    limit = c(-1, 1)
+  ) +
+  theme(
+    axis.text.x = element_text(
+      angle = 90,
+      vjust = 0.5,
+      hjust = 1,
+      color = axis_cols   
+    )
+  ) +
+  labs(
+    title = "Module-sample Relationships",
+    y = "Modules",
+    fill = "corr"
+  )
+
+dev.off()
+
+ss <- samplesheet %>%
+  distinct(sample, condition)
+
+ss <- ss[match(rownames(MEs0), ss$sample), ]
+
+stopifnot(all(rownames(MEs0) == ss$sample))
+
+ME_cols <- grep("^ME", colnames(MEs0), value = TRUE)
+MEs_mat <- MEs0[, ME_cols, drop = FALSE]
+
+cond_factor <- factor(ss$condition)
+cond_levels <- levels(cond_factor)
+
+datTraits <- sapply(cond_levels, function(cl) as.numeric(cond_factor == cl))
+datTraits <- as.data.frame(datTraits)
+colnames(datTraits) <- cond_levels
+rownames(datTraits) <- ss$sample  
+
+#Correlations and p-values
+moduleTraitCor  <- cor(MEs_mat, datTraits, use = "p")
+moduleTraitPval <- corPvalueStudent(moduleTraitCor, nrow(MEs_mat))
+
+textMatrix <- paste0(signif(moduleTraitCor, 2), "\n(",
+                     signif(moduleTraitPval, 1), ")")
+
+#Heatmap of correlation between conditions and modules
+pdf(paste0(coexpression_dir,"/labeled_heatmap.pdf"), width = 8, height = 8)
+
+labeledHeatmap(Matrix = moduleTraitCor,
+               xLabels = colnames(datTraits),      
+               yLabels = colnames(MEs_mat),        
+               ySymbols = colnames(MEs_mat),
+               colorLabels = FALSE,
+               colors = blueWhiteRed(50),
+               textMatrix = textMatrix,
+               setStdMargins = TRUE,
+               cex.text = 0.8,
+               zlim = c(-1, 1),
+               main = "Modules and experimental conditions correlation")
+
+dev.off()
+
+
+#Generation of networks of interest
+
+# Selecting the top correlation values
+moduleMaxCor <- apply(moduleTraitCor, 1, function(x) max(abs(x), na.rm = TRUE))
+
+# Ordering from the highest to the lowest correlation value
+moduleMaxCor <- sort(moduleMaxCor, decreasing = TRUE)
+
+# Keeping the top 3
+nTop <- min(3, length(moduleMaxCor))
+topModulesME <- names(moduleMaxCor)[1:nTop]  
+
+topModuleColors <- gsub("^ME", "", topModulesME)
+
+topModulesME
+topModuleColors
+
+mergedColors = labels2colors(netwk$colors)
+geneNames <- names(mergedColors)
+
+suppressPackageStartupMessages({
+library(WGCNA)})
+
+stopifnot(all(rownames(adjacency) == geneNames),
+          all(colnames(adjacency) == geneNames))
+
+for (col in topModuleColors) {
+  message("Processing module: ", col)
+  
+  inModule <- mergedColors == col
+  modGenes <- geneNames[inModule]
+  
+  modAdj <- adjacency[inModule, inModule]
+  
+  thr <- 0.1
+  
+  # Exporting data needed for cytoscape visualization
+  exportNetworkToCytoscape(
+    modAdj,
+    edgeFile = paste0(coexpression_dir,"/CytoscapeInput-edges-", col, ".txt"),
+    nodeFile = paste0(coexpression_dir,"/CytoscapeInput-nodes-", col, ".txt"),
+    weighted = TRUE,
+    threshold = thr,
+    nodeNames = modGenes,
+    altNodeNames = modGenes,
+    nodeAttr = mergedColors[inModule]
+  )
+}
+
+
+
+
+
+

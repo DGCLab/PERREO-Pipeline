@@ -1,0 +1,841 @@
+###############################################################################
+####                                                                       ####
+####                      DIFFERENTIAL EXPRESSION ANALYSIS                 ####
+####                                                                       ####
+####             Authors:                                                  ####
+####                                                                       ####
+####                                                                       ####
+###############################################################################
+
+
+## ==============================
+## Logging coloured (R)
+## ==============================
+
+use_color <- interactive() || Sys.getenv("TERM") != ""
+
+if (use_color) {
+  COL_INFO  <- "\033[34m"
+  COL_OK    <- "\033[32m"
+  COL_WARN  <- "\033[33m"
+  COL_ERR   <- "\033[31m"
+  COL_BOLD  <- "\033[1m"
+  COL_RESET <- "\033[0m"
+  
+  SYM_OK   <- "✔"
+  SYM_WARN <- "⚠"
+  SYM_ERR  <- "✖"
+} else {
+  COL_INFO <- COL_OK <- COL_WARN <- COL_ERR <- COL_BOLD <- COL_RESET <- ""
+  SYM_OK   <- "[OK]"
+  SYM_WARN <- "[WARN]"
+  SYM_ERR  <- "[ERROR]"
+}
+
+msg_info <- function(x) {
+  cat(COL_INFO, COL_BOLD, x, COL_RESET, "\n", sep = "")
+}
+
+msg_ok <- function(x) {
+  cat(COL_OK, COL_BOLD, SYM_OK, " ",  x, COL_RESET, "\n", sep = "")
+}
+
+msg_warn <- function(x) {
+  cat(COL_WARN, COL_BOLD, SYM_WARN, " ",  x, COL_RESET, "\n", sep = "")
+}
+
+msg_error <- function(x) {
+  cat(COL_ERR, COL_BOLD, SYM_ERR, " ",  x, COL_RESET, "\n", sep = "")
+}
+
+
+
+version <- "v1.0"
+cat(sprintf("
+  /^ ^\\
+ / 0 0 \\              PERREO PIPELINE %s  
+ V\\ Y /V      ----------------------------------
+  / - \\       Processing Differential Expression
+  |    \\                  Analysis
+  || (__V)     
+------------------------------------------------------------
+
+", version))
+
+
+
+options(warn = -1)
+
+args <- commandArgs(trailingOnly=TRUE)
+
+batch <- args[[1]]
+sample_list <- args[[2]]
+method <- args[[3]]
+CWD <- args[[4]]
+repeatmasker_annotation_gtf <- args[[5]]
+k_num <- as.numeric(args[[6]])
+FDR_thr <- as.numeric(args[[7]])
+log2FC_thr <- as.numeric(args[[8]])
+SAMPLES_DIR <- paste0(CWD,"/Results/")
+DEA_results_DIR <- paste0(SAMPLES_DIR,"/DEA_results")
+
+if (batch == "yes"){batch = TRUE}else{batch=FALSE}
+  
+## Load libraries
+suppressPackageStartupMessages({
+library(dplyr)
+library(DESeq2)
+library(readr)
+library(ggplot2)
+library(pheatmap)
+library(ggpubr)
+library(ggrepel)
+library(grid)
+library(rtracklayer)
+library(EDASeq)
+library(edgeR)
+library(RUVSeq)
+library(pdftools)
+})  
+
+## Loading the metadata:
+
+sample_list <- read.table(paste0(CWD,"/",sample_list), header = T, sep="\t")
+
+## Prepare the data for DESeq2:
+
+cts_raw <- read.table(paste0(SAMPLES_DIR,"count_data.txt"))
+rownames <- rownames(cts_raw)
+
+cts <- as.matrix(cts_raw)
+rownames(cts) <- rownames
+samples <- colnames(cts)
+
+if (!identical(samples, sample_list$sample)) {
+  sample_list <- sample_list[order(sample_list$sample),]
+}
+
+if (identical(as.character(samples), as.character(sample_list$sample))) {
+  msg_ok("Order of samples ids in `cts` and `samplesheet` do match!")
+} else {  
+  msg_error("Order of samples ids in `cts` and `samplesheet` do not match!")
+  stop("The condition is not met.", call. = FALSE)
+}
+
+condition <- sample_list$condition
+coldata <- within(data.frame(row.names = samples,
+                             condition = factor(condition)), {
+                               if ("batch" %in% colnames(sample_list))
+                                 batch <- sample_list$batch})
+
+if (ncol(cts) != nrow(coldata)) {
+  msg_error("Number of samples in `cts` and `coldata` do not match!")
+  stop("The condition is not met.", call. = FALSE)
+}
+
+
+cts <- round(cts)
+
+dds <- DESeqDataSetFromMatrix(
+  countData = cts,
+  colData = coldata,
+  design = ~  condition 
+)
+
+## Filter genes which have at least a zero between all samples
+
+keep <- apply(counts(dds), 1, function(x) all(x > 0))
+dds <- dds[keep, ]
+
+mat <- counts(dds)
+
+
+## Correct Batch Effect
+
+if(batch == TRUE){
+  
+  ruvg <- TRUE
+  msg_info("Removing Batch Effect...")
+  
+  if ("batch" %in% colnames(sample_list)) {
+    ruvg <- FALSE
+  }
+  
+  if(ruvg == TRUE){
+    
+  # Extracting counts data to build the EdgeR object
+  msg_info("Applying RUVg...")
+  
+  # Normalizing the object before applying RUVg algorithm
+  
+  design <- model.matrix(~condition)
+  y <- DGEList(counts=mat, group=condition)
+  y <- calcNormFactors(y, method="TMM")
+  y <- estimateDisp(y, design)
+  
+  fit <- glmFit(y, design)
+  lrt <- glmLRT(fit, coef=colnames(design))
+  
+  # Selecting the 25% genes less statistically significant variables
+  
+  top_all <- topTags(lrt, n = nrow(mat))$table
+  top_all <- top_all[order(top_all$PValue, decreasing = TRUE), ]
+  
+  # Selecting the 25% genes as stable genes
+  
+  n_empirical <- ceiling(0.25 * nrow(top_all))
+  empirical <- rownames(top_all)[1:n_empirical]
+
+  set <- newSeqExpressionSet(
+    counts = mat,
+    normalizedCounts = cpm(mat), # For PCA pre-BATCH
+    phenoData = data.frame(coldata, row.names = colnames(cts)))
+  
+  res <- RUVg(x=set, cIdx=empirical, k=k_num ,isLog = F)
+  mat.cpm.ruv <- res@assayData$normalizedCounts # For PCA post-BATCH
+  
+  Wdf <- as.data.frame(pData(res)[, grep("^W_", colnames(pData(res))), drop = FALSE]) 
+  
+  # Add to metadata
+  sample_list <- cbind(sample_list, Wdf)
+  
+  
+  if (method == "edgeR") {
+    
+    msg_info("DEA is being performed by edgeR")
+    
+    # Create a DGEList with the original counts (non-TMM)
+    dge <- DGEList(counts = mat, samples = samples)
+    
+    # Design matrix with RUV factors and condition
+    form <- as.formula(paste("~ ", paste(colnames(Wdf), collapse = " + "), "+ condition"))
+    design <- model.matrix(form, data = sample_list)
+    
+    dge <- calcNormFactors(dge, method="TMM")
+    dge <- estimateDisp(dge, design)
+
+ 
+    fit <- glmQLFit(dge, design)
+    qlf <- glmQLFTest(fit, coef = colnames(design)[2+k_num])
+    
+    results <- topTags(qlf, n = Inf)
+    res_filtered <- results$table[abs(results$table$logFC)> log2FC_thr & results$table$FDR < FDR_thr,]
+    
+    mat.dge <- cpm(dge) # For prediction model
+    
+  } else if (method == "DESeq2") {
+    
+    msg_info("DEA is being performed by DESeq2")
+    
+    form <- as.formula(paste("~ ", paste(colnames(Wdf), collapse = " + "), "+ condition"))
+    
+    dds <- DESeqDataSetFromMatrix(
+      countData = mat,
+      colData = sample_list,
+      design = form)
+    
+    dds <- DESeq(dds)
+    results <- results(dds, contrast = c("condition", unique(condition)[2], unique(condition)[1]))
+    res_filtered <- subset(results, abs(log2FoldChange) > log2FC_thr & padj < FDR_thr) |> as.data.frame()
+    
+    vsd <- varianceStabilizingTransformation(dds) # For prediction model
+
+  }
+  
+  #Once the batch effect is corrected we use the matrix for visualization
+  #PCA
+  pca <- prcomp(t(set@assayData$normalizedCounts),scale. = T)
+  pca_df <- as.data.frame(pca$x)
+  pca_df$condition <- condition
+  
+  p <- ggplot(pca_df, aes(x=PC1, y=PC2, color=condition)) +
+    geom_point(size=3) +
+    scale_color_manual(values = c("#804A45", "#455F80")) +
+    stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+    labs(title="PCA - Before Batch Effect Corrected",
+         x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+         y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+    theme_minimal()
+  
+  ggsave(paste0(DEA_results_DIR,"/pca_nobatch.png"), plot = p, width = 8, height = 6, dpi = 300)
+  ggsave(paste0(DEA_results_DIR,"/pca_nobatch.pdf"), plot = p, width = 8, height = 6, dpi = 300)
+  
+  pca_corrected <- prcomp(t(mat.cpm.ruv),scale. = T)
+  pca_df_corrected <- as.data.frame(pca_corrected$x)
+  pca_df_corrected$condition <- condition
+  
+  p_corrected <- ggplot(pca_df_corrected, aes(x=PC1, y=PC2, color=condition)) +
+    geom_point(size=3) +
+    scale_color_manual(values = c("#804A45", "#455F80")) +
+    stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+    labs(title="PCA - Batch Effect Corrected",
+         x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+         y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+    theme_minimal()
+  
+  ggsave(paste0(DEA_results_DIR,"/pca_corrected.png"), plot = p_corrected, width = 8, height = 6, dpi = 300)
+  ggsave(paste0(DEA_results_DIR,"/pca_corrected.pdf"), plot = p_corrected, width = 8, height = 6, dpi = 300)
+  
+  } else {
+    if (method == "edgeR") {
+      
+      msg_info("DEA is being performed by edgeR")
+      
+      dge <- DGEList(counts = mat, samples = samples)
+      
+      design <- model.matrix(~ batch + condition, data = sample_list)
+      
+      dge <- calcNormFactors(dge, method="TMM")
+      dge <- estimateDisp(dge, design)
+
+      fit <- glmQLFit(dge, design)
+      qlf <- glmQLFTest(fit, coef = colnames(design)[3])  
+      
+      results <- topTags(qlf, n = Inf)
+      res_filtered <- results$table[abs(results$table$logFC)> log2FC_thr & results$table$FDR < FDR_thr,]
+      
+      mat.dge <- cpm(dge) # For prediction model
+      
+    } else if (method == "DESeq2") {
+      
+      msg_info("DEA is being performed by DESeq2")
+      
+      dds <- DESeqDataSetFromMatrix(
+        countData = mat,
+        colData = sample_list,
+        design = ~ batch + condition
+      )
+      
+      dds <- DESeq(dds)
+      results <- results(dds, contrast = c("condition", unique(condition)[2], unique(condition)[1]))
+      res_filtered <- subset(results, abs(log2FoldChange) > log2FC_thr & padj < FDR_thr) |> as.data.frame()
+      
+      vsd <- varianceStabilizingTransformation(dds) # For prediction model
+    }
+ 
+    #Once the batch effect is corrected we use the matrix for visualization
+    #PCA
+    pca <- prcomp(t(assay(vsd)),scale. = T)
+    pca_df <- as.data.frame(pca$x)
+    pca_df$condition <- condition
+    
+    p <- ggplot(pca_df, aes(x=PC1, y=PC2, color=condition)) +
+      geom_point(size=3) +
+      scale_color_manual(values = c("#804A45", "#455F80")) +
+      stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+      labs(title="PCA - Before Batch Effect Corrected",
+           x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+           y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+      theme_minimal()
+    
+    ggsave(paste0(DEA_results_DIR,"/pca_nobatch.png"), plot = p, width = 8, height = 6, dpi = 300)
+    ggsave(paste0(DEA_results_DIR,"/pca_nobatch.pdf"), plot = p, width = 8, height = 6, dpi = 300)
+    
+    pca_corrected <- prcomp(t(if (method == "edgeR"){mat.dge}else{assay(vsd)}),scale. = T)
+    pca_df_corrected <- as.data.frame(pca_corrected$x)
+    pca_df_corrected$condition <- condition
+    
+    p_corrected <- ggplot(pca_df_corrected, aes(x=PC1, y=PC2, color=condition)) +
+      geom_point(size=3) +
+      scale_color_manual(values = c("#804A45", "#455F80")) +
+      stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+      labs(title="PCA - Batch Effect Corrected",
+           x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+           y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+      theme_minimal()
+    
+    ggsave(paste0(DEA_results_DIR,"/pca_corrected.png"), plot = p_corrected, width = 8, height = 6, dpi = 300)
+    ggsave(paste0(DEA_results_DIR,"/pca_corrected.pdf"), plot = p_corrected, width = 8, height = 6, dpi = 300)
+}  
+
+  
+} else {
+  if (method == "edgeR") {
+    
+    msg_info("DEA is being performed by edgeR")
+    
+    # Create a DGEList with the original counts (non-TMM)
+    dge <- DGEList(counts = mat, samples = samples)
+    
+    # Design matrix with RUV factors and condition
+    design <- model.matrix(~ condition, data = sample_list)
+    
+    dge <- calcNormFactors(dge, method="TMM")
+    dge <- estimateDisp(dge, design)
+    
+    mat.dge <- cpm(dge) # For prediction model & PCA
+    
+    fit <- glmQLFit(dge, design)
+    qlf <- glmQLFTest(fit, coef = colnames(design)[2])
+    
+    results <- topTags(qlf, n = Inf)
+    res_filtered <- results$table[abs(results$table$logFC)> log2FC_thr & results$table$FDR < FDR_thr,]
+    
+    ## PCA
+    
+    pca <- prcomp(t(mat.dge),scale. = T)
+    pca_df <- as.data.frame(pca$x)
+    pca_df$condition <- condition
+    
+    p <- ggplot(pca_df, aes(x=PC1, y=PC2, color=condition)) +
+      geom_point(size=3) +
+      scale_color_manual(values = c("#804A45", "#455F80")) +
+      stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+      labs(title="PCA",
+           x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+           y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+      theme_minimal()
+    
+    ggsave(paste0(DEA_results_DIR,"/pca.png"),plot = p, width = 8, height = 6, dpi = 300)
+    ggsave(paste0(DEA_results_DIR,"/pca.pdf"),plot = p, width = 8, height = 6, dpi = 300)
+    
+  } else if (method == "DESeq2") {
+    
+    msg_info("DEA is being performed by DESeq2")
+    
+    dds <- DESeqDataSetFromMatrix(
+      countData = mat,
+      colData = sample_list,
+      design = ~ condition
+    )
+    
+    dds <- DESeq(dds)
+    results <- results(dds, contrast = c("condition", unique(condition)[2], unique(condition)[1]))
+    res_filtered <- subset(results, abs(log2FoldChange) > log2FC_thr & padj < FDR_thr) |> as.data.frame()
+    
+    vsd <- varianceStabilizingTransformation(dds) # For prediction model & PCA
+    
+    ## PCA
+    pca <- prcomp(t(assay(vsd)),scale. = T)
+    pca_df <- as.data.frame(pca$x)
+    pca_df$condition <- condition
+    
+    p <- ggplot(pca_df, aes(x=PC1, y=PC2, color=condition)) +
+      scale_color_manual(values = c("#804A45", "#455F80")) +
+      geom_point(size=3) +
+      stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+      labs(title="PCA",
+           x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+           y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+      theme_minimal() +
+      geom_point(size=3) +
+      stat_ellipse(aes(group = condition), type = "norm", level = 0.95, linetype = "dashed") +
+      labs(title="PCA",
+           x=paste0("PC1 (", round(100*summary(pca)$importance[2,1], 1), "% var)"),
+           y=paste0("PC2 (", round(100*summary(pca)$importance[2,2], 1), "% var)")) +
+      theme_minimal()
+    
+    ggsave(paste0(DEA_results_DIR,"/pca.png"), plot = p, width = 8, height = 6, dpi = 300)
+    ggsave(paste0(DEA_results_DIR,"/pca.pdf"), plot = p, width = 8, height = 6, dpi = 300)
+    
+  }
+}
+
+## Generate Matrix for Prediction Model
+
+if (method == "DESeq2") {
+    expression_matrix <- assay(vsd)
+    rownames(expression_matrix) <- gsub("#.*$", "", rownames(expression_matrix))
+      
+} else {
+    mat.dge.log <- log2(mat.dge)
+    rownames(mat.dge.log) <- gsub("#.*$", "", rownames(mat.dge.log))
+    expression_matrix <- mat.dge.log}
+
+
+write.csv(expression_matrix, paste0(DEA_results_DIR,"/expression_matrix.csv"))
+write.csv(res_filtered, paste0(DEA_results_DIR,"/DEG.csv"))
+write.csv(results, paste0(DEA_results_DIR,"/DEA_results.csv"))
+
+
+###############################################################################
+####                                                                       ####
+####                VolcanoPlot & HeatMap & Barplot UP/DOWN                ####
+####                                                                       ####
+###############################################################################
+
+
+## ---------------- VOLCANO PLOTS ----------------
+
+results <- as.data.frame(results)
+
+if (method == "DESeq2"){
+  log2FC <- results$log2FoldChange
+  FDR <- results$padj
+  dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(condition)[2]),
+                       ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(condition)[2]), 
+                              "Not significant"))
+  
+  volcano.df <- data.frame(
+    RepeatSequence = rownames(results),
+    log2FC = results$log2FoldChange,
+    negLog10P = -log10(results$padj),
+    DEG.Status = factor(dep.labels,
+                        levels = c(paste0("Upregulated in ", unique(condition)[2]), 
+                                   paste0("Downregulated in ", unique(condition)[2]),
+                                   "Not significant")))
+  
+} else{
+  log2FC <- results$logFC
+  FDR <- results$FDR
+  dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(condition)[2]),
+                       ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(condition)[2]), 
+                              "Not significant"))
+  
+  volcano.df <- data.frame(
+    RepeatSequence = rownames(results),
+    log2FC = results$logFC,
+    negLog10P = -log10(results$FDR),
+    DEG.Status = factor(dep.labels,
+                        levels = c(paste0("Upregulated in ", unique(condition)[2]), 
+                                   paste0("Downregulated in ", unique(condition)[2]),
+                                   "Not significant")))
+} 
+
+## Check if there are DEGs
+all_not_significant <- all(
+  volcano.df$DEG.Status == "Not significant" | is.na(volcano.df$DEG.Status)
+)
+
+if (all_not_significant) {
+  msg_error("No differentially expressed genes were detected. The pipeline will stop here.")
+  next
+}
+
+grp_up   <- paste0("Upregulated in ", unique(condition)[2])
+grp_down <- paste0("Downregulated in ", unique(condition)[2])
+pal <- setNames(
+  c("#804A45", "#455F80", "grey70"),          
+  c(grp_up, grp_down, "Not significant")      
+)
+
+top_up   <- volcano.df |>  filter(DEG.Status == grp_up)    |>  slice_max(negLog10P, n = 10)
+top_down <- volcano.df |> filter(DEG.Status == grp_down)  |>  slice_max(negLog10P, n = 10)
+top_labs <- bind_rows(top_up, top_down)
+write.table(top_labs, paste0(CWD,"/Results/toplabels.txt"))
+write.table(
+  top_up$RepeatSequence,
+  file = paste0(CWD,"/Results/primersearchtoplabels.txt"),
+  quote = FALSE,
+  row.names = FALSE,
+  col.names = FALSE
+)
+
+ggplot(volcano.df, aes(x = log2FC, y = negLog10P)) +
+  geom_point(aes(color = DEG.Status), alpha = 0.7, size = 1.5) +
+  scale_color_manual(values = pal, breaks = names(pal))+
+  geom_vline(xintercept = c(-log2FC_thr, log2FC_thr), linetype = "dashed", color = "black") +
+  geom_hline(yintercept = -log10(FDR_thr), linetype = "dashed", color = "black") +
+  geom_text_repel(data = top_labs,
+                  aes(label = RepeatSequence),
+                  size = 2.5, max.overlaps = Inf, box.padding = 0.5, segment.size = 0.2) +
+  labs(title = paste0("Volcano Plot (", unique(condition)[2], " vs ", unique(condition)[1], ")"),
+       x = expression(log[2]*"(Fold-change)"),
+       y = expression(-log[10]*"(padj)"),
+       color = "DEG Status") +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "top")
+
+ggsave(paste0(DEA_results_DIR,"/VolcanoPlot.png"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
+
+ggsave(paste0(DEA_results_DIR,"/VolcanoPlot.pdf"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
+
+## ---------------- HEATMAP ----------------
+
+repeat_differentials <- subset(volcano.df, DEG.Status != "Not significant")
+repeat_differentials <- repeat_differentials[!is.na(repeat_differentials$DEG.Status),]
+repeat_differentials <- repeat_differentials$RepeatSequence
+repeat_differentials <- gsub("#.*$","", repeat_differentials)
+
+expression_differentials <- expression_matrix[rownames(expression_matrix) %in% 
+                                                repeat_differentials,]
+
+
+annotation_col <- data.frame(
+  Condition = factor(condition, levels = c(unique(condition)[2], unique(condition)[1]))
+)
+rownames(annotation_col) <- colnames(expression_differentials)
+
+expression_differentials <- expression_differentials[,order(annotation_col)]
+
+cond_levels <- levels(annotation_col$Condition)
+base_colors <- c("#804A45", "#BAC6D4","#F5A553", "#2E8B57","#455F80", "#323840", "#FFF1C2")
+ann_colors <- list(
+  Condition = setNames(base_colors[seq_along(cond_levels)], cond_levels)
+)
+
+heat_colors <- colorRampPalette(c("#455F80", "white", "#804A45"))(100)
+
+if (length(repeat_differentials) > 1){
+heatmap <- pheatmap(expression_differentials,
+                    annotation_col = annotation_col,
+                    clustering_distance_rows = "euclidean",
+                    cluster_cols = FALSE,
+                    clustering_method = "complete",
+                    scale = "row",
+                    fontsize_row = if(length(expression_differentials) <= 30){8}else{4},
+                    fontsize_col = if(length(samples) <= 16){8}else{6},
+                    main = "DEGs between conditions",
+                    annotation_colors = ann_colors,
+                    color = heat_colors,
+                    border_color = NA,
+                    annotation_names_col = if(length(samples) <= 30){TRUE}else{FALSE})
+}
+
+png(paste0(DEA_results_DIR,"/heatmap_DEGs.png"), width = 2600, height = 2000, res = 300)
+grid.newpage()
+grid.draw(heatmap$gtable)
+dev.off()
+
+pdf(paste0(DEA_results_DIR,"/heatmap_DEGs.pdf"), width = 8.5, height = 6.5)
+grid.newpage()
+grid.draw(heatmap$gtable)
+dev.off()
+
+## ---------------- BARPLOT UP/DOWN ----------------
+
+counts_deg <- volcano.df |> 
+  filter(DEG.Status != "Not significant")
+
+df_bar <- counts_deg %>%
+  arrange(desc(log2FC)) %>%
+  mutate(RepeatSequence = factor(RepeatSequence, levels = RepeatSequence))
+
+ggplot(df_bar, aes(x = RepeatSequence, y = log2FC, fill = DEG.Status)) +
+  geom_col(width = 0.8) +
+  scale_fill_manual(values = pal) +
+  labs(
+    title = "Differential Expression of Repetitive Elements",
+    x = "Repeat Sequence",
+    y = "log2 Fold Change",
+    fill = "Status"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = if(length(counts_deg$RepeatSequence) <= 50){8}else{4}),
+    legend.position = "top",
+    panel.grid.major.x = element_blank()
+  ) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+
+ggsave(paste0(DEA_results_DIR,"/BarPlotUpDown.png"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
+
+ggsave(paste0(DEA_results_DIR,"/BarPlotUpDown.pdf"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
+
+###############################################################################
+####                                                                       ####
+####                         Classification rep-types                      ####
+####                                                                       ####
+###############################################################################
+
+## Read & Preprocess GTF
+msg_info(paste0("Loading: ", repeatmasker_annotation_gtf))
+
+gtf <- rtracklayer::readGFF(repeatmasker_annotation_gtf)
+
+gtf_differentials <- gtf[gtf$gene_id %in% repeat_differentials,]
+gtf_differentials <- as.data.frame(gtf_differentials)
+
+repeat_class_info <- gtf_differentials |> 
+  dplyr::select(gene_id, repeat_class) |> 
+  distinct()
+
+msg_info("Classifying repeats...")
+
+if (method == "DESeq2"){
+    log2FC <- results$log2FoldChange
+    FDR <- results$padj
+    dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(condition)[2]),
+                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(condition)[2]), 
+                                "Not significant"))
+    
+    volcano.df <- data.frame(
+      RepeatSequence = rownames(results),
+      log2FC = results$log2FoldChange,
+      negLog10P = -log10(results$padj),
+      DEG.Status = factor(dep.labels,
+                          levels = c(paste0("Upregulated in ", unique(condition)[2]), 
+                                     paste0("Downregulated in ", unique(condition)[2]),
+                                     "Not significant")))
+    
+} else{
+    log2FC <- results$logFC
+    FDR <- results$FDR
+    dep.labels <- ifelse(log2FC > log2FC_thr & FDR < FDR_thr, paste0("Upregulated in ", unique(condition)[2]),
+                         ifelse(log2FC < -log2FC_thr & FDR < FDR_thr, paste0("Downregulated in ", unique(condition)[2]), 
+                                "Not significant"))
+    
+    volcano.df <- data.frame(
+      RepeatSequence = rownames(results),
+      log2FC = results$logFC,
+      negLog10P = -log10(results$FDR),
+      DEG.Status = factor(dep.labels,
+                          levels = c(paste0("Upregulated in ", unique(condition)[2]), 
+                                     paste0("Downregulated in ", unique(condition)[2]),
+                                     "Not significant")))
+} 
+  
+  
+DEGs_type <- volcano.df |>
+  filter(DEG.Status != "Not significant") |> 
+  dplyr::rename(gene_id = RepeatSequence) |> 
+  mutate(gene_id = gsub("#.*$", "", gene_id)) |>    
+  left_join(repeat_class_info, by = "gene_id")
+
+type_df <- DEGs_type |>
+  filter(!is.na(repeat_class)) |>
+  dplyr::count(repeat_class) |>
+  mutate(
+    percentage = (n / sum(n)) * 100,
+    percentage_label = paste0(round(percentage, 1), "%")
+  ) |> 
+  arrange(desc(n))
+
+
+## Plot DEG
+
+ggplot(type_df, aes(x = reorder(repeat_class, n), y = percentage)) +
+  geom_bar(stat = "identity", fill = "#BAC6D4", alpha = 0.7) +
+  geom_text(aes(label = percentage_label), 
+            hjust = -0.1, size = 3.5) +
+  coord_flip() +
+  labs(
+    title = paste0("Repeat class types distribution for ", unique(condition)[2], " vs ", unique(condition)[1]," - DEGs"),
+    subtitle = paste("Total genes: ", sum(type_df$n)-length(which(duplicated(DEGs_type$gene_id)))),
+    x = "Repeat class type",
+    y = "Percentage (%)",
+    caption = "DEA data analysis"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10)
+  )
+
+ggsave(paste0(DEA_results_DIR,"/Classification_DEGs.png"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
+
+ggsave(paste0(DEA_results_DIR,"/Classification_DEGs.pdf"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
+
+## Plot All
+
+repeat_class_info_all <- gtf |> 
+  dplyr::select(gene_id, repeat_class) |> 
+  distinct()
+
+rep_type <- volcano.df |> 
+  dplyr::rename(gene_id = RepeatSequence) |> 
+  mutate(gene_id = gsub("#.*$", "", gene_id)) |>    
+  left_join(repeat_class_info_all, by = "gene_id")
+
+rep_type <- rep_type |>
+  dplyr::mutate(repeat_class = ifelse(is.na(repeat_class), "(Unknown)", repeat_class)) |>
+  dplyr::count(repeat_class, name = "n") |>
+  arrange(n) |>
+  mutate(
+    percentage = 100 * n / sum(n),
+    percentage_label = sprintf("%.1f%%", percentage),
+    repeat_class = factor(repeat_class, levels = repeat_class))
+
+ggplot(rep_type, aes(x = repeat_class, y = percentage)) +
+  geom_col(fill = "#BAC6D4", alpha = 0.8, width = 0.7) +
+  geom_text(aes(label = percentage_label),
+            hjust = -0.1, size = 3.5) +
+  coord_flip(clip = "off") +
+  scale_y_continuous(labels = scales::label_number(accuracy = 1)) +
+  labs(
+    title = paste0("Repeat class types distribution for ", unique(condition)[2], " vs ", unique(condition)[1]),
+    subtitle = paste("Total elements:", sum(rep_type$n)),
+    x = "Repeat class type",
+    y = "Percentage (%)",
+    caption = "DEA data analysis"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title = element_text(size = 14, face = "bold"),
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(size = 10),
+    plot.margin = margin(5.5, 30, 5.5, 5.5) 
+  ) +
+  expand_limits(y = max(rep_type$percentage) * 1.12)  
+
+ggsave(paste0(DEA_results_DIR,"/Classification_All.png"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
+
+ggsave(paste0(DEA_results_DIR,"/Classification_All.pdf"),
+       width = 6000, height = 4500, dpi = 600, units = "px")
+
+
+
+###############################################################################
+####                                                                       ####
+####                         Repeat RNAs distribution                      ####
+####                                                                       ####
+###############################################################################
+
+library(ggplot2)
+library(ggpubr)
+
+if (method == "DESeq2"){log_means <- colMeans(assay(vsd), na.rm = TRUE)
+} else{log_means <- log10(colMeans(mat.dge, na.rm = TRUE) + 1)} 
+
+df_means <- data.frame(
+  condition = sample_list$condition,
+  mean_log = log_means
+)
+
+df_means$condition <- factor(df_means$condition)
+my_comparisons <- combn(levels(df_means$condition), 2, simplify = FALSE)
+
+base_colors <- c("#804A45", "#BAC6D4","#F5A553", "#2E8B57","#455F80", "#323840", "#FFF1C2")
+
+ymax      <- max(df_means$mean_log)
+y_bracket <- ymax * 1.08
+y_label   <- ymax * 1.085
+
+ggplot(df_means, aes(x = condition, y = mean_log, fill = condition)) +
+  geom_violin(trim = FALSE, alpha = 0.6, width = 0.85, color = NA) +
+  geom_boxplot(width = 0.15, outlier.shape = NA, alpha = 0.8, color = "black") +
+  geom_jitter(width = 0.12, size = 2, alpha = 0.9, color = "black") +
+  scale_fill_manual(values = base_colors) +
+  labs(
+    title = "Mean repetitive sequence counts per replicate",
+    x = "Condition",
+    y = "Mean repetitive reads (log10)"
+  ) +
+  theme_bw(base_size = 12) +
+  theme(
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank()) +
+  stat_compare_means(
+    comparisons = my_comparisons,
+    method      = "wilcox.test",
+    label       = "p.signif")
+  
+
+ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.png"), width = 8, height = 6, dpi = 300)
+ggsave(paste0(DEA_results_DIR,"/repetitive_counts_violin_box.pdf"), width = 8, height = 6, dpi = 300)
+
+
+## PDF Report
+
+pdf_files <- list.files(DEA_results_DIR, pattern = "\\.pdf$", full.names = TRUE)
+
+output_pdf <- file.path(DEA_results_DIR, "report.pdf")
+
+if (length(pdf_files) > 0) {
+  
+  pdf_combine(input = pdf_files, output = output_pdf)
+  msg_ok(paste0("PDF report has been generated successfully in ", DEA_results_DIR))
+  
+} else {
+  msg_warn("No PDF files to create the report.")
+}
+
