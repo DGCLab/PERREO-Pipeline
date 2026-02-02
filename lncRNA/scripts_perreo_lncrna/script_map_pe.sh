@@ -43,10 +43,10 @@ source "${SCRIPT_DIR}/logging.sh"
       --readFilesIn "$trimmed1" "$trimmed2" \
       --outFileNamePrefix "$MAP_DIR/${sample_id}_" \
       --outSAMtype BAM SortedByCoordinate \
-      --outFilterMultimapNmax 500 \
-      --winAnchorMultimapNmax 500 \
+      --outFilterMultimapNmax 10 \
+      --winAnchorMultimapNmax 50 \
       --outFilterMismatchNoverLmax $mismatch_align \
-      --outSAMmultNmax 500 \
+      --outSAMmultNmax 10 \
       --outMultimapperOrder Random \
       --runRNGseed 42 \
       --outSAMattributes NH HI AS nM NM MD
