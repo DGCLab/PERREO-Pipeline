@@ -507,7 +507,6 @@ dependencies:
   - samtools=1.21
   - scipy=1.16.3
   - sed=4.9
-  - setuptools=44.0.0
   - snappy=1.2.2
   - spectra=0.0.11
   - sqlite=3.51.0
