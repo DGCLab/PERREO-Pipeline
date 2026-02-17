@@ -128,7 +128,7 @@ Then, there are some arguments that have to be taken into account although it is
 |-----------------|--------------|
 | Threads     | 8      |
 | RAM     | 32      |
-| Trimming      |  simple (not needed for PERREO LR)     | 
+| Trimming      |  simple (not needed for PERREO SR-SE & LR)     | 
 | Mismatch align     | 0.05     | 
 | Trimming quality threshold     | 30     | 
 | Minimum reads length (for trimming)     | 16     | 
@@ -203,8 +203,6 @@ For SR-SE:<br>
 -ram                          RAM memory used for MarkDuplicates in GB (default: 32).
 -adapter                      Adapter sequence. If reads are already trimmed, the user can ignore this argument and trimming will
                               be also performed to obtain high quality reads by indicating "-adapter """.
--trimming                     simple/extra. The second must be selected if it is know that the kit used adds extra
-                              GC nucleotides (default: simple).
 -trimming_quality_threshold   Minimum quality permitted for reads to be kept after trimming (default: 30).
 -min_length_trim              Minimum reads length to not discard them after trimming (default: 16).
 -max_length_trim              Maximum reads length permitted for reads to be kept after trimming (default: ).
@@ -228,7 +226,7 @@ For SR-SE:<br>
 
 
 ## Trimming
-In this step there are two main options: simple trimming with cutadapt and a more complex trimming performed firstly with cutadapt and then with trimGC.py script in order to remove additional GC nucleotides added by specific sequencing kits. <br>
+In this step there are two main options: simple trimming with cutadapt and a more complex trimming performed firstly with cutadapt and then with trimGC.py script in order to remove additional GC nucleotides added by specific sequencing kits. This additional trimming is only available for paired-end short-reads sequencing data. <br>
 <br>
 If adapters had been removed previously and the trimming step should only be taken into account to remove low quality reads, user must include -adapt_r1, -adapt_r2 and -adapter arguments as indicated in the previous boxes while running the pipeline.<br>
 <br>
