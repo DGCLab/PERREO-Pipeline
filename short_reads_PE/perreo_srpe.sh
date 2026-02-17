@@ -161,13 +161,13 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
         # ------------ 1) TRIMMING READS ---------------------------
         case "$STRAND" in
           forward)
-            bash "$TRIM_FW_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya"
+            bash "$TRIM_FW_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya" "$TRIM_EXTRA"
             ;;
           reverse)
-            bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya"
+            bash "$TRIM_RV_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya" "$TRIM_EXTRA"
             ;;
             unstranded)
-            bash "$TRIM_UNSTR_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya"
+            bash "$TRIM_UNSTR_SCRIPT" "$sample_id" "$IN1" "$IN2" "$TRIM_DIR" "$adapt_r1" "$adapt_r2" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read1" "$initial_trim_read2" "$polya" 
             ;;
           *)
             msg_warn "[CUTADAPT] $sample_id: unknown strandedness '$STRAND' (expected forward/reverse)" >&2
@@ -202,7 +202,7 @@ msg_info "[STAR] Starting alignment against reference genome"
   if [[ -f "$MAP_DIR/${sample_id}_Aligned.sortedByCoord.out.bam" ]];then
         msg_info '[STAR] Skipping mapping...'
   else
-        bash "$MAP_SCRIPT" "$sample_id" "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" "$threads" "$MAP_DIR" "$GENOME_DIR" "$mismatch_align"
+        bash "$MAP_SCRIPT" "$sample_id" "${TRIM_DIR}/${sample_id}_trimmed_1.fastq" "${TRIM_DIR}/${sample_id}_trimmed_2.fastq" "$threads" "$MAP_DIR" "$GENOME_DIR" "$mismatch_align" 
   fi
   done
 
