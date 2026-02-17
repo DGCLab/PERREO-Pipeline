@@ -4,12 +4,11 @@ sample_id="$1"
 IN="$2"
 TRIM_DIR="$3"
 adapter="$4"
-trimming_type="$5"
-threads="$6"
-trimming_quality="$7"
-min_length="$8"
-initial_trim_read="$9"
-polya="${10}"
+threads="$5"
+trimming_quality="$6"
+min_length="$7"
+initial_trim_read="$8"
+polya="$9"
 
 # Setting up colors for messages
 
@@ -22,7 +21,6 @@ msg_info $sample_id
 msg_info $IN
 msg_info $TRIM_DIR
 msg_info $adapter
-msg_info $trimming_type
 msg_info $threads
 msg_info $trimming_quality
 msg_info $min_length
