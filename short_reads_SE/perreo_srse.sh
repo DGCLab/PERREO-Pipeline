@@ -35,7 +35,6 @@ while [[ $# -gt 0 ]]; do
       -trimming_quality_threshold) trimming_quality_threshold="$2"; shift 2 ;;
       -min_length_trim) min_length_trim="$2"; shift 2 ;;
       -max_length_trim) min_length_trim="$2"; shift 2 ;;
-      -trimming) trimming="$2"; shift 2 ;;
       -initial_trim_read) initial_trim_read="$2"; shift 2 ;;
       -mismatch_align) mismatch_align="$2"; shift 2 ;;
       -project_name) project_name="$2"; shift 2 ;;
@@ -64,7 +63,6 @@ initial_trim_read="${initial_trim_read:-0}"
 min_length_trim="${min_length_trim:-16}"
 prediction_model="${prediction_model:-no}"
 batch="${batch:-no}"
-trimming="${trimming:-simple}"
 polya="${polya:-}"
 positive_class="${positive_class:-}"
 adapter="${adapter:-}"
@@ -87,7 +85,6 @@ run_pipeline_sample() {
   msg_info "Repeats: ${GREEN}$repeat_gtf${RESET}"
   msg_info "Threads: ${GREEN}${threads:-8}${RESET}"
   msg_info "Adapter: ${GREEN}${adapter:-none}${RESET}"
-  msg_info "trimming type: ${GREEN}${trimming:-simple}${RESET}"
   msg_info "trimming_quality_threshold: ${GREEN}${trimming_quality_threshold:-30}${RESET}" 
   msg_info "minimum_length_trim: ${GREEN}${min_length_trim:-16}${RESET}"
   msg_info "initial_trim_read: ${GREEN}${initial_trim_read:-0}${RESET}"
@@ -151,7 +148,7 @@ awk 'BEGIN{FS=OFS="\t"} NR>1 {print $1, $2, $3}' "../$sample_list" \
 
         # ------------ 1) TRIMMING READS ---------------------------
         
-       bash "$TRIM_SCRIPT" "$sample_id" "$IN" "$TRIM_DIR" "$adapter" "$trimming" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read" "$polya"
+       bash "$TRIM_SCRIPT" "$sample_id" "$IN" "$TRIM_DIR" "$adapter" "$threads" "$trimming_quality_threshold" "$min_length_trim" "$initial_trim_read" "$polya"
     else
         echo "✓ Trimmed FASTQs already exist for $sample_id — skipping trimming."
     fi
