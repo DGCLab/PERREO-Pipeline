@@ -144,7 +144,7 @@ Then, there are some arguments that have to be taken into account although it is
 
 
 
-For SR-LR mode, the parameters trimming_type, trimming_quality_threshold, min_length_trim and max_length_trim are not considered as trimming for long-reads should be performed during the basecalling before obtaining the fastq files.<br>
+For SR-LR mode, the parameters trimming, trimming_quality_threshold, min_length_trim and max_length_trim are not considered as trimming for long-reads should be performed during the basecalling before obtaining the fastq files.<br>
 
 
 
@@ -170,7 +170,7 @@ For SR-PE:<br>
 -adapt_r2                     Adapter 2 sequence. If reads are already trimmed, the user can ignore this argument and trimming will
                               be also performed to obtain high quality reads by indicating "-adapt_r2 """.
 -trimming                     simple/extra. The second must be selected if it is know that the kit used adds extra
-                              GC nucleotides (default: trimming_simple).
+                              GC nucleotides (default: simple).
 -trimming_quality_threshold   Minimum quality permitted for reads to be kept after trimming (default: 30).
 -min_length_trim              Minimum reads length to not discard them after trimming (default: 16).
 -max_length_trim              Maximum reads length permitted for reads to be kept after trimming (default: ).
@@ -204,7 +204,7 @@ For SR-SE:<br>
 -adapter                      Adapter sequence. If reads are already trimmed, the user can ignore this argument and trimming will
                               be also performed to obtain high quality reads by indicating "-adapter """.
 -trimming                     simple/extra. The second must be selected if it is know that the kit used adds extra
-                              GC nucleotides (default: trimming_simple).
+                              GC nucleotides (default: simple).
 -trimming_quality_threshold   Minimum quality permitted for reads to be kept after trimming (default: 30).
 -min_length_trim              Minimum reads length to not discard them after trimming (default: 16).
 -max_length_trim              Maximum reads length permitted for reads to be kept after trimming (default: ).
