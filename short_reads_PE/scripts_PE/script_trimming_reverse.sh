@@ -60,7 +60,7 @@ else
 
 
 
-  if [[ "$trimming_type" == "trimming_extra" ]]; then
+  if [[ "$trimming_type" == "extra" ]]; then
        msg_info "[CUTADAPT] → Performing extra trimming"
        gzip "${TRIM_DIR}/${sample_id}_trimmed_1.fastq"
        gzip "${TRIM_DIR}/${sample_id}_trimmed_2.fastq"
