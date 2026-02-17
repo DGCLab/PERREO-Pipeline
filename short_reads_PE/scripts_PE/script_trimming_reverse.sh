@@ -14,6 +14,7 @@ min_length="${10}"
 initial_trim_read1="${11}"
 initial_trim_read2="${12}"
 polya="${13}"
+TRIM_EXTRA="${14}"
 
 
 # Setting up colors for messages
