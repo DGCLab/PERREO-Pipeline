@@ -91,7 +91,7 @@ ____   _____  ____   ____   _____   ___
 |_|    |_____||_| \\_\\|_| \\_\\|_____| \\___/ 
 '
 
-msg_info "Starting PERREO pipeline
+msg_info "Starting PERREO pipeline for data derived from paired-end and short-reads sequencing techonologies 
 "
 
 run_pipeline_sample() {
