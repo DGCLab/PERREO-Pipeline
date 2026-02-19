@@ -75,7 +75,6 @@ fi
 
 # Function for running the analysis with all the samples
 
-msg_info "Starting PERREO pipeline"
 
 msg_info $' 
 ____   _____  ____   ____   _____   ___  
@@ -85,7 +84,7 @@ ____   _____  ____   ____   _____   ___
 |_|    |_____||_| \\_\\|_| \\_\\|_____| \\___/ 
 '
 
-msg_info "Starting PERREO pipeline
+msg_info "Starting PERREO pipeline for data derived from single-end and short-reads sequencing technologies
 "
 
 run_pipeline_sample() {
