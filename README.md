@@ -389,10 +389,5 @@ The generated report contains the plots previously mentioned in the Differential
 <img width="6000" height="4500" alt="Classification_All" src="https://github.com/user-attachments/assets/37aa337a-d45d-4778-be2f-90bb57105c25" />
 <img width="6000" height="4500" alt="BarPlotUpDown" src="https://github.com/user-attachments/assets/69d56e63-f1c4-4996-b6a4-8ff4072e35c1" />
 
-## Additional considerations
-If the user is interested in evaluating the computational resources cosumption, the pipeline can be run using the following code:
-```bash
-/usr/bin/time -v perreo_srpe.sh ... > perreo_srpe.log 2>&1
-```
 
 
