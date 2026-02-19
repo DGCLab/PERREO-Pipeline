@@ -288,7 +288,7 @@ if(batch == TRUE){
       res_df <- as.data.frame(res)
       res_df$gene <- rownames(res_df)
       
-      res_filtered <- subset(res_df, abs(res_df$logFC) > log2FC_thr & res_df$FDR < FDR_thr) 
+      res_filtered <- subset(res_df, abs(res_df$log2FoldChange) > log2FC_thr & res_df$padj < FDR_thr) 
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
@@ -393,7 +393,7 @@ if(batch == TRUE){
       res_df <- as.data.frame(res)
       res_df$gene <- rownames(res_df)
       
-      res_filtered <- subset(res_df, abs(res_df$logFC) > log2FC_thr & res_df$FDR < FDR_thr) 
+      res_filtered <- subset(res_df, abs(res_df$log2FoldChange) > log2FC_thr & res_df$padj < FDR_thr) 
       assign(paste0("res_filtered","_contrast_", cname), res_filtered)
       
       write.csv(res_df, file = file.path(outdir, paste0("contrast_", cname, ".csv")), row.names = F)
@@ -742,7 +742,7 @@ annotation_col <- data.frame(
 )
 rownames(annotation_col) <- colnames(expression_differentials)
 
-expression_differentials <- expression_differentials[,order(annotation_col)]
+expression_differentials <- expression_differentials[,order(rownames(annotation_col))]
 
 cond_levels <- levels(annotation_col$Condition)
 base_colors <- c("#804A45", "#BAC6D4","#F5A553", "#2E8B57","#455F80", "#323840", "#FFF1C2")
@@ -1044,6 +1044,7 @@ if (length(pdf_files) > 0) {
 } else {
   msg_warn("No PDF files to create the report.")
 }
+
 
 
 
