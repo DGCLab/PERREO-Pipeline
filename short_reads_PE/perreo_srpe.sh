@@ -83,13 +83,16 @@ fi
 
 # Function for running the analysis with all the samples
 
-msg_info $' ____   _____  ____   ____   _____   ___  
+msg_info $' 
+____   _____  ____   ____   _____   ___  
 |  _ \\ | ____||  _ \\ |  _ \\ | ____| / _ \\ 
 | |_) ||  _|  | |_) || |_) ||  _|  | | | |
 |  __/ | |___ |  _ < |  _ < | |___ | |_| |
-|_|    |_____||_| \\_\\|_| \\_\\|_____| \\___/ '
+|_|    |_____||_| \\_\\|_| \\_\\|_____| \\___/ 
+'
 
-msg_info "Starting PERREO pipeline"
+msg_info "Starting PERREO pipeline
+"
 
 run_pipeline_sample() {
   msg_info " ----- Pipeline paramters summary -----"
