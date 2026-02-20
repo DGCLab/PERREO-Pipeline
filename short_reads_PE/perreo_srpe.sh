@@ -158,7 +158,8 @@ run_pipeline_sample() {
   done
 }
 
-###
+print_logo_with_your_summary "logo.svg" 60 6
+
 
 if [ -d "genome_index" ]; then
   msg_ok "Genome index already exists in genome_index, creation omitted."
