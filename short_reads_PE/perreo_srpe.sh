@@ -95,7 +95,20 @@ msg_info "Starting PERREO pipeline for data derived from paired-end and short-re
 "
 
 run_pipeline_sample() {
-  msg_info " ----- Pipeline paramters summary -----"
+
+  print_logo_with_your_summary() {
+  local logo_path="$1"
+  local width="${2:-60}"
+  local gap="${3:-6}"
+
+  # Logo (Braille) -> líneas
+  mapfile -t LOGO_LINES < <(python3 braille_logo.py "$logo_path" "$width")
+
+  # TU summary EXACTO (cópialo tal cual dentro de este bloque)
+  # Si tu msg_info escribe a stderr, cambia 1>&2 por 2>&1 (ver abajo)
+  mapfile -t PANEL_LINES < <(
+    {
+      msg_info " ----- Pipeline paramters summary -----"
   msg_info "samplesheet: ${GREEN}$sample_list${RESET}"
   msg_info "Reference: ${GREEN}$reference_genome${RESET}"
   msg_info "GTF: ${GREEN}$genome_gtf${RESET}"
@@ -116,6 +129,34 @@ run_pipeline_sample() {
   msg_info "log2FC: ${GREEN}${log2FC:-1}${RESET}"
   msg_info "FDR: ${GREEN}${FDR:-0.05}${RESET}"
   msg_info "Positive class: ${GREEN}$positive_class${RESET}"
+    } 2>&1
+  )
+
+  # Ancho del bloque izquierdo
+  local left_w=0 l
+  for l in "${LOGO_LINES[@]}"; do
+    (( ${#l} > left_w )) && left_w=${#l}
+  done
+
+  # Altura total + centrado vertical del panel
+  local hL=${#LOGO_LINES[@]}
+  local hR=${#PANEL_LINES[@]}
+  local H=$(( hL > hR ? hL : hR ))
+  local top_pad=0
+  (( hR < H )) && top_pad=$(( (H - hR) / 2 ))
+
+  # Imprimir combinado
+  local i j L R
+  for ((i=0; i<H; i++)); do
+    L="${LOGO_LINES[i]:-}"
+    R=""
+    j=$(( i - top_pad ))
+    if (( j >= 0 && j < hR )); then
+      R="${PANEL_LINES[j]}"
+    fi
+    printf "%-*s%*s%s\n" "$left_w" "$L" "$gap" "" "$R"
+  done
+}
 
 ###
 
