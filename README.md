@@ -184,7 +184,8 @@ For SR-PE:<br>
                               based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
 -method                       edgeR/DESeq2. 
 -k_num                        K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended
-                              to also increase the k number (default: 2).
+                              to also increase the k number. However, 2-3 factors should be enough to keep all the unwanted variation
+                              (default: 2).
 -log2FC                       Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                          Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
 -prediction_model             yes/no (default: no). When activated, it only will design prediction models in case the number of samples
@@ -215,7 +216,8 @@ For SR-SE:<br>
                               based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
 -method                       edgeR/DESeq2. 
 -k_num                        K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended
-                              to also increase the k number (default: 2).
+                              to also increase the k number. However, 2-3 factors should be enough to keep all the unwanted variation
+                              (default: 2).
 -log2FC                       Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                          Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
 -prediction_model             yes/no (default: no). When activated, it only will design prediction models in case the number of samples
@@ -312,7 +314,8 @@ The required arguments for this mode are the following:<br>
                        based on that column. If yes but batch column does not exist, RUVg will reduce the undesired variability.
 -method                edgeR/DESeq2. 
 -k_num                 K number for RUVg-based batch effect reduction. As far as the dataset size increases, it is recommended
-                       to also increase the k number (default: 2).
+                       to also increase the k number. However, 2-3 factors should be enough to keep all the unwanted variation
+                       (default: 2).
 -log2FC                Log2-transformed fold-change threshold for Differential Expression Analysis (default: 1).
 -FDR                   Adjusted p-value threshold for Differential Expression Analysis (default: 0.05).
 -prediction_model      yes/no (default: no). When activated, it only will design prediction models in case the number of samples
