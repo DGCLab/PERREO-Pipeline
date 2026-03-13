@@ -632,6 +632,32 @@ empty_raw <- sub("^res_filtered_", "results_", empty_filtered)
 res_names <- ls(pattern = "^results_contrast_")
 res_names <- setdiff(res_names, empty_raw)
 
+#res_names_filtered <- ls(pattern = "^res_filtered_contrast_")
+res_names_filtered <- setdiff(res_names_filtered, empty_filtered)
+
+
+if (length(res_names_filtered)==0){
+  stop("None of the contrasts showed any differentially expressed features.")
+}
+
+# res_names es un vector de caracteres con nombres de data.frames
+keep <- vapply(
+  res_names_filtered,
+  FUN = function(nm) nrow(get(nm)) >= 2,
+  FUN.VALUE = logical(1)
+)
+
+res_names_filtered <- res_names_filtered[keep]
+
+# raíz común: desde "contrast_" en adelante
+root_res      <- sub("^results_",       "", res_names)
+root_filtered <- sub("^res_filtered_",  "", res_names_filtered)
+
+# quedarte con los res_names cuyo "root" también está en root_filtered
+res_names_kept <- res_names[root_res %in% root_filtered]
+
+# si quieres sobrescribir:
+res_names <- res_names_kept
 for (nm in res_names) {
   
 message("Processing: ", nm)
@@ -1044,6 +1070,7 @@ if (length(pdf_files) > 0) {
 } else {
   msg_warn("No PDF files to create the report.")
 }
+
 
 
 
