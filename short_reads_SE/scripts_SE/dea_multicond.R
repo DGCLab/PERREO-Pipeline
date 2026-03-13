@@ -649,6 +649,10 @@ keep <- vapply(
 
 res_names_filtered <- res_names_filtered[keep]
 
+if (length(res_names_filtered)==0){
+  stop("None of the contrasts showed any differentially expressed features.")
+}
+
 # raíz común: desde "contrast_" en adelante
 root_res      <- sub("^results_",       "", res_names)
 root_filtered <- sub("^res_filtered_",  "", res_names_filtered)
@@ -658,6 +662,7 @@ res_names_kept <- res_names[root_res %in% root_filtered]
 
 # si quieres sobrescribir:
 res_names <- res_names_kept
+              
 for (nm in res_names) {
   
 message("Processing: ", nm)
@@ -1070,6 +1075,7 @@ if (length(pdf_files) > 0) {
 } else {
   msg_warn("No PDF files to create the report.")
 }
+
 
 
 
