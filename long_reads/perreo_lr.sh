@@ -223,19 +223,6 @@ done
 msg_ok "[STRINGTIE2] All .gtf generated, transcriptome assembly was generated successfully."
 
 
-#Then, we call this script to quantify reads that map uniquely to genes, uniquely to repeats and reads that map to both genes and repetitive regions
-
-if [[ ! -f "$CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv" ]]; then
-
-msg_info "Calculating hybrid transcripts..."
-bash "$HYBRIDS_SCRIPT" "$CWD/Results/transcriptome_assembly" "$CWD" "$genome_gtf" "$repeat_gtf" > $CWD/Results/transcriptome_assembly/hybrid_transcripts_summary.tsv
-
-fi
-
-Rscript "$HYBRIDS_R_SCRIPT" "$CWD"
-msg_ok "Done!"
-
-
 # ---------- 6) DIFFERENTIAL EXPRESSION ANALYSIS ----------
 
 
