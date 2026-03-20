@@ -629,7 +629,7 @@ empty_filtered <- res_names_filtered[sapply(res_names_filtered, function(x) {
   is.data.frame(obj) && nrow(obj) == 0
 })]
 empty_raw <- sub("^res_filtered_", "results_", empty_filtered)
-res_names <- ls(pattern = "^results_contrast_")
+res_names <- ls(pattern = "^res_contrast_")
 res_names <- setdiff(res_names, empty_raw)
 
 #res_names_filtered <- ls(pattern = "^res_filtered_contrast_")
