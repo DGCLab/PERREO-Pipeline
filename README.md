@@ -382,6 +382,19 @@ stringtie "$BAM" \
 
 Then, the pipeline performs a preliminar anylsis where the annotations file of each sample is mapped to a GTF containing exonic regions and another GTF containing repetitive elements in order to obtain hybrid transcripts composed of fragments derived from exons and repeats.<br>
 
+## Prediction models
+
+GLMnet and Random Forest algorithms generate prediction models to assess the classifying potential of repeat RNAs. It is important to define the positive class and to provide a sufficient number of samples to perform these analyses.
+
+A common error is the following:
+
+```text
+Error in roc.default(bin_truth, prob_df[[cls]], levels = rev(levels(bin_truth)),  : 
+  No case observation.
+Calls: eval_and_export ... mutate -> ovr_roc_curves -> <Anonymous> -> roc.default
+Execution halted
+This error may arise from an insufficient number of samples per class or from severe class imbalance. To mitigate this, the pipeline applies a balancing strategy prior to cross-validation, ensuring that all classes are represented in both training and test partitions across folds. If this error persists, users should verify that each class contains a minimum number of samples relative to the number of cross-validation folds, and consider either merging underrepresented classes or excluding them from the analysis.
+```
 
 ## PDF report
 The generated report contains the plots previously mentioned in the Differential Expression section.
