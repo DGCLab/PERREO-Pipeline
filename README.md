@@ -394,7 +394,7 @@ Error in roc.default(bin_truth, prob_df[[cls]], levels = rev(levels(bin_truth)),
 Calls: eval_and_export ... mutate -> ovr_roc_curves -> <Anonymous> -> roc.default
 Execution halted
 ```
-This error may arise from an insufficient number of samples per class or from severe class imbalance. To mitigate this, the pipeline applies a balancing strategy prior to cross-validation, ensuring that all classes are represented in both training and test partitions across folds. If this error persists, users should verify that each class contains a minimum number of samples relative to the number of cross-validation folds, and consider either merging underrepresented classes or excluding them from the analysis.
+This error may arise from an insufficient number of samples per class or from severe class imbalance. To mitigate this, the pipeline applies a balancing strategy prior to cross-validation, ensuring that all classes are represented in both training and test partitions across folds. If this error persists, users should verify that each class contains a minimum number of samples relative to the number of cross-validation folds, and consider either merging underrepresented classes or excluding them from the analysis. In that case, the user can remove the specific samples from the samplesheet and run again the code if all the previous steps have been performed. In these way, these samples would have been considered for DEA, coexpression analysis and transcriptome assembly, but not for prediction models design.
 
 
 ## PDF report
