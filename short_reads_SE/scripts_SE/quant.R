@@ -47,7 +47,7 @@ msg_ok <- function(x) {
 # msg_info(repeat_gtf)
 # msg_info(quant_dir)
 
-if (strandedness=="unstranded"){
+if (strandness=="unstranded"){
     strandness_fc = 0
 }
 if(strandness=="forward"){
