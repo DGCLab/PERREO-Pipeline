@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140">
+  <rect width="140" height="140" rx="20" ry="20" fill="#f5f2ff" />
+  <path d="M40 105 L70 30 L100 105 Z" fill="#7c5cf5" opacity="0.18" />
+  <circle cx="70" cy="60" r="12" fill="#7c5cf5" opacity="0.9" />
+  <circle cx="55" cy="92" r="8" fill="#00bfbf" />
+  <circle cx="85" cy="92" r="8" fill="#00bfbf" />
+  <text x="24" y="32" font-family="Helvetica, Arial, sans-serif" font-size="16" fill="#4b2ea9" font-weight="700">Variantes</text>
+</svg>
