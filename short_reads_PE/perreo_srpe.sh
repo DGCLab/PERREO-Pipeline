@@ -91,8 +91,9 @@ ____   _____  ____   ____   _____   ___
 |_|    |_____||_| \\_\\|_| \\_\\|_____| \\___/ 
 '
 
-msg_info "Starting PERREO pipeline for data derived from paired-end and short-reads sequencing techonologies 
-"
+msg_info "🔥 Starting PERREO pipeline for data derived from paired-end and short-reads sequencing techonologies"
+
+msg_info "☕ Please ensure coffee levels are above threshold."
 
 run_pipeline_sample() {
 
