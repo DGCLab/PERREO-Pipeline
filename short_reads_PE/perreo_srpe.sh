@@ -91,7 +91,7 @@ ____   _____  ____   ____   _____   ___
 |_|    |_____||_| \\_\\|_| \\_\\|_____| \\___/ 
 '
 
-msg_info "🚀 Launching PERREO pipeline for data derived from paired-end and short-reads sequencing techonologies"
+msg_info "🚀 Launching PERREO pipeline for data derived from paired-end short-read sequencing techonologies"
 
 msg_info "☕ Please ensure coffee levels are above threshold."
 
