@@ -65,7 +65,7 @@ ____   _____  ____   ____   _____   ___
 |_|    |_____||_| \\_\\|_| \\_\\|_____| \\___/ 
 '
 
-msg_info "🚀 Launching PERREO pipeline for data derived from long-reads sequencing technologies"
+msg_info "🚀 Launching PERREO pipeline for data derived from long-read sequencing technologies"
 
 msg_info "☕ Please ensure coffee levels are above threshold."
 
