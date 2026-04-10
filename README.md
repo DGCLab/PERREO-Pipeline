@@ -1,13 +1,17 @@
 # PERREO
 
-<img width="600" height="350" alt="logo_github" src="https://github.com/user-attachments/assets/f029a40a-dfc7-447c-b032-fe07a61f8a48" />
+<p align="center">
+  <img width="600" height="350" src="https://github.com/user-attachments/assets/f029a40a-dfc7-447c-b032-fe07a61f8a48">
+</p>
 
-<br><br>
+<br>
 
-![R](https://img.shields.io/badge/R-276DC3?style=for-the-badge&logo=r&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
-![Conda](https://img.shields.io/badge/Conda-44A833?style=for-the-badge&logo=anaconda&logoColor=white)
+<p align="center">
+  <img src="https://img.shields.io/badge/R-276DC3?style=for-the-badge&logo=r&logoColor=white">
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white">
+  <img src="https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black">
+  <img src="https://img.shields.io/badge/Conda-44A833?style=for-the-badge&logo=anaconda&logoColor=white">
+</p>
 
 # Software Requirements
 
