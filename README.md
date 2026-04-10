@@ -2,6 +2,9 @@
 
 <img width="600" height="350" alt="logo_github" src="https://github.com/user-attachments/assets/f029a40a-dfc7-447c-b032-fe07a61f8a48" />
 
+![R](https://img.shields.io/badge/-R-276DC3?style=flat&logo=r)
+![Linux](https://img.shields.io/badge/-Linux-FCC624?style=flat&logo=linux)
+
 # Software Requirements
 
 To perform the entire analysis, it is necessary to create a conda environment with all required packages and programs. Users can achieve this by running the provided YAML file, which will install the complete environment automatically.
