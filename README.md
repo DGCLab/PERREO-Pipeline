@@ -2,8 +2,11 @@
 
 <img width="600" height="350" alt="logo_github" src="https://github.com/user-attachments/assets/f029a40a-dfc7-447c-b032-fe07a61f8a48" />
 
-![R](https://img.shields.io/badge/-R-276DC3?style=flat&logo=r)
-![Linux](https://img.shields.io/badge/-Linux-FCC624?style=flat&logo=linux)
+
+![R](https://img.shields.io/badge/-R-276DC3?logo=r)
+![Python](https://img.shields.io/badge/-Python-3776AB?logo=python)
+![Nextflow](https://img.shields.io/badge/-Nextflow-23aa62)
+![Linux](https://img.shields.io/badge/-Linux-FCC624?logo=linux)
 
 # Software Requirements
 
