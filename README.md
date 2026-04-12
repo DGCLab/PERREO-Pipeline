@@ -47,8 +47,7 @@ The samplesheet structure should be as follows, regardless of the mode run:
 | SRR14506660     | reverse      | ESO       |
 | SRR14506859     | reverse      | HC        |
 
-If the user is unsure about the library strandedness, they can include a random type (forward/reverse) and decide later by applying specific software to infer strandedness, such as infer_experiment.py or check_for_strandedness. However, in this case, the user cannot perform extra trimming, as the trimGC.py script requires strandedness to trim the reads.
-
+If the user is unsure about the library strandedness, they can include a random type (forward/reverse) and decide later by applying specific software to infer strandedness. 
 If data belong to more than two experimental conditions and the batch effect cause is known, an additional column called "batch" must be included in the samplesheet to indicate the origin batch.
 
 For example: If samples come from different hospitals, this column should be included, and the hospital of origin must be indicated for each sample.
@@ -225,7 +224,6 @@ If adapters have been removed previously and trimming is only needed to remove l
 
 To remove polyA tails, include the -polya argument as follows: -polya polya.
 
-If the library was unstranded, even if "extra" trimming is selected, the pipeline will perform simple trimming, as trimGC.py can only be executed on data from forward and reverse libraries. Thus, simple trimming is automatically applied to unstranded library-based data.
 
 Single-end cutadapt trimming:
 
