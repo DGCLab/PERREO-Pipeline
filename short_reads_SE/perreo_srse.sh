@@ -9,7 +9,6 @@ source "${SCRIPT_DIR}/scripts_SE/logging.sh"
 
 # Scripts paths that already exist (ajusta nombres/paths)
 TRIM_SCRIPT="$CWD/scripts_SE/script_trimming_se.sh"   
-TRIM_EXTRA="$CWD/scripts_SE/trimGC.py"
 MAP_SCRIPT="$CWD/scripts_SE/script_map_se.sh"
 MARKDUP_SCRIPT="$CWD/scripts_SE/script_markduplicates.sh"           
 QUANT_SCRIPT="$CWD/scripts_SE/quant.R"
