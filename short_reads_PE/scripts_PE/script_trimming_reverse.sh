@@ -67,7 +67,7 @@ else
            
        # Verifying that the fastq files already exists
        if [ -f "trim/${sample_id}_trimmed_1.fastq.gz" ] && [ -f "trim/${sample_id}_trimmed_2.fastq.gz" ]; then
-          python "$TRIM_EXTRA" -s reverse -o "trim/${sample_id}_trimmed_gc" -i "trim/${sample_id}_trimmed" > trimGC.log 2>&1
+          python "$TRIM_EXTRA" -s reverse -o "trim/${sample_id}_trimmed_gc" -i "trim/${sample_id}_trimmed" > trim_extra.log 2>&1
           gunzip ${TRIM_DIR}/${sample_id}_trimmed_gc_1.fastq.gz
           gunzip ${TRIM_DIR}/${sample_id}_trimmed_gc_2.fastq.gz
           
