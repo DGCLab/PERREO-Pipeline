@@ -218,7 +218,7 @@ For SR-SE:
 
 ## Trimming
 
-In this step, there are two main options: simple trimming with cutadapt, and a more complex trimming performed first with cutadapt and then with the trimGC.py script to remove additional GC nucleotides added by specific sequencing kits. This additional trimming is only available for paired-end short-read sequencing data.
+In this step, there are two main options: simple trimming with cutadapt, and a more complex trimming performed first with cutadapt and then with the trimGC.py script to remove additional GC nucleotides added by specific sequencing kits. This additional trimming is only available for paired-end short-read sequencing data. Please note that trimGC.py is not included in this repository and must be obtained separately from the cfRNA-SEEK repository: <https://github.com/lulab/cfRNA-SEEK/tree/master>.
 
 If adapters have been removed previously and trimming is only needed to remove low-quality reads, include the -adapt_r1, -adapt_r2, and -adapter arguments as indicated in the previous sections while running the pipeline.
 
