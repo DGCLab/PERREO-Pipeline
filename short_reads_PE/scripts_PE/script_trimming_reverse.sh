@@ -58,32 +58,5 @@ else
 
   fi
 
-
-
-  if [[ "$trimming_type" == "extra" ]]; then
-       msg_info "[CUTADAPT] → Performing extra trimming"
-       gzip "${TRIM_DIR}/${sample_id}_trimmed_1.fastq"
-       gzip "${TRIM_DIR}/${sample_id}_trimmed_2.fastq"
-           
-       # Verifying that the fastq files already exists
-       if [ -f "trim/${sample_id}_trimmed_1.fastq.gz" ] && [ -f "trim/${sample_id}_trimmed_2.fastq.gz" ]; then
-          python "$TRIM_EXTRA" -s reverse -o "trim/${sample_id}_trimmed_gc" -i "trim/${sample_id}_trimmed" > trim_extra.log 2>&1
-          gunzip ${TRIM_DIR}/${sample_id}_trimmed_gc_1.fastq.gz
-          gunzip ${TRIM_DIR}/${sample_id}_trimmed_gc_2.fastq.gz
-          
-          mv ${TRIM_DIR}/${sample_id}_trimmed_gc_1.fastq ${TRIM_DIR}/${sample_id}_trimmed_1.fastq
-          mv ${TRIM_DIR}/${sample_id}_trimmed_gc_2.fastq ${TRIM_DIR}/${sample_id}_trimmed_2.fastq
-
-
-       else
-          msg_error "[CUTADAPT] Trimmed files not found"
-       fi 
-   
-  else
-       msg_info "[CUTADAPT] → Skipping extra trimming"
-       
-  fi
-fi
-
 fastqc ${TRIM_DIR}/${sample_id}_trimmed_1.fastq
 fastqc ${TRIM_DIR}/${sample_id}_trimmed_2.fastq
