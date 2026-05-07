@@ -58,5 +58,7 @@ else
 
   fi
 
+  fi
+
 fastqc ${TRIM_DIR}/${sample_id}_trimmed_1.fastq
 fastqc ${TRIM_DIR}/${sample_id}_trimmed_2.fastq
