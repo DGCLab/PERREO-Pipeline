@@ -56,6 +56,7 @@ else
         "$IN1" "$IN2" > cutadapt.log 2>&1
 
   fi
+fi
 
 
 fastqc ${TRIM_DIR}/${sample_id}_trimmed_1.fastq
