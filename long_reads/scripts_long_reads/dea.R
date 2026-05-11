@@ -2,10 +2,11 @@
 ####                                                                       ####
 ####                      DIFFERENTIAL EXPRESSION ANALYSIS                 ####
 ####                                                                       ####
-####             Authors:                                                  ####
-####                                                                       ####
+####             Authors: Francisco Rodríguez Martín                       ####                      
+####                      Mario Masero León                                ####
 ####                                                                       ####
 ###############################################################################
+
 
 ## ==============================
 ## Logging coloured (R)
