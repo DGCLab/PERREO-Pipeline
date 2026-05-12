@@ -99,7 +99,8 @@ Once the script is executed, the interface will open in the web browser, allowin
 
 The flow diagram illustrates the different steps included in this pipeline.
 
-![PERREO](https://github.com/user-attachments/assets/3385d410-6be1-4de8-97a1-d07a007d40af)
+<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/6eb18562-4891-4e49-92ef-fd07074cd738" />
+
 
 # PERREO Modes
 
