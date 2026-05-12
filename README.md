@@ -1,8 +1,6 @@
 # PERREO
 
-<p align="center">
 <img width="921" height="471" alt="527598980-f029a40a-dfc7-447c-b032-fe07a61f8a48" src="https://github.com/user-attachments/assets/25a1f772-afae-4d6d-9a41-8f3b7de08190" />
-</p>
 
 <br>
 
