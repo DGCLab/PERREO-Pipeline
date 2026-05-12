@@ -1,7 +1,7 @@
 # PERREO
 
 <p align="center">
-  <img width="600" height="350" src="https://github.com/user-attachments/assets/f029a40a-dfc7-447c-b032-fe07a61f8a48">
+<img width="921" height="471" alt="527598980-f029a40a-dfc7-447c-b032-fe07a61f8a48" src="https://github.com/user-attachments/assets/25a1f772-afae-4d6d-9a41-8f3b7de08190" />
 </p>
 
 <br>
@@ -99,7 +99,7 @@ Once the script is executed, the interface will open in the web browser, allowin
 
 The flow diagram illustrates the different steps included in this pipeline.
 
-<img width="6968" height="3922" alt="workflow" src="https://github.com/user-attachments/assets/5a550c54-a04e-4fce-8ddd-b1af8bf9638f" />
+<img width="1671" height="941" alt="image" src="https://github.com/user-attachments/assets/15d45e36-3699-48c6-adad-e648a7f2577b" />
 
 
 # PERREO Modes
