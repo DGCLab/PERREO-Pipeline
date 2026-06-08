@@ -1,0 +1,23 @@
+site_name: PERREO
+site_description: Documentation for the PERREO repeat RNA analysis pipeline
+repo_url: https://github.com/DGCLab/PERREO-Pipeline
+theme:
+  name: readthedocs
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Data Preparation: data-preparation.md
+  - Running PERREO: running.md
+  - Modes:
+      - Overview: modes.md
+      - Short Reads Paired-End: sr-pe.md
+      - Short Reads Single-End: sr-se.md
+      - Long Reads: long-reads.md
+  - Downstream Analysis: downstream-analysis.md
+  - Outputs: outputs.md
+  - Script Reference: script-reference.md
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
